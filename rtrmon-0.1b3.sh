@@ -72,7 +72,7 @@ logo () {
   echo -e "${CYellow}      ____  __________  __  _______  _   __"
   echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version${CYellow}"
   echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext Page"
+  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext Page ($NextPage/2)"
   echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(E)${CGreen}xit${CClear}"
 }
 
