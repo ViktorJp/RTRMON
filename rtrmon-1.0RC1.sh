@@ -13,7 +13,7 @@
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
 Version="1.0RC1"
-Beta=1
+Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"          # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                   # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"          # Path to the location of rtrmon.cfg
