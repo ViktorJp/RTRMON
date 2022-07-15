@@ -1,0 +1,6 @@
+v1.0RC1   - (July 15, 2022)
+          - RELEASE - Release Candidate 1 (RC1) is officially out there!
+          - ADDED - Added a setup, config, uninstall, and update menu, along with options to view logs, or launch RTRMON regularly in an SSH window,
+            or using the screen utility.  Many of these capabilities came over from VPNMON-R2.
+          - ADDED - Using proper add-on guidelines, support files are now located under /jffs/addons/rtrmon.d, with the main rtrmon.sh located under
+            the /jffs/scripts as usual.
