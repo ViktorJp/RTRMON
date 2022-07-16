@@ -1,3 +1,7 @@
+v1.0      - (July 16, 2022)
+          - FIXED - Now allows you to set your WiFi speeds to 0 if you effectively have them disabled (Thanks @Stephen Harrington)
+          - FIXED - Changed temp units to force to uppercase during config, and made a small wording change (Thanks @Thirteen)
+          
 v1.0RC1   - (July 15, 2022)
           - RELEASE - Release Candidate 1 (RC1) is officially out there!
           - ADDED - Added a setup, config, uninstall, and update menu, along with options to view logs, or launch RTRMON regularly in an SSH window,
