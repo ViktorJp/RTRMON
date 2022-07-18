@@ -1,5 +1,5 @@
 v1.01     - (TBA)
-          - FIXED - Bug fix that was caused by reading a blank NVRAM size used file causing an arithmetic error!
+          - FIXED - Bug fix that was occassionally caused by reading a blank NVRAM size used file causing an arithmetic error!
           - ADDED - capability of checking NVRAM to determine whether your wl0 or wl1 (wireless LANs) are turned on or not, and if not, it will
             show as disabled in the UI - Thanks @Stephen Harrington!
           - ADDED - if someone fat-fingers the temp units other than C, F or K, it will just default to C.          
