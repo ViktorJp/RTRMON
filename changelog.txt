@@ -1,3 +1,9 @@
+v1.01     - (TBA)
+          - FIXED - Arithmetic error bug that affected reading a blank NVRAM size used file causing some issues!
+          - ADDED - capability of checking NVRAM to determine whether your wl0 or wl1 (wireless LANs) are turned on or not, and if not, it will
+            show as disabled in the UI - Thanks @Stephen Harrington!
+          - ADDED - if someone fat-fingers the temp units other than C, F or K, it will just default to C.          
+
 v1.0      - (July 16, 2022)
           - FIXED - Now allows you to set your WiFi speeds to 0 if you effectively have them disabled (Thanks @Stephen Harrington)
           - FIXED - Changed temp units to force to uppercase during config, and made a small wording change (Thanks @Thirteen)
