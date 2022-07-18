@@ -1167,7 +1167,8 @@ DisplayPage2 () {
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
           if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
             MaxSpeed24Ghz=0
-          elif [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+          fi
+          if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
             MaxSpeed5Ghz=0
           fi
 
