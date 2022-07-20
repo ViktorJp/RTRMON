@@ -1,3 +1,7 @@
+v1.02     - (July 20, 2022)
+          - FIXED - Apparently AC68U's have a different way of capturing the CPU temp, and am checking for this alternate way on any router that
+            might use the same methods.  So now there's two.  ;)
+
 v1.01     - (July 18, 2022)
           - FIXED - Bug fix that was occasionally being caused by reading a blank NVRAM file causing an arithmetic error!
           - ADDED - capability of checking NVRAM to determine whether your wl0 or wl1 (wireless LANs) are turned on or not, and if not, it will
