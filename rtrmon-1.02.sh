@@ -786,7 +786,7 @@ calculatestats () {
    if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
      F_cputemp=$($timeoutcmd$timeoutsec cat /sys/class/thermal/thermal_zone0/temp | cut -c -2)
    elif [ -f /proc/dmu/temperature ]; then # Thanks to PeterR for the bug report on AC68U's - hopefully this will fix that
-     F_cputemp=$($timeoutcmd$timeoutseccat /proc/dmu/temperature | cut -c19-20)
+     F_cputemp=$($timeoutcmd$timeoutsec cat /proc/dmu/temperature | cut -c19-20)
    fi
 
   # Memory - Usage
