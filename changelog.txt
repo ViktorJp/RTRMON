@@ -1,3 +1,7 @@
+v1.03     - (July 20, 2022)
+          - FIXED - It looks like there was some inconsistency in the way the JFFS partition was being measured as well, and fixed that code to
+            be a bit more compliant with returning the right values.
+
 v1.02     - (July 20, 2022)
           - FIXED - Apparently AC68U's have a different way of capturing the CPU temp, and am checking for this alternate way on any router that
             might use the same methods.  So now there's two.  ;)
