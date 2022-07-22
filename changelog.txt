@@ -1,7 +1,7 @@
-v1.04     - (TBA)
-          - ADDED: Additional stats on the networking page, include WAN0, WAN1 and LAN IP addresses... as well as WAN DNS IP addresses.
-          - CHANGED: Increased the number of digits after the decimal for all networking traffic to allow for some more precision.
-          - CHANGED: All setup menu look & feel to match that of VPNMON-R2
+v1.04     - (July 22, 2022)
+          - ADDED: Additional stats on the networking page, include WAN0, WAN1 and LAN IP addresses... as well as WAN DNS IP addresses! Whoo!
+          - CHANGED: Increased the number of digits after the decimal for all networking traffic to show a little more precision.
+          - CHANGED: All setup menu's look & feel now match that of VPNMON-R2!  We have achieved congruency!  :)
 
 v1.03     - (July 20, 2022)
           - FIXED - It looks like there was some inconsistency in the way the JFFS partition was being measured as well, and fixed that code to
