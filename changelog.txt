@@ -1,3 +1,8 @@
+v1.05     - (July 22, 2022)
+          - FIXED: Additional bug that @Stephen Harrington uncovered regarding the WAN DNS NVRAM variable being used, and was yielding some
+            different results for him than it was for me.  Changed it to look at a different variable, and built in some more logic that
+            picks the DNS entries depending on which WAN connection is active.
+
 v1.04     - (July 22, 2022)
           - ADDED: Additional stats on the networking page, include WAN0, WAN1 and LAN IP addresses... as well as WAN DNS IP addresses! Whoo!
           - CHANGED: Increased the number of digits after the decimal for all networking traffic to show a little more precision.
