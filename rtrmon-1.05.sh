@@ -853,8 +853,8 @@ calculatestats () {
 
     if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi    
-    if [ -z $dns1ip ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
-    if [ -z $dns2ip ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
+    if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
+    if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
     
   # Network - Wifi - Temp
     ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
