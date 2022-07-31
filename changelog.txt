@@ -1,4 +1,4 @@
-v1.06     - (July 31, 2022)
+v1.06     - (TBA)
           - ADDED: Additional stats on the networking page, including the WAN and LAN IP6 addresses. Though my alignment OCD will have to live
             with the fact that IP6 addresses are variable length and won't fit nicely between brackets. Thanks to @SomewhereOverTheRainbow for
             his assist in developing the code that pulls this info!
