@@ -1,8 +1,17 @@
-v1.06     - (TBA)
+v1.1b1    - (TBA)
+          - MAJOR: Added a major enhancement to RTRMON -- namely, the commandline Ookla Speedtest binary! Whoo! On the newly added Page 3 of
+            the application, you can now initiate a manual speedtest! It will by default use your primary WAN connection and pick the closest
+            server to you to run its test, and display these results on Page 3.  These results are saved to a file, so next time you launch
+            RTRMON, you will be able to see your last results.  There are no fancy spdMerlin graphs or charts, but just good ol' plain data,
+            and some progress indicators giving you a dashboard-like view of your actual vs max WAN up/down speeds. In the setup menu, you
+            can now enable 'Ookla Speedtest', which will download and install the binaries. If you disable it, the setup menu will prompt you
+            to uninstall these components for you.
+          - ADDED: Another variable has been added to capture your WAN upload speed. I personally don't have symmetrical up/download speeds,
+            and using this will only give you a better indicator what's happening on your network as it measures and displays these results.
           - ADDED: Additional stats on the networking page, including the WAN and LAN IP6 addresses. Though my alignment OCD will have to live
             with the fact that IP6 addresses are variable length and won't fit nicely between brackets. Thanks to @SomewhereOverTheRainbow for
-            his assist in developing the code that pulls this info!
-
+            his assist in developing the code that pulls this info! RTRMON v1.06b1 additions have been absorbed under this major release.
+          
 v1.05     - (July 22, 2022)
           - FIXED: Additional bug that @Stephen Harrington uncovered regarding the WAN DNS NVRAM variable being used, and was yielding some
             different results for him than it was for me.  Changed it to look at a different variable, and built in some more logic that
