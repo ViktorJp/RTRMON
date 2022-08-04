@@ -1190,13 +1190,13 @@ DisplayPage2 () {
   printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
   echo -en " / "
   printf '%03d.%03d.%03d.%03d'  ${oldwan1ip//./ }
-  echo -e " ${CGreen}]${CClear}"
+  echo -e "${CClear}"
   if [ ! -z $oldwanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}WAN 0/1 I6 ${CGreen}[ ${CCyan}$oldwanip6${CClear}"; fi
   echo -en "${InvCyan} ${CClear} ${CCyan}WAN DNS IP ${CGreen}[ ${CCyan}"
   if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
   echo -en " / "
   if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
-  echo -e " ${CGreen}]${CClear}"
+  echo -e "${CClear}"
   preparebar 35 "|"
   progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay
   echo ""
@@ -1208,7 +1208,7 @@ DisplayPage2 () {
   echo ""
   echo -en "${InvCyan} ${CClear}${CCyan} BR0 LAN IP ${CGreen}[ ${CCyan}"
   printf '%03d.%03d.%03d.%03d'  ${oldlanip//./ }
-  echo -e "                   ${CGreen}]${CClear}"
+  echo -e "${CClear}"
   if [ ! -z $oldlanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}BR0 LAN I6 ${CGreen}[ ${CCyan}$oldlanip6${CClear}"; fi
   preparebar 35 "|"
   progressbar $oldlanrxmbrate $MaxSpeedLAN " Avg LAN RX" "Mbps" "Standard" $oldlanrxmbratedisplay
@@ -1252,7 +1252,7 @@ DisplayPage2 () {
 
 # -------------------------------------------------------------------------------------------------------------------------
 
-# This function displays the stats UI for page 2
+# This function displays the stats UI for page 3
 DisplayPage3 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
