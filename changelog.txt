@@ -2,6 +2,7 @@ v1.12     - (TBA)
           - FIXED: Prevented the hotkey menu from working during the initial boot process while it is capturing data for display purposes,
             and makes this menu active after the capture process.  This helps prevent invalid results from being display and borking things
             up with error messages. ;) Thanks for the find, @Stephen Harrington!
+          - FIXED: A couple of minor numbering typos for some setup menu entries.
 
 v1.11     - (August 6, 2022)
           - FIXED: A parsing issue was generating some weird results due to the formatting of some the test servers, and subsequently dropping
