@@ -1,3 +1,12 @@
+v1.12     - (TBA)
+          - FIXED: Prevented the hotkey menu from working during the initial boot process while it is capturing data for display purposes,
+            and makes this menu active after the capture process.  This helps prevent invalid results from being display and borking things
+            up with error messages. ;) Thanks for the find, @Stephen Harrington!
+
+v1.11     - (August 6, 2022)
+          - FIXED: A parsing issue was generating some weird results due to the formatting of some the test servers, and subsequently dropping
+            the wrong data into the wrong fields.
+
 v1.1      - (August 5, 2022)
           - MAJOR: Added a major enhancement to RTRMON -- namely, the commandline Ookla Speedtest binary! Whoo! On the newly added Page 3 of
             the application, you can now initiate a manual speedtest! It will by default use your primary WAN connection and pick the closest
