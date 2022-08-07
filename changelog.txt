@@ -1,4 +1,4 @@
-v1.12     - (TBA)
+v1.12     - (August 7, 2022)
           - FIXED: Prevented the hotkey menu from working during the initial boot process while it is capturing data for display purposes,
             and makes this menu active after the capture process.  This helps prevent invalid results from being display and borking things
             up with error messages. ;) Thanks for the find, @Stephen Harrington!
