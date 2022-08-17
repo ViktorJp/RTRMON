@@ -1,3 +1,10 @@
+v1.14     - (August 17, 2022)
+          - FIXED: Based on feedback from @adahnert running on stock Asus firmware, I have made some mods to certain NVRAM calls that don't
+            seem to return any values when running on non-Merlin firmware.  Happy to oblige, so now the cache total value defaults to 100
+            if there is no cache configured (to avoid divide-by-zero errors and wonky progress bars), and the WAN interface name now
+            defaults to "eth0" if this value is returned as a blank.
+          - ADDED: The router model at the top of the page to easily identify what kind of device this is.
+
 v1.12     - (August 7, 2022)
           - FIXED: Prevented the hotkey menu from working during the initial boot process while it is capturing data for display purposes,
             and makes this menu active after the capture process.  This helps prevent invalid results from being display and borking things
