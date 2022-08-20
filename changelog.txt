@@ -1,3 +1,7 @@
+v1.16     - (TBA)
+          - FIXED: Added a few more timeout commands to some recently imported NVRAM GET statements that were locking up my script
+            again. Grr.
+            
 v1.15     - (August 17, 2022)
           - FIXED: Modified the df command which is used to assemble /jffs stats/information, and came across a weird situation that was
             breaking the command due to it referencing ubi:/jffs instead of dev:/jffs... Thanks for the find, @visortgw
