@@ -1,0 +1,15 @@
+Future Enhancements (Planned)
+-----------------------------
+
+To-Do:
+------
+* Allow user to pick own custom speedtest server by ID
+
+Completed:
+----------
+
+
+Ideas or Discussion
+-------------------
+If you have any ideas or requests, please don't hesitate to mention them here in the forums for further discussion:
+https://www.snbforums.com/threads/release-rtrmon-v1-15-aug-17-2022-monitor-your-routers-health-new-ookla-speedtest-geek-out-and-measure-your-cpu-temp-in-k.79738/
