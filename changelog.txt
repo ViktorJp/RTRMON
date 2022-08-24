@@ -4,7 +4,8 @@ v1.17     - (TBA)
           - CHANGED: The way that the progress bar percentages work, and now allows them to display values > 100%.  This was evident
             where indicated or measured speedtest bandwidth rates were being capped at the top of specified speeds, and would not show any
             values greater than what was specified in the config.  So now, if you specified that you have a 1Gig pipe, and you're actually
-            pulling down 1200Mbps, it will show your current bandwidth rate at 120%.  Thanks much to @visortgw for the suggestion!
+            pulling down 1200Mbps, it will show your current bandwidth rate at 120%.  This change has been made for any networking and
+            temperature values.  Thanks much to @visortgw for the suggestion!
                         
 v1.15     - (August 17, 2022)
           - FIXED: Modified the df command which is used to assemble /jffs stats/information, and came across a weird situation that was
