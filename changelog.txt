@@ -1,7 +1,11 @@
-v1.16     - (TBA)
+v1.17     - (TBA)
           - FIXED: Added a few more timeout commands to some recently imported NVRAM GET statements that were locking up my script
             again. Grr.
-            
+          - CHANGED: The way that the progress bar percentages work, and now allows them to display values > 100%.  This was evident
+            where indicated or measured speedtest bandwidth rates were being capped at the top of specified speeds, and would not show any
+            values greater than what was specified in the config.  So now, if you specified that you have a 1Gig pipe, and you're actually
+            pulling down 1200Mbps, it will show your current bandwidth rate at 120%.  Thanks much to @visortgw for the suggestion!
+                        
 v1.15     - (August 17, 2022)
           - FIXED: Modified the df command which is used to assemble /jffs stats/information, and came across a weird situation that was
             breaking the command due to it referencing ubi:/jffs instead of dev:/jffs... Thanks for the find, @visortgw
