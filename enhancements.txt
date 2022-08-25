@@ -4,11 +4,11 @@ Future Enhancements (Planned)
 To-Do:
 ------
 * Allow user to pick own custom speedtest server by ID
-* Allow percentage results to indicate > 100%
+* Add log events
 
 Completed:
 ----------
-
+* Allow percentage results to indicate > 100%
 
 Ideas or Discussion
 -------------------
