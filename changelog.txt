@@ -3,6 +3,8 @@ v1.19     - (August 28, 2022)
             suggestion, and for @SomeWhereOverTheRainBow for helping shape this feature! :)  This menu item will list the valid interfaces
             that are currently available on your router for you to pick from.  Please note, correct spelling and case senstivity is very
             important when entering this value!
+          - ADDED: The interface name is now visible on page (2) next to the WAN0/1 IP4 address field.  This will give you a quick way to
+            view what interface is currently selected to monitor your WAN stats.
           - FIXED: Fixed the other menu items so that if someone just hits enter while prompting for a value, that the default value gets
             added. This should help catch any accidental entries (or cats walking across your keyboard), and increases the chances for a
             valid entry to be registered.
