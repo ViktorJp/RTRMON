@@ -1,3 +1,12 @@
+v1.19     - (August 28, 2022)
+          - ADDED: Added another menu item that allows you to override the default interface assigned to WAN0. Thanks to @adahnert for the
+            suggestion, and for @SomeWhereOverTheRainBow for helping shape this feature! :)  This menu item will list the valid interfaces
+            that are currently available on your router for you to pick from.  Please note, correct spelling and case senstivity is very
+            important when entering this value!
+          - FIXED: Fixed the other menu items so that if someone just hits enter while prompting for a value, that the default value gets
+            added. This should help catch any accidental entries (or cats walking across your keyboard), and increases the chances for a
+            valid entry to be registered.
+
 v1.17     - (August 24, 2022)
           - FIXED: Added a few more timeout commands to some recently imported NVRAM GET statements that were locking up my script
             again. Grr.
