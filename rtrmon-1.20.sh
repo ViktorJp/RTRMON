@@ -456,7 +456,7 @@ vconfig () {
 
               while true
                 do
-                  read -p 'Choose Interface: ' ChooseInterface
+                  read -p 'Choose Interface #: ' ChooseInterface
 
                   case ${ChooseInterface#[-+]} in # Make sure we're only picking an item from the list
                     *[!0-9]* | '') echo ""; echo -e "${CRed}ERROR: Please make a valid selection${CClear}"; echo "" ;;
