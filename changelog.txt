@@ -1,3 +1,9 @@
+v1.20     - (August 28, 2022)
+          - CHANGED: Thanks to @Jack Yaz, always pushing me to do better, I have accepted the challenge, and created a numbered list of
+            valid interfaces to choose from instead of typing in an interface name. It is completely understandable that relying on people
+            to type in the correct interface name might cause you to lose faith in humanity, but I was trusting.  ;)  I think it took me
+            longer to come up with a working method to validate input!  LOL
+
 v1.19     - (August 28, 2022)
           - ADDED: Added another menu item that allows you to override the default interface assigned to WAN0. Thanks to @adahnert for the
             suggestion, and for @SomeWhereOverTheRainBow for helping shape this feature! :)  This menu item will list the valid interfaces
