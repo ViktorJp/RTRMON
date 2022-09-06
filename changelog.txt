@@ -1,3 +1,9 @@
+v1.21     - (TBA)
+          - ADDED: Based on excellent feedback from @ugandy, I have added compatibility for the more advanced GT-AXE11000 and the
+            GT-AXE16000 routers with 4 different WiFi interfaces, 2.4Ghz, 2 x 5Ghz and 6Ghz transmitters.  In doing so, the WiFi section
+            has now been split off onto its own page (3) to handle up to 4 different interface statistics.
+          - CHANGED: Moved the (I)nitiate Speedtest menu item to the top of page (4) on the Speedtest page.
+
 v1.20     - (August 28, 2022)
           - CHANGED: Thanks to @Jack Yaz, always pushing me to do better, I have accepted the challenge, and created a numbered list of
             valid interfaces to choose from instead of typing in an interface name. It is completely understandable that relying on people
