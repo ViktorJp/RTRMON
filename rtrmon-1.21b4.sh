@@ -1411,7 +1411,7 @@ DisplayPage3 () {
     converttemps $oldw24temp
     progressbar $currenttemp $currentrange " 2.4G Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
-    echo -e "${InvCyan} ${CClear}${CCyan} 2.4GHz Disabled"
+    echo -e "${InvCyan} ${CClear}${CCyan} 2.4GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
     echo ""
   fi
   if [ "$MaxSpeed5Ghz" != "0" ]; then
@@ -1428,7 +1428,7 @@ DisplayPage3 () {
     converttemps $oldw5temp
     progressbar $currenttemp $currentrange " 5G-1 Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
-    echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) Disabled"
+    echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
   fi
   if [ $AdvRouter == "True" ]; then
     if [ "$MaxSpeed5Ghz" != "0" ]; then
@@ -1445,7 +1445,7 @@ DisplayPage3 () {
       converttemps $oldw52temp
       progressbar $currenttemp $currentrange " 5G-2 Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
-      echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (2) Disabled"
+      echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (2) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
     fi
     if [ "$MaxSpeed6Ghz" != "0" ]; then
       echo ""
@@ -1461,7 +1461,7 @@ DisplayPage3 () {
       converttemps $oldw6temp
       progressbar $currenttemp $currentrange " 6.0G Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
-      echo -e "${InvCyan} ${CClear}${CCyan} 6.0GHz Disabled"
+      echo -e "${InvCyan} ${CClear}${CCyan} 6.0GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
     fi
   fi
 }
