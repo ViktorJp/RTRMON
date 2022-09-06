@@ -1105,7 +1105,7 @@ calculatestats () {
     if [ $AdvRouter = "True" ]; then
       w24tempraw=$($timeoutcmd$timeoutsec wl -i $ifname24 phy_tempsense | awk '{print $1}' )
       w5tempraw=$($timeoutcmd$timeoutsec wl -i $ifname5 phy_tempsense | awk '{print $1}' )
-      w53tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' )
+      w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' )
       w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' )
       if [ -z $w24tempraw ] || [ $w24tempraw -eq 0 ]; then w24tempraw=4; fi  #in case it does not return a valid number
       if [ -z $w5tempraw ] || [ $w5tempraw -eq 0 ]; then w5tempraw=4; fi
