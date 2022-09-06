@@ -105,7 +105,7 @@ logo () {
   echo -e "${CYellow}      ____  __________  __  _______  _   __"
   echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version - ${CCyan}$RouterModel${CYellow}"
   echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /  ${CRed}(S)${CGreen}etup${CYellow}"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext Page ($NextPage/4)${CYellow}"
+  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/4)${CYellow}"
   echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(E)${CGreen}xit${CClear}"
 }
 
@@ -926,6 +926,7 @@ if [ "$INITIALBOOT" == "0" ]; then
           [Ss]) FromUI=1; (vsetup); echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; FromUI=0;;
           [Ii]) QueueSpdtst=1; echo -e "${CGreen}  [Queuing Speedtest]                                                      ";;
           [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; fi;;
           [Ee]) echo -e "${CClear}"; exit 0;;
       esac
   fi
@@ -1012,10 +1013,17 @@ calculatestats () {
 
   # Router Model
   if [ $AdvRouter == "True" ]; then
-    ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
-    ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
-    ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
-    ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+    if [ $RouterModel == "GT-AXE16000" ]; then
+      ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
+      ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
+      ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
+      ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+    else
+      ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
+      ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
+      ifname52=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+      ifname6=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
+    fi
   else
     ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
@@ -1654,17 +1662,32 @@ DisplayPage4 () {
 
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
           if [ $AdvRouter == "True" ]; then
-            if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-              MaxSpeed5Ghz=0
-            fi
-            if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-              MaxSpeed52Ghz=0
-            fi
-            if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
-              MaxSpeed24Ghz=0
-            fi
-            if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-              MaxSpeed6Ghz=0
+            if [ $RouterModel == "GT-AXE16000" ]; then
+              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+                MaxSpeed5Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+                MaxSpeed52Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
+                MaxSpeed24Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+                MaxSpeed6Ghz=0
+              fi
+            else
+              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+                MaxSpeed24Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+                MaxSpeed5Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+                MaxSpeed52Ghz=0
+              fi
+              if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
+                MaxSpeed6Ghz=0
+              fi
             fi
           else
             if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
@@ -1702,10 +1725,17 @@ DisplayPage4 () {
   oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
 
   if [ $AdvRouter == "True" ]; then
-    ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
-    ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
-    ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
-    ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+    if [ $RouterModel == "GT-AXE16000" ]; then
+      ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
+      ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
+      ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
+      ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+    else
+      ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
+      ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
+      ifname52=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
+      ifname6=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
+    fi
   else
     ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
