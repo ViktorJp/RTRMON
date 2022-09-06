@@ -1259,6 +1259,8 @@ DisplaySpdtst () {
   #if [ $SpdUpload -gt $MaxSpeedInetUL ]; then SpdUpload=$MaxSpeedInetUL; fi
 
   #SpdServer="Your Local Test Server name/location"
+  echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate Speedtest${CClear}"
+  echo ""
   echo -e "${InvCyan} ${CClear} ${CCyan}Date       ${CGreen}[ ${CCyan}$SpdDate${CClear}"
   echo -e "${InvCyan} ${CClear} ${CCyan}Server     ${CGreen}[ ${CCyan}$SpdServer${CClear}"
   echo ""
@@ -1274,9 +1276,6 @@ DisplaySpdtst () {
   echo ""
   preparebar 35 "|"
   progressbar $SpdUpload $MaxSpeedInetUL " UL vs WAN " "Mbps" "Reverse" $SpdUpload $MaxSpeedInetUL
-  echo ""
-  echo ""
-  echo -en "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate Speedtest${CClear}"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1385,7 +1384,6 @@ DisplayPage2 () {
   echo ""
   preparebar 35 "|"
   progressbar $oldlantxmbrate $MaxSpeedLAN " Avg LAN TX" "Mbps" "Standard" $oldlantxmbratedisplay $MaxSpeedLAN
-  echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
