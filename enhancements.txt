@@ -9,6 +9,7 @@ To-Do:
 Completed:
 ----------
 * Allow percentage results to indicate > 100%
+* Added compatiblity for the GT-AXE/AX line of routers
 
 Ideas or Discussion
 -------------------
