@@ -1350,7 +1350,7 @@ DisplayPage2 () {
   fi
   echo -e "${CGreen}/${CRed}WAN${CClear}${CGreen}\______________________________________________________________${CClear}"
   echo ""
-  #dwan0ip="1.2.3.4"
+  #oldwan0ip="1.2.3.4"
   #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr"
   echo -en "${InvCyan} ${CClear} ${CCyan}WAN 0/1 IP ${CGreen}[ ${CCyan}"
   printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
@@ -1507,7 +1507,7 @@ DisplayPage4 () {
   if [ $RouterModel == "GT-AXE11000" ]; then
     ThreeBand2456="True"
   fi
-  if [ $RouterModel == "GT-AX11000" ]; then
+  if [ $RouterModel == "GT-AX11000_PRO" ]; then
     ThreeBand2455="True"
   fi
 
