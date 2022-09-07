@@ -1,7 +1,11 @@
 v1.21     - (TBA)
           - ADDED: Based on excellent feedback from @ugandy, I have added compatibility for the more advanced GT-AXE11000 and the
             GT-AXE16000 routers with 4 different WiFi interfaces, 2.4Ghz, 2 x 5Ghz and 6Ghz transmitters.  In doing so, the WiFi section
-            has now been split off onto its own page (3) to handle up to 4 different wireless interface statistics.
+            has now been split off onto its own page (3) to handle up to 4 different wireless interface statistics.  This version adds 
+            completely new logic to handle the weird interface assignment for the GT-AXE16000, the more standard 2.4/5/6GHz assignment
+            for the GT-AXE11000, and the even more different 2.4/5-1/5-2GHz assignment for the GT-AX11000.  I think I have a method now
+            to easily add new models as they come up... the downside is that I have to define them to specify what kinds of assignments
+            they "might" have.
           - ADDED: Included the interface names for all the Wireless transmitters to be included on top of the stats for each.
           - ADDED: A (P)revious page keypress function that allows you to now go back and forth between pages!  Whoo!
           - CHANGED: Moved the (I)nitiate Speedtest menu item to the top of page (4) on the Speedtest page.
