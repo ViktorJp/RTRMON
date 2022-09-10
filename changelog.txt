@@ -1,4 +1,4 @@
-v1.23     - (TBA)
+v1.23     - (September 10, 2022)
           - ADDED: Comptability added for the other Asus-Merlin-commpatible routers: GT-AX11000, ZenWiFi_Pro_XT12, and ZenWIFI_AX are all
             tri-band routers. Please know, I'm just taking a wild stab at identifying these router "model names", which would get read
             from your NVRAM.  If these are not correct, and you're not seeing 3 different WiFi bands under your page (3) WiFi tab, please
