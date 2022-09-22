@@ -1,3 +1,7 @@
+v1.24     - (TBA)
+          - MINOR: Small wording changes around the setup menu when it comes to installing Entware prerequisites. Added a check when the
+            script starts up to ensure that all prerequisites are in place before running the script.
+
 v1.23     - (September 10, 2022)
           - ADDED: Compatibility added for the other Asus-Merlin-compatible routers: GT-AX11000, ZenWiFi_Pro_XT12, and ZenWIFI_AX are all
             tri-band routers. Please know, I'm just taking a wild stab at identifying these router "model names", which would get read
