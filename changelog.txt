@@ -1,4 +1,4 @@
-v1.24     - (TBA)
+v1.24     - (September 29, 2022)
           - MINOR: Small wording changes around the setup menu when it comes to installing Entware prerequisites. Added a check when the
             script starts up to ensure that all prerequisites are in place before running the script.
           - CHANGED: The behavior of the "rtrmon -screen" command, so that when you execute this commandline parameter, it first will
