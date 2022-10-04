@@ -6,6 +6,7 @@ To-Do:
 * Allow user to pick own custom speedtest server by ID
 * Add log events
 * Autorotate through pages
+* WAN diagnostics/test page
 
 Completed:
 ----------
