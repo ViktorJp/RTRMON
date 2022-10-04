@@ -1,3 +1,7 @@
+v1.25     - (TBA)
+          - FIXED: the -wipe SCREEN command is now being checked earlier before the script determines how it is going to initiate a
+            SCREEN session.
+
 v1.24     - (September 29, 2022)
           - MINOR: Small wording changes around the setup menu when it comes to installing Entware prerequisites. Added a check when the
             script starts up to ensure that all prerequisites are in place before running the script.
