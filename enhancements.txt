@@ -6,10 +6,11 @@ To-Do:
 * Allow user to pick own custom speedtest server by ID
 * Add log events
 * Autorotate through pages
-* WAN diagnostics/test page
+* Add UDP open ports tab
 
 Completed:
 ----------
+* WAN diagnostics/test page
 * Allow percentage results to indicate > 100%
 * Added compatiblity for the GT-AXE/AX line of routers
 
