@@ -4,11 +4,12 @@ v1.30     - (TBA)
             functionality, curl functionality, spider functionality and SSL Handshakes! It will furthermore run an nmap scan against
             your local BR0 LAN connection and your public WAN connection, giving you information about any open TCP ports it finds.
           - ADDED: Nmap is now part of the required Entware Dependencies for RTRMON to run and perform all of its intended functions.
-            This can be added by going into the Setup menu, and choosing "fr" - Force Reinstall Dependencies.
+            This can be added by going into the Setup menu, and choosing "sc" - Setup & Configure, or "fr" - Force Reinstall
+            Dependencies.
           - FIXED: the -wipe SCREEN command is now being checked earlier before the script determines how it is going to initiate a
             SCREEN session.
-          - FIXED: Looks like my 2.4GHz antenna temp sensor stopped working, and generating a weird message, so I built in some error
-            checking to eliminate those from making it to the screen.
+          - FIXED: Looks like my 2.4GHz antenna temp sensor stopped working suddenly, and generating a weird message, so I built in
+            some error checking to eliminate those messages from making it to the screen.
 
 v1.24     - (September 29, 2022)
           - MINOR: Small wording changes around the setup menu when it comes to installing Entware prerequisites. Added a check when the
