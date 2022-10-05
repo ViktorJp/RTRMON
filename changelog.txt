@@ -4,7 +4,7 @@ v1.30     - (TBA)
             dig functionality, curl functionality, spider functionality and SSL Handshakes! It will furthermore run an nmap scan
             against your local BR0 LAN connection and your public WAN connection, giving you information about any open TCP ports it
             finds. Will look at adding a UDP-equivalent open ports tab! Huge thanks to @SomeWhereOverTheRainbow for his inspiration
-            and code for this functionality -- originally designed as a very efficient WAN check, I ended up converting it into a
+            and code for this functionality -- originally designed as a very efficient WAN check, it ended up getting converted into a
             slick network diag function.  ;)
           - ADDED: Nmap is now part of the required Entware Dependencies for RTRMON to run and perform all of its intended functions.
             This can be added by going into the Setup menu, and choosing "sc" - Setup & Configure, or "fr" - Force Reinstall
