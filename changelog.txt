@@ -1,5 +1,5 @@
 v1.30     - (TBA)
-          - MAJOR: Added a 5th page of STATS! -- View Network Diagnostics and and Open TCP Port Scanner!! This page gives you the
+          - MAJOR: Added a 5th page of STATS! -- View Network Diagnostics and and Open TCP/UDP Port Scanner!! This page gives you the
             option of running a network diagnostics check, and will test the following: Local clock, network connectivity, network
             resolution, dig functionality, curl functionality, spider functionality and SSL Handshakes! It will furthermore run an
             nmap scan against your local BR0 LAN connection and your public WAN connection, giving you information about any open
