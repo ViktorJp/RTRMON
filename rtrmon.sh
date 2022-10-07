@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.24 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.30 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,15 +35,20 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.24"
+Version="1.30"
 Beta=0
-LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"          # Logfile path/name that captures important date/time events - change
-APPPATH="/jffs/scripts/rtrmon.sh"                   # Path to the location of rtrmon.sh
-CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"          # Path to the location of rtrmon.cfg
-DLVERPATH="/jffs/addons/rtrmon.d/version.txt"       # Path to downloaded version from the source repository
-OOKLAPATH="/jffs/addons/rtrmon.d/speedtest"         # Path to Ookla speedtest binary
-SPDRESPATH="/jffs/addons/rtrmon.d/results.txt"      # Path to latest speedtest results
-IFLIST="/jffs/addons/rtrmon.d/interfaces.txt"       # Path to the Interface List
+LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
+APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
+CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
+DLVERPATH="/jffs/addons/rtrmon.d/version.txt"         # Path to downloaded version from the source repository
+OOKLAPATH="/jffs/addons/rtrmon.d/speedtest"           # Path to Ookla speedtest binary
+SPDRESPATH="/jffs/addons/rtrmon.d/results.txt"        # Path to latest speedtest results
+IFLIST="/jffs/addons/rtrmon.d/interfaces.txt"         # Path to the Interface List
+DIAGRESPATH="/jffs/addons/rtrmon.d/diagres.txt"       # Path to the network diagnostics results
+NMAPWANRESPATH="/jffs/addons/rtrmon.d/nwanres.txt"    # Path to the nmap WAN open TCP port results
+NMAPLANRESPATH="/jffs/addons/rtrmon.d/nlanres.txt"    # Path to the nmap LAN open TCP port results
+NMAPUWANRESPATH="/jffs/addons/rtrmon.d/nuwanres.txt"  # Path to the nmap WAN open UDP port results
+NMAPULANRESPATH="/jffs/addons/rtrmon.d/nulanres.txt"  # Path to the nmap LAN open UDP port results
 Interval=10
 MaxSpeedInet=1000
 MaxSpeedInetUL=50
@@ -54,6 +59,7 @@ MaxSpeed6Ghz=920
 TempUnits="C"
 Speedtst=0
 WANOverride="Auto"
+PSView="TCP"
 FromUI=0
 NextPage=1
 memused1=0
@@ -105,7 +111,7 @@ logo () {
   echo -e "${CYellow}      ____  __________  __  _______  _   __"
   echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version - ${CCyan}$RouterModel${CYellow}"
   echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /  ${CRed}(S)${CGreen}etup${CYellow}"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/4)${CYellow}"
+  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/5)${CYellow}"
   echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(E)${CGreen}xit${CClear}"
 }
 
@@ -695,17 +701,18 @@ vsetup () {
 
           sc) # Check for existence of entware, and if so proceed and install the timeout package, then run RTRMON -config
             clear
-            if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ]; then
+            if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ]; then
               vconfig
             else
               logoNM
+              echo ""
               echo -e "${CYellow}Installing RTRMON Dependencies...${CClear}"
               echo ""
-              echo -e "${CCyan}Would you like to optionally install the CoreUtils-Timeout${CClear}"
-              echo -e "${CCyan}and Screen utility? These utilities require you to have Entware${CClear}"
+              echo -e "${CCyan}RTRMON will require the installation of CoreUtils-Timeout, Screen${CClear}"
+              echo -e "${CCyan}and Nmap utilities. These utilities require you to have Entware${CClear}"
               echo -e "${CCyan}already installed using the AMTM tool. If Entware is present, the ${CClear}"
-              echo -e "${CCyan}Timeout and Screen utilities will be downloaded and installed during${CClear}"
-              echo -e "${CCyan}this setup process, and used by RTRMON.${CClear}"
+              echo -e "${CCyan}Timeout, Screen and Nmap utilities will be downloaded and installed${CClear}"
+              echo -e "${CCyan}during this setup process, and utilized by RTRMON.${CClear}"
               echo ""
               echo -e "${CGreen}CoreUtils-Timeout${CCyan} is a utility that provides more stability for${CClear}"
               echo -e "${CCyan}certain routers (like the RT-AC86U) which has a tendency to randomly${CClear}"
@@ -715,6 +722,9 @@ vsetup () {
               echo -e "${CCyan}environment directly on the router itself, instead of running your${CClear}"
               echo -e "${CCyan}commands or a script from a network-attached SSH client. This can${CClear}"
               echo -e "${CCyan}provide greater stability due to it running from the router itself.${CClear}"
+              echo ""
+              echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
+              echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
               echo ""
               [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
               echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
@@ -735,6 +745,10 @@ vsetup () {
                     echo -e "${CGreen}Installing Entware Screen Package...${CClear}"
                     echo ""
                     opkg install screen
+                    echo ""
+                    echo -e "${CGreen}Installing Entware Nmap Package...${CClear}"
+                    echo ""
+                    opkg install nmap
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                     echo ""
@@ -764,11 +778,11 @@ vsetup () {
             echo ""
             echo -e "${CYellow}Force Re-installing RTRMON Dependencies...${CClear}"
             echo ""
-            echo -e "${CCyan}Would you like to optionally re-install the CoreUtils-Timeout${CClear}"
-            echo -e "${CCyan}and Screen utility? These utilities require you to have Entware${CClear}"
+            echo -e "${CCyan}RTRMON will require the installation of CoreUtils-Timeout, Screen${CClear}"
+            echo -e "${CCyan}and Nmap utilities. These utilities require you to have Entware${CClear}"
             echo -e "${CCyan}already installed using the AMTM tool. If Entware is present, the ${CClear}"
-            echo -e "${CCyan}Timeout and Screen utilities will be downloaded and installed during${CClear}"
-            echo -e "${CCyan}this setup process, and used by RTRMON.${CClear}"
+            echo -e "${CCyan}Timeout, Screen and Nmap utilities will be downloaded and re-installed${CClear}"
+            echo -e "${CCyan}during this setup process, and utilized by RTRMON.${CClear}"
             echo ""
             echo -e "${CGreen}CoreUtils-Timeout${CCyan} is a utility that provides more stability for${CClear}"
             echo -e "${CCyan}certain routers (like the RT-AC86U) which has a tendency to randomly${CClear}"
@@ -778,6 +792,9 @@ vsetup () {
             echo -e "${CCyan}environment directly on the router itself, instead of running your${CClear}"
             echo -e "${CCyan}commands or a script from a network-attached SSH client. This can${CClear}"
             echo -e "${CCyan}provide greater stability due to it running from the router itself.${CClear}"
+            echo ""
+            echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
+            echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
             echo ""
             [ -z "$(nvram get odmpid)" ] && RouterModel="$(nvram get productid)" || RouterModel="$(nvram get odmpid)" # Thanks @thelonelycoder for this logic
             echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
@@ -798,6 +815,10 @@ vsetup () {
                   echo -e "${CGreen}Force Re-installing Entware Screen Package...${CClear}"
                   echo ""
                   opkg install --force-reinstall screen
+                  echo ""
+                  echo -e "${CGreen}Force Re-installing Entware Nmap Package...${CClear}"
+                  echo ""
+                  opkg install --force-reinstall nmap
                   echo ""
                   echo -e "${CGreen}Re-install completed...${CClear}"
                   echo ""
@@ -945,10 +966,13 @@ if [ "$INITIALBOOT" == "0" ]; then
 
   if [ $key_press ]; then
       case $key_press in
-          [Ss]) FromUI=1; (vsetup); echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; FromUI=0;;
-          [Ii]) QueueSpdtst=1; echo -e "${CGreen}  [Queuing Speedtest]                                                      ";;
-          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
-          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; fi;;
+          [Ss]) FromUI=1; (vsetup); echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+          [Ii]) QueueSpdtst=1; echo -e "${CGreen}  [Queuing Speedtest]                                                      "; sleep 1; clear; DisplayPage4; echo -e "\n";;
+          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; fi;;
+          [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}  [Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
+          [Tt]) PSView="TCP"; clear; DisplayPage5; echo "";;
+          [Uu]) PSView="UDP"; clear; DisplayPage5; echo "";;
           [Ee]) echo -e "${CClear}"; exit 0;;
       esac
   fi
@@ -1119,23 +1143,23 @@ calculatestats () {
 
   # Network - Wifi - Temp
     # Standard Dual-Band config
-    w24tempraw=$($timeoutcmd$timeoutsec wl -i $ifname24 phy_tempsense | awk '{print $1}' )
-    w5tempraw=$($timeoutcmd$timeoutsec wl -i $ifname5 phy_tempsense | awk '{print $1}' )
-    if [ -z $w24tempraw ] || [ $w24tempraw -eq 0 ]; then w24tempraw=4; fi  #in case it does not return a valid number
-    if [ -z $w5tempraw ] || [ $w5tempraw -eq 0 ]; then w5tempraw=4; fi
+    w24tempraw=$($timeoutcmd$timeoutsec wl -i $ifname24 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+    w5tempraw=$($timeoutcmd$timeoutsec wl -i $ifname5 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+    if [ -z $w24tempraw ] || [ $w24tempraw -eq 0 ]; then w24tempraw=1; fi  #in case it does not return a valid number
+    if [ -z $w5tempraw ] || [ $w5tempraw -eq 0 ]; then w5tempraw=1; fi
     w24temp=$(awk -v v1=$w24tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     w5temp=$(awk -v v1=$w5tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
 
     # Tri or Quad Band 5GHz
     if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
-      w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' )
-      if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=4; fi
+      w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+      if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=1; fi
       w52temp=$(awk -v v1=$w52tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
     # Tri or Quad-Band 6GHz
     if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
-      w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' )
-      if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=4; fi
+      w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+      if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=1; fi
       w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
 
@@ -1249,7 +1273,7 @@ DisplaySpdtst () {
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
     printf "${CGreen}\r  [Initializing Speedtest]"
-    speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr)"
+    speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     SpdDate=$(date)
     SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//')
     SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
@@ -1489,7 +1513,7 @@ DisplayPage3 () {
 
 # -------------------------------------------------------------------------------------------------------------------------
 
-# This function displays the stats UI for page 3
+# This function displays the stats UI for page 4
 DisplayPage4 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
@@ -1501,6 +1525,258 @@ DisplayPage4 () {
   echo -e "${CGreen}/${CRed}Speedtest${CClear}${CGreen}\________________________________________________________${CClear}"
   echo ""
   DisplaySpdtst
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+
+# This function displays the stats UI for page 5 which includes network diagnostics and open port scanning
+DisplayPage5 () {
+
+  local ALIVE
+  local YEAR
+  local NW_STATE
+  local RES_STATE
+  local HOST_STATE
+  local CURL_STATE
+  local SPIDER_STATE
+  local SSL_STATE
+  #oldwan0ip="123.45.67.89"
+
+  # Check to see if previous results are available to display
+  if [ -f $DIAGRESPATH ]; then
+    source $DIAGRESPATH
+  else
+    Lastruntime="No previous results found"
+    LocalClockTest="Failed"
+    NetworkConnTest="Failed"
+    NetworkResTest="Failed"
+    DigFuncTest="Failed"
+    CurlFuncTest="Failed"
+    SpiderFuncTest="Failed"
+    SSLHandshakeTest="Failed"
+  fi
+
+  logo
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "${CRed}  $UpdateNotify${CClear}"
+    echo -e "${CGreen} ___________________${CClear}"
+  else
+    echo -e "${CGreen} ___________________${CClear}"
+  fi
+  echo -e "${CGreen}/${CRed}Network Diagnostics${CClear}${CGreen}\______________________________________________${CClear}"
+  echo ""
+  echo -e "${InvGreen} ${CClear} ${CGreen}Run ${CRed}(D)${CGreen}iagnostics${CClear} ${CCyan}-- Last Run: $Lastruntime"
+  echo ""
+
+  if [ "$QueueNetworkDiag" == "1" ]; then
+  #run network diags and save Results
+    printf "${InvCyan} ${CClear} ${CCyan}Local Clock Test... ${CYellow}[Checking]     ${CClear}"
+      YEAR="$(/bin/date +"%Y")"
+      sleep 1
+      if [ "$YEAR" -gt 1970 ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Local Clock Test... ${CGreen}[Passed]     ${CClear}"
+        LocalClockTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Local Clock Test... ${CRed}[Failed]     ${CClear}"
+        LocalClockTest="Failed"
+      fi
+    echo ""
+    printf "${InvCyan} ${CClear} ${CCyan}Network Connectivity Test... ${CYellow}[Checking]     ${CClear}"
+      NW_STATE="$(ping 1.1.1.1 -c1 -W2 >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$NW_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Network Connectivity Test... ${CGreen}[Passed]     ${CClear}"
+        NetworkConnTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Network Connectivity Test... ${CRed}[Failed]     ${CClear}"
+        NetworkConnTest="Failed"
+      fi
+    echo ""
+
+    printf "${InvCyan} ${CClear} ${CCyan}Network Resolution Test... ${CYellow}[Checking]     ${CClear}"
+      RES_STATE="$(nslookup google.com 127.0.0.1 >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$RES_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Network Resolution Test... ${CGreen}[Passed]     ${CClear}"
+        NetworkResTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Network Resolution Test... ${CRed}[Failed]     ${CClear}"
+        NetworkResTest="Failed"
+      fi
+    echo ""
+
+    printf "${InvCyan} ${CClear} ${CCyan}Dig Functionality Test... ${CYellow}[Checking]     ${CClear}"
+      DIG_STATE="$(dig google.com >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$DIG_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Dig Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        DigFuncTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Dig Functionality Test... ${CRed}[Failed]     ${CClear}"
+        DigFuncTest="Failed"
+      fi
+    echo ""
+
+    printf "${InvCyan} ${CClear} ${CCyan}Curl Functionality Test... ${CYellow}[Checking]     ${CClear}"
+      CURL_STATE="$(curl -Is http://www.google.com | head -n 1 >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$CURL_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Curl Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        CurlFuncTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Curl Functionality Test... ${CRed}[Failed]     ${CClear}"
+        CurlFuncTest="Failed"
+      fi
+    echo ""
+
+    printf "${InvCyan} ${CClear} ${CCyan}Spider Functionality Test... ${CYellow}[Checking]     ${CClear}"
+      SPIDER_STATE="$(wget -q --spider http://google.com >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$SPIDER_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}Spider Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        SpiderFuncTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}Spider Functionality Test... ${CRed}[Failed]     ${CClear}"
+        SpiderFuncTest="Failed"
+      fi
+    echo ""
+
+    printf "${InvCyan} ${CClear} ${CCyan}SSL Handshake Test... ${CYellow}[Checking]     ${CClear}"
+      SSL_STATE="$(nc -w1 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$SSL_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
+        SSLHandshakeTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CCyan}SSL Handshake Test... ${CRed}[Failed]     ${CClear}"
+        SSLHandshakeTest="Failed"
+      fi
+    echo ""
+    if [ "$PSView" == "TCP" ]; then
+      echo -e "${CGreen} _______________________    _______________________${CClear}"
+      echo -e "${CGreen}/${CRed}Open ${CGreen}(T)${CRed}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CDkGray}Open ${CGreen}(U)${CDkGray}DP Port Scanner${CGreen}\_______________${CClear}"
+      echo ""
+      echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
+      WANnmap=$(nmap $oldwan0ip | grep "open")
+      if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open"; fi
+      echo ""
+      echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+      LANnmap=$(nmap $oldlanip | grep "open")
+      if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open"; fi
+    elif [ "$PSView" == "UDP" ]; then
+      echo -e "${CGreen} _______________________    _______________________${CClear}"
+      echo -e "${CGreen}/${CDkGray}Open ${CGreen}(T)${CDkGray}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CRed}Open ${CGreen}(U)${CRed}DP Port Scanner${CGreen}\_______________${CClear}"
+      echo ""
+      echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
+      WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
+      if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open"; fi
+      echo ""
+      echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+      LANUnmap=$(nmap -sU $oldlanip | grep "open")
+      if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open"; fi
+    fi
+
+  { echo 'Lastruntime="'"$(date)"'"'
+    echo 'LocalClockTest="'"$LocalClockTest"'"'
+    echo 'NetworkConnTest="'"$NetworkConnTest"'"'
+    echo 'NetworkResTest="'"$NetworkResTest"'"'
+    echo 'DigFuncTest="'"$DigFuncTest"'"'
+    echo 'CurlFuncTest="'"$CurlFuncTest"'"'
+    echo 'SpiderFuncTest="'"$SpiderFuncTest"'"'
+    echo 'SSLHandshakeTest="'"$SSLHandshakeTest"'"'
+  } > $DIAGRESPATH
+
+  nmap $oldwan0ip -oN $NMAPWANRESPATH | grep "open" >/dev/null 2>&1
+  nmap $oldlanip -oN $NMAPLANRESPATH | grep "open" >/dev/null 2>&1
+  nmap $oldwan0ip -sU -oN $NMAPUWANRESPATH | grep "open" >/dev/null 2>&1
+  nmap $oldlanip -sU -oN $NMAPULANRESPATH | grep "open" >/dev/null 2>&1
+
+  QueueNetworkDiag=0
+
+else
+
+  if [ "$LocalClockTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Local Clock Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Local Clock Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$NetworkConnTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Network Connectivity Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Network Connectivity Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$NetworkResTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Network Resolution Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Network Resolution Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$DigFuncTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Dig Functionality Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Dig Functionality Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$CurlFuncTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Curl Functionality Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Curl Functionality Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$SpiderFuncTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}Spider Functionality Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}Spider Functionality Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$SSLHandshakeTest" == "Passed" ]; then
+    printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
+  else
+    printf "\r${InvRed} ${CClear} ${CCyan}SSL Handshake Test... ${CRed}[Failed]     ${CClear}"
+  fi
+  echo ""
+  if [ "$PSView" == "TCP" ]; then
+    echo -e "${CGreen} _______________________    _______________________${CClear}"
+    echo -e "${CGreen}/${CRed}Open ${CGreen}(T)${CRed}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CDkGray}Open ${CGreen}(U)${CDkGray}DP Port Scanner${CGreen}\_______________${CClear}"
+    echo ""
+    echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
+    if [ ! -f $NMAPWANRESPATH ]; then
+      echo "None"
+    else
+      WANnmap=$(cat $NMAPWANRESPATH | grep "open")
+      if [ -z "$WANnmap" ]; then echo "None"; else cat $NMAPWANRESPATH | grep "open"; fi
+    fi
+    echo ""
+    echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+    if [ ! -f $NMAPLANRESPATH ]; then
+      echo "None"
+    else
+      LANnmap=$(cat $NMAPLANRESPATH | grep "open")
+      if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open"; fi
+    fi
+  elif [ "$PSView" == "UDP" ]; then
+    echo -e "${CGreen} _______________________    _______________________${CClear}"
+    echo -e "${CGreen}/${CDkGray}Open ${CGreen}(T)${CDkGray}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CRed}Open ${CGreen}(U)${CRed}DP Port Scanner${CGreen}\_______________${CClear}"
+    echo ""
+    echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
+    if [ ! -f $NMAPUWANRESPATH ]; then
+      echo "None"
+    else
+      WANUnmap=$(cat $NMAPUWANRESPATH | grep "open")
+      if [ -z "$WANUnmap" ]; then echo "None"; else cat $NMAPUWANRESPATH | grep "open"; fi
+    fi
+    echo ""
+    echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+    if [ ! -f $NMAPULANRESPATH ]; then
+      echo "None"
+    else
+      LANUnmap=$(cat $NMAPULANRESPATH | grep "open")
+      if [ -z "$LANUnmap" ]; then echo "None"; else cat $NMAPULANRESPATH | grep "open"; fi
+    fi
+  fi
+fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1632,6 +1908,8 @@ DisplayPage4 () {
   # Check to see if the screen option is being called and run operations normally using the screen utility
   if [ "$1" == "-screen" ]
     then
+      screen -wipe >/dev/null 2>&1 # Kill any dead screen sessions
+      sleep 1
       ScreenSess=$(screen -ls | grep "rtrmon" | awk '{print $1}' | cut -d . -f 1)
       if [ -z $ScreenSess ]; then
         clear
@@ -1641,8 +1919,6 @@ DisplayPage4 () {
         echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
         echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
         echo ""
-        screen -wipe >/dev/null 2>&1 # Kill any dead screen sessions
-        sleep 1
         screen -dmS "rtrmon" $APPPATH -monitor
         sleep 2
         echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
@@ -1672,7 +1948,7 @@ DisplayPage4 () {
   if [ "$1" == "-monitor" ]
     then
       clear
-      if [ -f $CFGPATH ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ]; then
+      if [ -f $CFGPATH ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ]; then
         source $CFGPATH
 
           if [ -f "/opt/bin/timeout" ] # If the timeout utility is available then use it and assign variables
@@ -1729,10 +2005,16 @@ DisplayPage4 () {
               fi
             fi
       else
-        echo -e "${CRed}Error: RTRMON is not configured.  Please run 'rtrmon.sh -setup' to complete setup${CClear}"
+        echo -e "${CRed}Error: RTRMON is not configured or does not have all the required dependencies${CClear}"
+        echo -e "${CRed}installed. Please use 'rtrmon -setup' to install dependencies/complete setup!${CClear}"
+        echo -e "$(date) - RTRMON ----------> ERROR: RTRMON is not configured/missing dependencies. Please run the setup tool." >> $LOGFILE
         echo ""
-        echo -e "$(date) - RTRMON ----------> ERROR: RTRMON is not configured. Please run the setup tool." >> $LOGFILE
-        kill 0
+        echo -e "${CGreen}Launching the Setup Menu in T-5 sec...${CClear}"
+        SPIN=5
+        spinner
+        vsetup
+        echo -e "${CClear}"
+        exit 0
       fi
   fi
 
@@ -1827,6 +2109,10 @@ while true; do
     clear
     DisplayPage4
     echo ""
+  elif [ "$NextPage" == "5" ]; then
+    clear
+    DisplayPage5
+    #echo ""
   fi
 
   # Reset stats after the UI has finished drawing
