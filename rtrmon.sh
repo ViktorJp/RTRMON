@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.30 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.31 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.30"
+Version="1.31"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -461,6 +461,10 @@ vconfig () {
                   if [ -f /jffs/addons/rtrmon.d/speedtest ]; then
                     echo -e "${CGreen}Ookla Speedtest binaries installed successfully...${CClear}"
                     Speedtst=1
+                    echo ""
+                    read -rsp $'Press any key to initialize Speedtest and accept license...\n' -n1 key
+                    /jffs/addons/rtrmon.d/speedtest
+                    cp /root/.config/ookla/speedtest-cli.json /jffs/addons/rtrmon.d/speedtest-cli.json 2>/dev/null
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                   else
@@ -1275,7 +1279,7 @@ DisplaySpdtst () {
     printf "${CGreen}\r  [Initializing Speedtest]"
     speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     SpdDate=$(date)
-    SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//')
+    SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
     SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
     SpdJitter=$(echo $speed | awk -F '","' 'NR==1 {print $4}' | sed -e 's/^"//' -e 's/"$//')
     SpdPacketLoss=$(echo $speed | awk -F '","' 'NR==1 {print $5}' | sed -e 's/^"//' -e 's/"$//')
@@ -1960,6 +1964,15 @@ fi
               timeoutcmd=""
               timeoutsec=""
               timeoutlng=""
+          fi
+
+          if [ ! -f "/jffs/addons/rtrmon.d/speedtest-cli.json" ]; then
+              cp /root/.config/ookla/speedtest-cli.json /jffs/addons/rtrmon.d/speedtest-cli.json 2>/dev/null
+          fi
+
+          if [ ! -d "/root/.config/ookla" ]; then
+            mkdir -p "/root/.config/ookla"
+            cp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
           fi
 
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
