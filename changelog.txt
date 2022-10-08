@@ -1,3 +1,13 @@
+v1.31     - (October 7, 2022) - HOTFIX
+          - FIXED: Ookla continues to surprise me with getting their licensing agreement in your face in places you don't expect it.
+            In this case, it was interfering with the results file being saved, and causing malformed strings, gunking things up. 
+            The process has now changed a bit... On a new install, or when you select option 9 to enable the Ookla Speedtest, after
+            the install completes, an initial speedtest is run where the license file is captured and saved to the /jffs/addons/
+            rtrmon.d folder. Each time RTRMON runs, it will check to see if that license file exists, if not, it will copy it over
+            from the /root/.config/ookla folder, and vice versa... if the /root/.config/ookla folder is gone due to a router reboot,
+            it will copy that license file back over, hopefully providing some stability.  Thanks to @ugandy for reporting this
+            issue!  :)
+
 v1.30     - (October 7, 2022)
           - MAJOR: Added a 5th page of STATS! -- View Network Diagnostics and and Open TCP/UDP Port Scanner!! This page gives you the
             option of running a network diagnostics check, and will test the following: Local clock, network connectivity, network
