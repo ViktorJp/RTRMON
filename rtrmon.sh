@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.31 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.32 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.31"
+Version="1.32"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1646,7 +1646,7 @@ DisplayPage5 () {
     echo ""
 
     printf "${InvCyan} ${CClear} ${CCyan}SSL Handshake Test... ${CYellow}[Checking]     ${CClear}"
-      SSL_STATE="$(nc -w1 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
+      SSL_STATE="$(nc -w1 8.8.8.8 443 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
         printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
