@@ -1,3 +1,7 @@
+v1.32     - (TBA) - HOTFIX 2
+          - FIXED: Further error checking on the network diag functions based on some output/screenshot received from @DJones.
+            NC errors should be suppressed from this point, allowing RTRMON to show a passed/failed message.
+            
 v1.31     - (October 7, 2022) - HOTFIX
           - FIXED: Ookla continues to surprise me with getting their licensing agreement in your face in places you don't expect it.
             In this case, it was interfering with the results file being saved, and causing malformed strings, gunking things up. 
