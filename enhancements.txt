@@ -10,6 +10,7 @@ To-Do:
 * Startup on a certain page (Stephen Harrington)
 * Show a DHCP client list, or perhaps a connected wifi client list? Definitely reaching here.  ;)
 * Snapshot of top bandwidth usage on br0 and eth0
+* Show VPN traffic usage on WAN/LAN page
 
 Completed:
 ----------
