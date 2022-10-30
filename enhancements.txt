@@ -7,13 +7,14 @@ To-Do:
 * Go direct to pages 1-5 (Stephen Harrington)
 * Startup on a certain page (Stephen Harrington)
 * Snapshot of top bandwidth usage on br0 and eth0
-* Show VPN traffic usage on WAN/LAN page
 
 In Progress:
 * Allow user to pick own custom speedtest server by ID
 * maybe an option to disable the countdown bar? i find it distracting (@ugandy)
 * config changes are applied upon exit & save
 * Autorotate through pages
+* Added CPU IRQ stats to the CPU stats
+* Show VPN traffic usage on WAN/LAN page
 
 Completed:
 ----------
