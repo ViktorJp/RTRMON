@@ -1,3 +1,26 @@
+v1.33b2   - (BETA - TBA)
+          - ADDED: Borrowing a little something from VPNMON-R2, and are now showing VPN client statistics under page 2 of RTRMON.
+            The VPN section shows current public VPN IP, VPN IP city location, current TUN (tunnel) slot and TX/RX stats of the
+            current connection. Having this alongside your WAN and LAN stats, gives you a good perspective on what level of network
+            traffic is truly happening on your router.
+          - ADDED: Now you are able to pick your own custom speedtest server ID to test against. This option is now available under
+            the config menu. Please note, in order to find the ID, one method currently available is when using the browser and
+            going to speedtest.net, when hoving your mouse over a specific test server, the digits on the end of the URL signify
+            its ID. Enter these digits into the config menu item to always test against this preferred server. Leaving this field
+            with a 0 entry will choose the closest/fastest test server to your WAN exit location. Look for item #10 under config.
+          - ADDED: An option to choose a more minimalist progress bar. Thanks to @ugandy, you can specify if you want the standard
+            or minimalist progress bar under the config menu, item #12. For those who found it annoying or distracting, enjoy!
+          - ADDED: An auto-rotate option is now available by hitting the (R)otate pgs option from any of the currently 5 different
+            stats screens.  When doing so, RTRMON will automatically advance to the next page, and loop through each until you
+            disable this feature by again hitting the (R)otate pgs key. Thanks for the suggestion, @Stephen Harrington!
+          - ADDED: More log events have been added, namely when the script started up, results of speed tests, and when your VPN
+            changes so that it lets you know that an API call was made to determine your public VPN IP and exit city location.
+          - CHANGED: As with VPNMON-R2, now when you make changes to the config while running the program, upon return to the main
+            UI, your changes will automatically be applied without needing to exit and restart.
+          - FIXED: Under heavy load, I noticed that the CPU percentages did not add up (close to) 100%, and realized that I left
+            out a vital component, namely the IRQ stat. This item has now been added under the CPU stats, giving you a little more
+            accuracy on current activity.
+
 v1.32     - (October 11, 2022) - HOTFIX 2
           - FIXED: Added some additional error checking on the network diag functions based on some output/screenshot received from
             @DJones. Thank you! NC errors should be suppressed from this point forward, allowing RTRMON to show a passed/failed
