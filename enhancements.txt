@@ -3,7 +3,6 @@ Future Enhancements (Planned)
 
 To-Do:
 ------
-* Add log events
 * Go direct to pages 1-5 (Stephen Harrington)
 * Startup on a certain page (Stephen Harrington)
 * Snapshot of top bandwidth usage on br0 and eth0
@@ -15,6 +14,7 @@ In Progress:
 * Autorotate through pages
 * Added CPU IRQ stats to the CPU stats
 * Show VPN traffic usage on WAN/LAN page
+* Add log events for boot, speedtest and vpn api calls
 
 Completed:
 ----------
