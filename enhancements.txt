@@ -11,7 +11,7 @@ In Progress:
 * Allow user to pick own custom speedtest server by ID
 * maybe an option to disable the countdown bar? i find it distracting (@ugandy)
 * config changes are applied upon exit & save
-* Autorotate through pages
+* Autorotate through pages (Stephen Harrington)
 * Added CPU IRQ stats to the CPU stats
 * Show VPN traffic usage on WAN/LAN page
 * Add log events for boot, speedtest and vpn api calls
