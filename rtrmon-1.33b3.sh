@@ -2335,7 +2335,11 @@ fi
       i=$(($i+1))
       gettopstats $i
       preparebar 53 "|"
-      progressbar $i $Interval "" "s" "Standard"
+      if [ "$ProgPref" == "0" ]; then
+        progressbar $i $Interval "" "s" "Standard"
+      else
+        progressbaroverride $i $Interval "" "s" "Standard"
+      fi
   done
 
 calculatestats
