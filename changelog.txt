@@ -21,7 +21,9 @@ v1.33b2   - (BETA - TBA)
             out a vital component, namely the IRQ stat. This item has now been added under the CPU stats, giving you a little more
             accuracy on current activity.
           - FIXED: RTRMON is now able to recognize whether your VPN connection is using a public or private network, and will
-            accomodate for each in the UI under page #2.  Thanks to @visortgw for reporting this issue! 
+            accommodate for each in the UI under page #2.  Thanks to @visortgw for reporting this issue! 
+          - FIXED: The minimalist progress bar will now also be visible during the initial booth sequence... thanks for the
+            suggestion, @visortgw
 
 v1.32     - (October 11, 2022) - HOTFIX 2
           - FIXED: Added some additional error checking on the network diag functions based on some output/screenshot received from
