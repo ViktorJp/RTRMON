@@ -2,8 +2,8 @@ v1.33b2   - (BETA - TBA)
           - ADDED: Borrowing a little something from VPNMON-R2, and are now showing VPN client statistics under page 2 of RTRMON.
             The VPN section shows current public VPN IP, VPN IP city location, current TUN (tunnel) slot and TX/RX stats of the
             current connection. Having this alongside your WAN and LAN stats, gives you a good perspective on what level of network
-            traffic is truly happening on your router. This feature will show up to 2 connected VPN clients that you may currently
-            have connected due to screen space contraints.
+            traffic is truly happening on your router. This feature will now show up to 2 connected VPN clients that you may
+            currently have connected due to screen space contraints.
           - ADDED: Now you are able to pick your own custom speedtest server ID to test against. This option is now available under
             the config menu. Please note, in order to find the ID, one method currently available is when using the browser and
             going to speedtest.net, when hoving your mouse over a specific test server, the digits on the end of the URL signify
