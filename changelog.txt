@@ -1,3 +1,7 @@
+v1.41     - (November 2, 2022) HOTFIX 1
+          - CHANGED: Added a prerequisite check for the existence of JQ, which is now required when pulling info about your VPN
+            connection.  Thanks for the heads-up, @ugandy!
+
 v1.40     - (November 2, 2022)
           - ADDED: Borrowing a little something from VPNMON-R2, and are now showing VPN client statistics under page 2 of RTRMON.
             The VPN section shows current public VPN IP, VPN IP city location, current TUN (tunnel) slot and TX/RX stats of the
