@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.32 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.40 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.32"
+Version="1.40"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -60,6 +60,20 @@ TempUnits="C"
 Speedtst=0
 WANOverride="Auto"
 PSView="TCP"
+spdtestsvrID=0
+ProgPref=0
+autorotate=0
+autorotateindicator="OFF"
+vpn=0
+vpn2=0
+VPNState=0
+VPN2State=0
+vpncity="Unknown"
+vpn2city="Unknown"
+vpnip="0.0.0.0"
+vpn2ip="0.0.0.0"
+vpnon="False"
+vpn2on="False"
 FromUI=0
 NextPage=1
 memused1=0
@@ -80,6 +94,7 @@ displaycpuusr1=0
 displaycpusys1=0
 displaycpunice1=0
 displaycpuidle1=0
+displaycpuirq1=0
 
 # Color variables
 CBlack="\e[1;30m"
@@ -112,7 +127,7 @@ logo () {
   echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version - ${CCyan}$RouterModel${CYellow}"
   echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /  ${CRed}(S)${CGreen}etup${CYellow}"
   echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/5)${CYellow}"
-  echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(E)${CGreen}xit${CClear}"
+  echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(R)${CGreen}otate Pgs:${CCyan}$autorotateindicator ${CRed}(E)${CGreen}xit${CClear}"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -217,6 +232,38 @@ progressbar() {
   fi
 }
 
+progressbaroverride() {
+  # $1 - number (-1 for clearing the bar)
+  # $2 - max number
+  # $3 - system name
+  # $4 - measurement
+  # $5 - standard/reverse progressbar
+  # $6 - alternate display values
+  # $7 - alternate value for progressbar exceeding 100%
+
+  insertspc=" "
+
+  if [ $1 -eq -1 ]; then
+    printf "\r  $barspaces\r"
+  else
+    if [ ! -z $7 ] && [ $1 -ge $7 ]; then
+      barch=$(($7*barlen/$2))
+      barsp=$((barlen-barch))
+      progr=$((100*$1/$2))
+    else
+      barch=$(($1*barlen/$2))
+      barsp=$((barlen-barch))
+      progr=$((100*$1/$2))
+    fi
+
+    if [ ! -z $6 ]; then AltNum=$6; else AltNum=$1; fi
+
+    if [ "$5" == "Standard" ]; then
+      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+    fi
+  fi
+}
+
 # -------------------------------------------------------------------------------------------------------------------------
 
 # converttemps is a function that converts temp readouts from C to F or K
@@ -307,7 +354,18 @@ vconfig () {
       if [ "$Speedtst" == "0" ]; then
         printf "No"; printf "%s\n";
       else printf "Yes"; printf "%s\n"; fi
-      echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CCyan}: WAN0 Interface Override?      :"${CGreen}$WANOverride
+      if [ "$spdtestsvrID" == "0" ] && [ "$Speedtst" == "1" ]; then
+        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CDkGray}: Custom Speedtest Server ID?   :${CDkGray}Use Closest"
+      elif [ "$spdtestsvrID" != "0" ] && [ "$Speedtst" == "1" ]; then
+        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CCyan}: Custom Speedtest Server ID?   :"${CGreen}$spdtestsvrID
+      else
+        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CDkGray}: Custom Speedtest Server ID?   :${CDkGray}N/A"
+      fi
+      echo -e "${InvDkGray}${CWhite} 11 ${CClear}${CCyan}: WAN0 Interface Override?      :"${CGreen}$WANOverride
+      echo -en "${InvDkGray}${CWhite} 12 ${CClear}${CCyan}: Progress Bar Preference?      :"${CGreen}
+      if [ "$ProgPref" == "0" ]; then
+        printf "Standard"; printf "%s\n";
+      else printf "Minimalist"; printf "%s\n"; fi
       echo -e "${InvDkGray}${CWhite}  | ${CClear}"
       echo -e "${InvDkGray}${CWhite}  s ${CClear}${CCyan}: Save & Exit"
       echo -e "${InvDkGray}${CWhite}  e ${CClear}${CCyan}: Exit & Discard Changes"
@@ -409,6 +467,7 @@ vconfig () {
                     echo ""
                     echo -e "${CGreen}Completed removing Ookla Speedtest binaries...${CClear}"
                     Speedtst=0
+                    spdtestsvrID=0
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                   else
@@ -470,6 +529,7 @@ vconfig () {
                   else
                     echo -e "${CRed}ERROR: Ookla Speedtest binaries install failed...${CClear}"
                     Speedtst=0
+                    spdtestsvrID=0
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                   fi
@@ -478,14 +538,31 @@ vconfig () {
                   echo ""
                   echo -e "${CGreen}Canceling install of Ookla Speedtest binaries...${CClear}"
                   Speedtst=0
+                  spdtestsvrID=0
                   sleep 2
                 fi
               fi
             ;;
 
             10) # -----------------------------------------------------------------------------------------
+
+              if [ "$Speedtst" == "0" ]; then return; fi
               echo ""
-              echo -e "${CCyan}10. Would you like to override the default interface assigned${CClear}"
+              echo -e "${CCyan}10. Would you like to use a custom Speedtest Server ID?"
+              echo -e "${CCyan}These IDs can be found by running a Speedtest on your browser"
+              echo -e "${CCyan}and noting the ID of the server in its URL when hovering your"
+              echo -e "${CCyan}mouse over it. Enter an ID number, or use 0 to choose the"
+              echo -e "${CCyan}closest server to you."
+              echo -e "${CYellow}(Default = 0)${CClear}"
+              read -p 'Server ID: ' spdtestsvrID1
+              spdtestsvrID2=$(echo $spdtestsvrID1 | tr '[0-9]')
+              if [ -z "$spdtestsvrID1" ]; then spdtestsvrID=0; else spdtestsvrID=$spdtestsvrID2; fi
+
+            ;;
+
+            11) # -----------------------------------------------------------------------------------------
+              echo ""
+              echo -e "${CCyan}11. Would you like to override the default interface assigned${CClear}"
               echo -e "${CCyan}to your local WAN0? Typically, 'eth0' is assigned to WAN0, but${CClear}"
               echo -e "${CCyan}based on how you've rigged your router, it might be something${CClear}"
               echo -e "${CCyan}else. By default, RTRMON will automatically try to determine${CClear}"
@@ -533,6 +610,16 @@ vconfig () {
               fi
             ;;
 
+            12) # -----------------------------------------------------------------------------------------
+              echo ""
+              echo -e "${CCyan}12. What is your preference for the Interval Progress Bar?"
+              echo -e "${CCyan}(0 = Standard) or (1 = Minimalist)?"
+              echo -e "${CYellow}(Default = 0)${CClear}"
+              read -p 'Progress Bar Pref: ' ProgPref1
+              ProgPref2=$(echo $ProgPref1 | tr '[0-1]')
+              if [ -z "$ProgPref1" ]; then ProgPref=0; else ProgPref=$ProgPref2; fi
+            ;;
+
             [Ss]) # -----------------------------------------------------------------------------------------
               echo ""
               { echo 'Interval='$Interval
@@ -544,10 +631,12 @@ vconfig () {
                 echo 'MaxSpeed6Ghz='$MaxSpeed6Ghz
                 echo 'TempUnits="'"$TempUnits"'"'
                 echo 'Speedtst='$Speedtst
+                echo 'spdtestsvrID='$spdtestsvrID
+                echo 'ProgPref='$ProgPref
                 echo 'WANOverride="'"$WANOverride"'"'
               } > $CFGPATH
               echo ""
-              echo -e "${CGreen}Please restart RTRMON to apply your changes..."
+              echo -e "${CCyan} Applying config changes to RTRMON..."
               echo -e "$(date) - RTRMON - Successfully wrote a new config file" >> $LOGFILE
               sleep 3
               return
@@ -571,6 +660,8 @@ vconfig () {
         echo 'MaxSpeed6Ghz=920'
         echo 'TempUnits="C"'
         echo 'Speedtst=0'
+        echo 'spdtestsvrID=0'
+        echo 'ProgPref=0'
         echo 'WANOverride="Auto"'
       } > $CFGPATH
 
@@ -633,21 +724,40 @@ vupdate () {
   echo ""
   if [ "$Version" == "$DLVersion" ]
     then
-      echo -e "${CGreen}No update available.  You are on the latest version!${CClear}"
-      echo ""
-      read -rsp $'Press any key to continue...\n' -n1 key
-      return
-    else
-      echo -e "${CCyan}Would you like to update to the latest version?${CClear}"
+      echo -e "${CCyan}You are on the latest version! Would you like to download anyways?${CClear}"
+      echo -e "${CCyan}This will overwrite your local copy with the current build.${CClear}"
       if promptyn "(y/n): "; then
         echo ""
-        echo -e "${CCyan}Updating RTRMON to ${CYellow}v$DLVersion${CClear}"
+        echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
         curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
         echo ""
-        echo -e "${CCyan}Update successful!${CClear}"
-        echo -e "$(date) - RTRMON - Successfully updated RTRMON from v$Version to v$DLVersion" >> $LOGFILE
+        echo -e "${CCyan}Download successful!${CClear}"
+        echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
         echo ""
         echo -e "${CYellow}Please exit, restart and configure new options using: 'rtrmon.sh -config'.${CClear}"
+        echo -e "${CYellow}NOTE: New features may have been added that require your input to take${CClear}"
+        echo -e "${CYellow}advantage of its full functionality.${CClear}"
+        echo ""
+        read -rsp $'Press any key to continue...\n' -n1 key
+        return
+      else
+        echo ""
+        echo ""
+        echo -e "${CGreen}Exiting Update Utility...${CClear}"
+        sleep 1
+        return
+      fi
+    else
+      echo -e "${CCyan}Score! There is a new version out there! Would you like to update?${CClear}"
+      if promptyn " (y/n): "; then
+        echo ""
+        echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
+        echo ""
+        echo -e "${CCyan}Download successful!${CClear}"
+        echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
+        echo ""
+        echo -e "${CYellow}Please exit, restart and configure new options using: 'rtrmon -config'.${CClear}"
         echo -e "${CYellow}NOTE: New features may have been added that require your input to take${CClear}"
         echo -e "${CYellow}advantage of its full functionality.${CClear}"
         echo ""
@@ -931,7 +1041,7 @@ get_wan_setting() {
 # gettopstats gathers the majority of cpu and memory related stats directly from the TOP utility
 gettopstats () {
 
-TotalMem=$(top -n 1 | awk 'NR==1 {print $2, $4, $6, $8, $10} NR==2 {print $2, $4, $6, $8} NR==3 {print $3, $4, $5}' 2>/dev/null)
+TotalMem=$(top -n 1 | awk 'NR==1 {print $2, $4, $6, $8, $10} NR==2 {print $2, $4, $6, $8, $14} NR==3 {print $3, $4, $5}' 2>/dev/null)
 
 memused="$(echo $TotalMem | awk '{print $1}' | sed 's/K$//')"
 memfree="$(echo $TotalMem | awk '{print $2}' | sed 's/K$//')"
@@ -942,13 +1052,15 @@ cpuusr="$(echo $TotalMem | awk '{print $6}' | sed 's/%$//' | cut -d . -f 1)"
 cpusys="$(echo $TotalMem | awk '{print $7}' | sed 's/%$//' | cut -d . -f 1)"
 cpunice="$(echo $TotalMem | awk '{print $8}' | sed 's/%$//' | cut -d . -f 1)"
 cpuidle="$(echo $TotalMem | awk '{print $9}' | sed 's/%$//' | cut -d . -f 1)"
+cpuirq="$(echo $TotalMem | awk '{print $10}' | sed 's/%$//' | cut -d . -f 1)"
 displaycpuusr="$(echo $TotalMem | awk '{print $6}' | sed 's/%$//')"
 displaycpusys="$(echo $TotalMem | awk '{print $7}' | sed 's/%$//')"
 displaycpunice="$(echo $TotalMem | awk '{print $8}' | sed 's/%$//')"
 displaycpuidle="$(echo $TotalMem | awk '{print $9}' | sed 's/%$//')"
-cpuload1m="$(echo $TotalMem | awk '{print $10}')"
-cpuload5m="$(echo $TotalMem | awk '{print $11}')"
-cpuload15m="$(echo $TotalMem | awk '{print $12}')"
+displaycpuirq="$(echo $TotalMem | awk '{print $10}' | sed 's/%$//')"
+cpuload1m="$(echo $TotalMem | awk '{print $11}')"
+cpuload5m="$(echo $TotalMem | awk '{print $12}')"
+cpuload15m="$(echo $TotalMem | awk '{print $13}')"
 
 memused1=$(($memused1 + $memused))
 memfree1=$(($memfree1 + $memfree))
@@ -959,10 +1071,13 @@ cpuusr1=$(($cpuusr1 + $cpuusr))
 cpusys1=$(($cpusys1 + $cpusys))
 cpunice1=$(($cpunice1 + $cpunice))
 cpuidle1=$(($cpuidle1 + $cpuidle))
+cpuirq1=$(($cpuirq1 + $cpuirq))
+
 displaycpuusr1=$(awk -v v1=$displaycpuusr1 -v v2=$displaycpuusr 'BEGIN{printf "%0.2f\n", v1+v2}')
 displaycpusys1=$(awk -v v1=$displaycpusys1 -v v2=$displaycpusys 'BEGIN{printf "%0.2f\n", v1+v2}')
 displaycpunice1=$(awk -v v1=$displaycpunice1 -v v2=$displaycpunice 'BEGIN{printf "%0.2f\n", v1+v2}')
 displaycpuidle1=$(awk -v v1=$displaycpuidle1 -v v2=$displaycpuidle 'BEGIN{printf "%0.2f\n", v1+v2}')
+displaycpuirq1=$(awk -v v1=$displaycpuirq1 -v v2=$displaycpuirq 'BEGIN{printf "%0.2f\n", v1+v2}')
 
 if [ "$INITIALBOOT" == "0" ]; then
   # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
@@ -970,13 +1085,14 @@ if [ "$INITIALBOOT" == "0" ]; then
 
   if [ $key_press ]; then
       case $key_press in
-          [Ss]) FromUI=1; (vsetup); echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+          [Ss]) FromUI=1; (vsetup); source $CFGPATH; echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
           [Ii]) QueueSpdtst=1; echo -e "${CGreen}  [Queuing Speedtest]                                                      "; sleep 1; clear; DisplayPage4; echo -e "\n";;
           [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
           [Pp]) if [ "$NextPage" == "1" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; fi;;
           [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}  [Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
           [Tt]) PSView="TCP"; clear; DisplayPage5; echo "";;
           [Uu]) PSView="UDP"; clear; DisplayPage5; echo "";;
+          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
           [Ee]) echo -e "${CClear}"; exit 0;;
       esac
   fi
@@ -994,10 +1110,12 @@ oldstats () {
   oldcpusys1=$cpusys1
   oldcpunice1=$cpunice1
   oldcpuidle1=$cpuidle1
+  oldcpuirq1=$cpuirq1
   olddisplaycpuusr1=$displaycpuusr1
   olddisplaycpusys1=$displaycpusys1
   olddisplaycpunice1=$displaycpunice1
   olddisplaycpuidle1=$displaycpuidle1
+  olddisplaycpuirq1=$displaycpuirq1
   oldF_cputemp=$F_cputemp
   oldmemused2=$memused2
   oldmemfree2=$memfree2
@@ -1039,6 +1157,15 @@ oldstats () {
   oldlanip=$lanip
   oldlanrxmbrate=$lanrxmbrate
   oldlantxmbrate=$lantxmbrate
+  oldvpnrxmbrate=$vpnrxmbrate
+  oldvpntxmbrate=$vpntxmbrate
+  oldvpn2rxmbrate=$vpn2rxmbrate
+  oldvpn2txmbrate=$vpn2txmbrate
+  oldvpnip=$vpnip
+  oldvpncity=$vpncity
+  oldvpn2ip=$vpn2ip
+  oldvpn2city=$vpn2city
+
   oldwanrxmbratedisplay=$wanrxmbratedisplay
   oldwantxmbratedisplay=$wantxmbratedisplay
   oldw24rxmbratedisplay=$w24rxmbratedisplay
@@ -1055,6 +1182,11 @@ oldstats () {
   fi
   oldlanrxmbratedisplay=$lanrxmbratedisplay
   oldlantxmbratedisplay=$lantxmbratedisplay
+  oldvpnrxmbratedisplay=$vpnrxmbratedisplay
+  oldvpntxmbratedisplay=$vpntxmbratedisplay
+  oldvpn2rxmbratedisplay=$vpn2rxmbratedisplay
+  oldvpn2txmbratedisplay=$vpn2txmbratedisplay
+
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1070,10 +1202,12 @@ calculatestats () {
    if [ ! -z $cpusys1 ]; then cpusys1=$(($cpusys1 / $Interval)); else cpusys1=0; fi
    if [ ! -z $cpunice1 ]; then cpunice1=$(($cpunice1 / $Interval)); else cpunice1=0; fi
    if [ ! -z $cpuidle1 ]; then cpuidle1=$(($cpuidle1 / $Interval)); else cpuidle1=0; fi
+   if [ ! -z $cpuirq1 ]; then cpuirq1=$(($cpuirq1 / $Interval)); else cpuirq1=0; fi
    if [ ! -z $displaycpuusr1 ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
    if [ ! -z $displaycpusys1 ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
    if [ ! -z $displaycpunice1 ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
    if [ ! -z $displaycpuidle1 ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
+   if [ ! -z $displaycpuirq1 ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
 
   # CPU - Temp - borrowed from @Maverickcdn - thank you!
    if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
@@ -1133,6 +1267,66 @@ calculatestats () {
     dns3ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $1}')"
     dns4ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $2}')"
 
+  # Network - VPN Client Ports and IP Addresses
+    vpn=0
+    while [ $vpn -ne 5 ]; do
+      vpn=$(($vpn+1))
+      VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+      if [ $VPNState -eq 2 ]; then
+        TUN="tun1"$vpn
+        NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
+        NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+
+        if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          vpnip=$NVRAMVPNIP
+          vpncity="Private Network"
+        else
+          lastvpnip=$oldvpnip
+          vpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ -z $vpnip ]; then vpnip=$NVRAMVPNIP; fi
+          if [ "$lastvpnip" != "$vpnip" ]; then
+            vpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpnip | jq --raw-output .city"
+            vpncity="$(eval $vpncity)"; if echo $vpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpncity="Undetermined"; fi
+            echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpnip ($vpncity)" >> $LOGFILE
+          fi
+        fi
+        vpnon="True"
+        #Check to see if there's a secondary VPN connection
+          vpn2=$vpn
+          while [ $vpn2 -ne 5 ]; do
+            vpn2=$(($vpn2+1))
+            VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+            if [ $VPN2State -eq 2 ]; then
+              TUN2="tun1"$vpn2
+              NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
+              NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+              if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+                vpn2ip=$NVRAMVPN2IP
+                vpn2city="Private Network"
+              else
+                lastvpn2ip=$oldvpn2ip
+                vpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+                if [ -z $vpn2ip ]; then vpn2ip=$NVRAMVPN2IP; fi
+                if [ "$lastvpn2ip" != "$vpn2ip" ]; then
+                  vpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
+                  vpn2city="$(eval $vpn2city)"; if echo $vpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn2city="Undetermined"; fi
+                  echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn2ip ($vpn2city)" >> $LOGFILE
+                fi
+              fi
+              vpn2on="True"
+              break
+            else
+              vpn2on="False"
+            fi
+          done
+        break
+      else
+        vpnon="False"
+        vpn2on="False"
+      fi
+    done
+
     if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
@@ -1140,6 +1334,8 @@ calculatestats () {
     if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
     if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
     if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
+    if [ "$vpnon" == "False" ]; then vpnip="0.0.0.0"; fi
+    if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
 
     # Many thanks to @SomewhereOverTheRainbow for his help and suggestions on getting IP6 info!
     wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
@@ -1194,6 +1390,38 @@ calculatestats () {
     newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
 
+  # Network - VPN - Traffic
+    # Grab total bytes VPN Traffic Measurement
+    if [ "$vpnon" == "True" ]; then
+      newvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+      newvpnrxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f1)"
+      newvpntxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpnrxbytes ]; then newvpnrxbytes=0; fi
+      if [ -z $newvpntxbytes ]; then newvpntxbytes=0; fi
+
+      if [ $newvpnrxbytes -le 0 ]; then
+        newvpnrxbytes=0
+      elif [ $newvpntxbytes -le 0 ]; then
+        newvpntxbytes=0
+      fi
+
+    fi
+
+    if [ "$vpn2on" == "True" ]; then
+      newvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+      newvpn2rxbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f1)"
+      newvpn2txbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn2rxbytes ]; then newvpn2rxbytes=0; fi
+      if [ -z $newvpn2txbytes ]; then newvpn2txbytes=0; fi
+
+      if [ $newvpn2rxbytes -le 0 ]; then
+        newvpn2rxbytes=0
+      elif [ $newvpn2txbytes -le 0 ]; then
+        newvpn2txbytes=0
+      fi
+
+    fi
+
   # Network - Traffic - Calculations to find the difference between old and new total bytes send/received and divided to give Megabits
     diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
@@ -1210,6 +1438,14 @@ calculatestats () {
     if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
       diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpnon" == "True" ]; then
+      diffvpnrxbytes=$(awk -v new=$newvpnrxbytes -v old=$oldvpnrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffvpntxbytes=$(awk -v new=$newvpntxbytes -v old=$oldvpntxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn2on" == "True" ]; then
+      diffvpn2rxbytes=$(awk -v new=$newvpn2rxbytes -v old=$oldvpn2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffvpn2txbytes=$(awk -v new=$newvpn2txbytes -v old=$oldvpn2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
 
   # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
@@ -1229,7 +1465,14 @@ calculatestats () {
       w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-
+    if [ "$vpnon" == "True" ]; then
+      vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
+    if [ "$vpn2on" == "True" ]; then
+      vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
@@ -1245,6 +1488,14 @@ calculatestats () {
     if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
       w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
+    if [ "$vpnon" == "True" ]; then
+      vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}')
+      vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}')
+    fi
+    if [ "$vpn2on" == "True" ]; then
+      vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}')
+      vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}')
     fi
 
   # Uptime calc
@@ -1277,7 +1528,11 @@ DisplaySpdtst () {
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
     printf "${CGreen}\r  [Initializing Speedtest]"
-    speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
+    if [ $spdtestsvrID == "0" ]; then
+      speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
+    else
+      speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
+    fi
     SpdDate=$(date)
     SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
     SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
@@ -1285,6 +1540,14 @@ DisplaySpdtst () {
     SpdPacketLoss=$(echo $speed | awk -F '","' 'NR==1 {print $5}' | sed -e 's/^"//' -e 's/"$//')
     SpdDownload=$(echo $speed | awk -F '","' 'NR==1 {print $6}' | sed -e 's/^"//' -e 's/"$//')
     SpdUpload=$(echo $speed | awk -F '","' 'NR==1 {print $7}' | sed -e 's/^"//' -e 's/"$//')
+
+    if [ $SpdDownload -eq 0 ]; then SpdDownload=1; fi
+    if [ $SpdUpload -eq 0 ]; then SpdUpload=1; fi
+
+    SpdDownloadLog=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
+    SpdUploadLog=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
+
+    echo -e "$(date) - RTRMON - New Speedtest Results -- Down:$SpdDownloadLog Mbps | Up:$SpdUploadLog Mbps | Latency:$SpdLatency ms | Jitter:$SpdJitter ms | PacketLoss:$SpdPacketLoss %" >> $LOGFILE
 
     { echo 'SpdDate="'"$SpdDate"'"'
       echo 'SpdServer="'"$SpdServer"'"'
@@ -1351,6 +1614,9 @@ DisplayPage1 () {
   echo ""
   preparebar 35 "|"
   progressbar $oldcpuidle1 100 " CPU Idle  " "%%" "Reverse" $olddisplaycpuidle1
+  echo ""
+  preparebar 35 "|"
+  progressbar $oldcpuirq1 100 " CPU IRQ   " "%%" "Standard" $olddisplaycpuirq1
   echo ""
   preparebar 35 "|"
   converttemps $oldF_cputemp
@@ -1430,7 +1696,59 @@ DisplayPage2 () {
   progressbar $oldlanrxmbrate $MaxSpeedLAN " Avg LAN RX" "Mbps" "Standard" $oldlanrxmbratedisplay $MaxSpeedLAN
   echo ""
   preparebar 35 "|"
+  if [ ${oldlantxmbrate%.*} -lt 0 ]; then oldlantxmbrate=0; oldlantxmbratedisplay=0; fi
   progressbar $oldlantxmbrate $MaxSpeedLAN " Avg LAN TX" "Mbps" "Standard" $oldlantxmbratedisplay $MaxSpeedLAN
+
+  if [ "$vpnon" == "True" ]; then
+    echo ""
+    echo -e "${CGreen} ____"
+    echo -e "${CGreen}/${CRed}VPN$vpn${CClear}${CGreen}\_____________________________________________________________${CClear}"
+    echo ""
+    if [ "$oldvpncity" == "Private Network" ]; then
+      echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
+      if [ ! -z "$oldvpncity" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PRV VPN NM ${CGreen}[ ${CCyan}$oldvpncity${CClear}"; fi
+    else
+      echo -en "${InvCyan} ${CClear}${CCyan} PUB VPN IP ${CGreen}[ ${CCyan}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
+      if [ ! -z "$oldvpncity" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PUB VPN CT ${CGreen}[ ${CCyan}$oldvpncity${CClear}"; fi
+    fi
+    if [ ${oldvpntxmbrate%.*} -lt 0 ]; then oldvpntxmbrate=0; oldvpntxmbratedisplay=0; fi
+    preparebar 35 "|"
+    progressbar $oldvpntxmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpntxmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpnrxmbrate%.*} -lt 0 ]; then oldvpnrxmbrate=0; oldvpnrxmbratedisplay=0; fi
+    preparebar 35 "|"
+    progressbar $oldvpnrxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpnrxmbratedisplay $MaxSpeedInetUL
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    echo ""
+    echo -e "${CGreen} ____"
+    echo -e "${CGreen}/${CRed}VPN$vpn2${CClear}${CGreen}\_____________________________________________________________${CClear}"
+    echo ""
+    if [ "$oldvpn2city" == "Private Network" ]; then
+      echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
+      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn2${CClear}"
+      if [ ! -z "$oldvpn2city" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PRV VPN NM ${CGreen}[ ${CCyan}$oldvpn2city${CClear}"; fi
+    else
+      echo -en "${InvCyan} ${CClear}${CCyan} PUB VPN IP ${CGreen}[ ${CCyan}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
+      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn2${CClear}"
+      if [ ! -z "$oldvpn2city" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PUB VPN CT ${CGreen}[ ${CCyan}$oldvpn2city${CClear}"; fi
+    fi
+    if [ ${oldvpn2txmbrate%.*} -lt 0 ]; then oldvpn2txmbrate=0; oldvpn2txmbratedisplay=0; fi
+    preparebar 35 "|"
+    progressbar $oldvpn2txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn2txmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpn2rxmbrate%.*} -lt 0 ]; then oldvpn2rxmbrate=0; oldvpn2rxmbratedisplay=0; fi
+    preparebar 35 "|"
+    progressbar $oldvpn2rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn2rxmbratedisplay $MaxSpeedInetUL
+  fi
+
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2042,6 +2360,7 @@ fi
   echo -e "  ${CGreen}[Initiating Boot Sequence - Gathering Initial Stats...]"
   echo ""
   INITIALBOOT=1
+  echo -e "$(date) - RTRMON - Initial Boot Sequence - Gathering Initial Stats..." >> $LOGFILE
 
 # Capture initial traffic and store current WAN/WiFi bytes stats
   if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
@@ -2082,6 +2401,97 @@ fi
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
 
+  vpn=0
+  while [ $vpn -ne 5 ]; do
+    vpn=$(($vpn+1))
+    VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    if [ $VPNState -eq 2 ]; then
+      TUN="tun1"$vpn
+      NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
+      NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpnip=$NVRAMVPNIP
+        oldvpncity="Private Network"
+      else
+        lastvpnip=$oldvpnip
+        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
+        if [ "$lastvpnip" != "$oldvpnip" ]; then
+          oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
+          oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
+          vpncity=$oldvpncity
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpnip ($oldvpncity)" >> $LOGFILE
+        fi
+      fi
+      vpnon="True"
+      #Check to see if there's a secondary VPN connection
+        vpn2=$vpn
+        while [ $vpn2 -ne 5 ]; do
+          vpn2=$(($vpn2+1))
+          VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+          if [ $VPN2State -eq 2 ]; then
+            TUN2="tun1"$vpn2
+            NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
+            NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+            if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+              oldvpn2ip=$NVRAMVPN2IP
+              oldvpn2city="Private Network"
+            else
+              lastvpn2ip=$oldvpn2ip
+              oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+              if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+              if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+                oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
+                oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+                echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+              fi
+            fi
+            vpn2on="True"
+            break
+          else
+            vpn2on="False"
+          fi
+        done
+      break
+    else
+      vpnon="False"
+      vpn2on="False"
+    fi
+  done
+
+  if [ "$vpnon" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+    oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
+    oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
+    if [ -z $oldvpntxbytes ]; then oldvpntxbytes=0; fi
+
+    if [ $oldvpnrxbytes -le 0 ]; then
+      oldvpnrxbytes=0
+    elif [ $oldvpntxbytes -le 0 ]; then
+      oldvpntxbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+    oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
+    oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
+    if [ -z $oldvpn2txbytes ]; then oldvpn2txbytes=0; fi
+
+    if [ $oldvpn2rxbytes -le 0 ]; then
+      oldvpn2rxbytes=0
+    elif [ $oldvpn2txbytes -le 0 ]; then
+      oldvpn2txbytes=0
+    fi
+
+  fi
+
+
 # Get initial TOP stats to average across the interval period
 
   RM_ELAPSED_TIME=0
@@ -2092,7 +2502,11 @@ fi
       i=$(($i+1))
       gettopstats $i
       preparebar 53 "|"
-      progressbar $i $Interval "" "s" "Standard"
+      if [ "$ProgPref" == "0" ]; then
+        progressbar $i $Interval "" "s" "Standard"
+      else
+        progressbaroverride $i $Interval "" "s" "Standard"
+      fi
   done
 
 calculatestats
@@ -2147,6 +2561,7 @@ while true; do
   displaycpusys1=0
   displaycpunice1=0
   displaycpuidle1=0
+  displaycpuirq1=0
 
   # Get fresh WAN stats
   oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
@@ -2166,23 +2581,128 @@ while true; do
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
 
+  # Get fresh VPN stats
+  vpn=0
+  while [ $vpn -ne 5 ]; do
+    vpn=$(($vpn+1))
+    VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    if [ $VPNState -eq 2 ]; then
+      TUN="tun1"$vpn
+      NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
+      NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpnip=$NVRAMVPNIP
+        oldvpncity="Private Network"
+      else
+        lastvpnip=$oldvpnip
+        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
+        if [ "$lastvpnip" != "$oldvpnip" ]; then
+          oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
+          oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
+          vpncity=$oldvpncity
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpnip ($oldvpncity)" >> $LOGFILE
+        fi
+      fi
+      vpnon="True"
+      #Check to see if there's a secondary VPN connection
+        vpn2=$vpn
+        while [ $vpn2 -ne 5 ]; do
+          vpn2=$(($vpn2+1))
+          VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+          if [ $VPN2State -eq 2 ]; then
+            TUN2="tun1"$vpn2
+            NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
+            NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+            if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+              oldvpn2ip=$NVRAMVPN2IP
+              oldvpn2city="Private Network"
+            else
+              lastvpn2ip=$oldvpn2ip
+              oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+              if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+              if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+                oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
+                oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+                echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+              fi
+            fi
+            vpn2on="True"
+            break
+          else
+            vpn2on="False"
+          fi
+        done
+      break
+    else
+      vpnon="False"
+      vpn2on="False"
+    fi
+  done
+
+  if [ "$vpnon" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+    oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
+    oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
+    if [ -z $oldvpntxbytes ]; then oldvpntxbytes=0; fi
+
+    if [ $oldvpnrxbytes -le 0 ]; then
+      oldvpnrxbytes=0
+    elif [ $oldvpntxbytes -le 0 ]; then
+      oldvpntxbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+    oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
+    oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
+    if [ -z $oldvpn2txbytes ]; then oldvpn2txbytes=0; fi
+
+    if [ $oldvpn2rxbytes -le 0 ]; then
+      oldvpn2rxbytes=0
+    elif [ $oldvpn2txbytes -le 0 ]; then
+      oldvpn2txbytes=0
+    fi
+
+  fi
+
   # Run through the stats gathering loop based on the current interval
   echo ""
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
+
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
       gettopstats $i
       preparebar 46 "|"
-      progressbar $i $Interval "" "s" "Standard"
+      if [ "$ProgPref" == "0" ]; then
+        progressbar $i $Interval "" "s" "Standard"
+      else
+        progressbaroverride $i $Interval "" "s" "Standard"
+      fi
   done
 
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
   oldstats
   clear
+
+  if [ "$autorotate" == "1" ] && [ $Interval -eq $i ]; then
+    if [ "$NextPage" == "1" ]; then clear; NextPage=2 #DisplayPage2
+    elif [ "$NextPage" == "2" ]; then clear; NextPage=3 #DisplayPage3
+    elif [ "$NextPage" == "3" ]; then clear; NextPage=4 #DisplayPage4
+    elif [ "$NextPage" == "4" ]; then clear; NextPage=5 #DisplayPage5
+    elif [ "$NextPage" == "5" ]; then clear; NextPage=1 #DisplayPage1
+    fi
+  fi
 
 done
 
