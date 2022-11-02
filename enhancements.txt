@@ -6,7 +6,6 @@ To-Do:
 * Go direct to pages 1-5 (Stephen Harrington)
 * Startup on a certain page (Stephen Harrington)
 * Snapshot of top bandwidth usage on br0 and eth0
-* Force update (like in vpnmon-r2)
 
 In Progress:
 * Allow user to pick own custom speedtest server by ID
@@ -16,6 +15,7 @@ In Progress:
 * Added CPU IRQ stats to the CPU stats
 * Show VPN traffic usage on WAN/LAN page
 * Add log events for boot, speedtest and vpn api calls
+* Force update (like in vpnmon-r2)
 
 Completed:
 ----------
