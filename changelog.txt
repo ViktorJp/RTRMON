@@ -18,6 +18,8 @@ v1.33b2   - (BETA - TBA)
             changes so that it lets you know that an API call was made to determine your public VPN IP and exit city location.
           - CHANGED: As with VPNMON-R2, now when you make changes to the config while running the program, upon return to the main
             UI, your changes will automatically be applied without needing to exit and restart.
+          - CHANGED: Modified the update functionality to allow you to force-update your current RTRMON script with the current
+            build available on github.
           - FIXED: Under heavy load, I noticed that the CPU percentages did not add up (close to) 100%, and realized that I left
             out a vital component, namely the IRQ stat. This item has now been added under the CPU stats, giving you a little more
             accuracy on current activity.
