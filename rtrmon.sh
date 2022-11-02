@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.40 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.41 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.40"
+Version="1.41"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -815,7 +815,7 @@ vsetup () {
 
           sc) # Check for existence of entware, and if so proceed and install the timeout package, then run RTRMON -config
             clear
-            if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ]; then
+            if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ]; then
               vconfig
             else
               logoNM
@@ -840,6 +840,10 @@ vsetup () {
               echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
               echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
               echo ""
+              echo -e "${CGreen}JQuery${CCyan} is a utility for querying data across the internet through the${CClear}"
+              echo -e "${CCyan}the means of APIs for the purposes of interacting with the various VPN${CClear}"
+              echo -e "${CCyan}providers to get a list of available VPN hosts in the selected country.${CClear}"
+              echo ""
               [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
               echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
               echo ""
@@ -863,6 +867,10 @@ vsetup () {
                     echo -e "${CGreen}Installing Entware Nmap Package...${CClear}"
                     echo ""
                     opkg install nmap
+                    echo ""
+                    echo -e "${CGreen} Installing Entware JQuery Package...${CClear}"
+                    echo ""
+                    opkg install jq
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                     echo ""
@@ -910,6 +918,10 @@ vsetup () {
             echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
             echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
             echo ""
+            echo -e "${CGreen}JQuery${CCyan} is a utility for querying data across the internet through the${CClear}"
+            echo -e "${CCyan}the means of APIs for the purposes of interacting with the various VPN${CClear}"
+            echo -e "${CCyan}providers to get a list of available VPN hosts in the selected country.${CClear}"
+            echo ""
             [ -z "$(nvram get odmpid)" ] && RouterModel="$(nvram get productid)" || RouterModel="$(nvram get odmpid)" # Thanks @thelonelycoder for this logic
             echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
             echo ""
@@ -933,6 +945,10 @@ vsetup () {
                   echo -e "${CGreen}Force Re-installing Entware Nmap Package...${CClear}"
                   echo ""
                   opkg install --force-reinstall nmap
+                  echo ""
+                  echo -e "${CGreen} Force Re-installing Entware JQuery Package...${CClear}"
+                  echo ""
+                  opkg install --force-reinstall jq
                   echo ""
                   echo -e "${CGreen}Re-install completed...${CClear}"
                   echo ""
@@ -2270,7 +2286,7 @@ fi
   if [ "$1" == "-monitor" ]
     then
       clear
-      if [ -f $CFGPATH ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ]; then
+      if [ -f $CFGPATH ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ]; then
         source $CFGPATH
 
           if [ -f "/opt/bin/timeout" ] # If the timeout utility is available then use it and assign variables
