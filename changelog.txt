@@ -22,7 +22,7 @@ v1.33b2   - (BETA - TBA)
             build available on github.
           - FIXED: Under heavy load, I noticed that the CPU percentages did not add up (close to) 100%, and realized that I left
             out a vital component, namely the IRQ stat. This item has now been added under the CPU stats, giving you a little more
-            accuracy on current activity.
+            accuracy on current CPU activity.
           - FIXED: RTRMON is now able to recognize whether your VPN connection is using a public or private network, and will
             accommodate for each in the UI under page #2.  Thanks to @visortgw for reporting this issue! 
           - FIXED: The minimalist progress bar will now also be visible during the initial booth sequence... thanks for the
