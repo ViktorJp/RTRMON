@@ -5,10 +5,10 @@ To-Do:
 ------
 * Go direct to pages 1-5 (Stephen Harrington)
 * Startup on a certain page (Stephen Harrington)
-* Snapshot of top bandwidth usage on br0 and eth* and vpn*
 * Reboot router if it fails regular diagnostics check/scheduler
 
 In Progress:
+* Snapshot of top bandwidth usage on br0 and eth* and vpn*
 * Allow user to pick own custom speedtest server by ID
 * maybe an option to disable the countdown bar? i find it distracting (@ugandy)
 * config changes are applied upon exit & save
