@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.41 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.45 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.41"
+Version="1.45"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -60,6 +60,7 @@ TempUnits="C"
 Speedtst=0
 WANOverride="Auto"
 PSView="TCP"
+NCView="WAN"
 spdtestsvrID=0
 ProgPref=0
 autorotate=0
@@ -126,7 +127,7 @@ logo () {
   echo -e "${CYellow}      ____  __________  __  _______  _   __"
   echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version - ${CCyan}$RouterModel${CYellow}"
   echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /  ${CRed}(S)${CGreen}etup${CYellow}"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/5)${CYellow}"
+  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/6)${CYellow}"
   echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(R)${CGreen}otate Pgs:${CCyan}$autorotateindicator ${CRed}(E)${CGreen}xit${CClear}"
 }
 
@@ -779,7 +780,7 @@ vupdate () {
 vsetup () {
 
   # Check for and add an alias for RTRMON
-  if ! grep -F "sh /jffs/scripts/rtrmon.sh" /jffs/configs/profile.add; then
+  if ! grep -F "sh /jffs/scripts/rtrmon.sh" /jffs/configs/profile.add >/dev/null 2>/dev/null; then
 		echo "alias rtrmon=\"sh /jffs/scripts/rtrmon.sh\" # RTRMON" >> /jffs/configs/profile.add
   fi
 
@@ -1101,14 +1102,18 @@ if [ "$INITIALBOOT" == "0" ]; then
 
   if [ $key_press ]; then
       case $key_press in
-          [Ss]) FromUI=1; (vsetup); source $CFGPATH; echo -e "${CGreen}  [Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-          [Ii]) QueueSpdtst=1; echo -e "${CGreen}  [Queuing Speedtest]                                                      "; sleep 1; clear; DisplayPage4; echo -e "\n";;
-          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
-          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; fi;;
-          [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}  [Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
+          [Ss]) FromUI=1; (vsetup); source $CFGPATH; echo -e "${CGreen}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+          [Ii]) QueueSpdtst=1; echo -e "${CGreen}[Queuing Speedtest]                                                      "; sleep 1; clear; DisplayPage4; echo -e "\n";;
+          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
+          [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}[Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
           [Tt]) PSView="TCP"; clear; DisplayPage5; echo "";;
           [Uu]) PSView="UDP"; clear; DisplayPage5; echo "";;
+          [Vv]) NCView="VPN"; clear; DisplayPage6; echo "";;
+          [Ww]) NCView="WAN"; clear; DisplayPage6; echo "";;
+          [Ll]) NCView="LAN"; clear; DisplayPage6; echo "";;
           [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
+          [Cc]) QueueNetworkConn=1; echo -e "${CGreen}[Queuing Network Connection Stats]                                       "; sleep 1; clear; DisplayPage6; echo "";;
           [Ee]) echo -e "${CClear}"; exit 0;;
       esac
   fi
@@ -1524,7 +1529,7 @@ calculatestats () {
 DisplaySpdtst () {
 
   if [ "$Speedtst" == "0" ] || [ ! -f $OOKLAPATH ]; then
-    echo -e "${CRed}  [Ookla Speedtest is not installed/configured]${CClear}"
+    echo -e "${CRed}[Ookla Speedtest is not installed/configured]${CClear}"
     return
   fi
 
@@ -1543,7 +1548,7 @@ DisplaySpdtst () {
 
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
-    printf "${CGreen}\r  [Initializing Speedtest]"
+    printf "${CGreen}\r[Initializing Speedtest]"
     if [ $spdtestsvrID == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     else
@@ -2118,6 +2123,535 @@ fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+
+# This function displays the stats UI for page 6 which includes top bandwidth connections for WAN, LAN and VPN
+DisplayPage6 () {
+
+  logo
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "${CRed}  $UpdateNotify${CClear}"
+    echo -e "${CGreen} _____________________________${CClear}"
+  else
+    echo -e "${CGreen} _____________________________${CClear}"
+  fi
+  echo -e "${CGreen}/${CRed}Network Connections/Bandwidth${CClear}${CGreen}\____________________________________${CClear}"
+  echo ""
+
+  if [ "$QueueNetworkConn" == "1" ]; then
+  #run network diags and save Results
+    printf "${CGreen}[Updating WAN( ) LAN( ) VPN( ) Statistics]"
+    iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
+    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN( ) VPN( ) Statistics]"
+    iftop -t -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
+    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN(${CYellow}X${CGreen}) VPN( ) Statistics]"
+    iftop -t -i tun1$vpn 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpnresult.txt
+    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN(${CYellow}X${CGreen}) VPN(${CYellow}X${CGreen}) Statistics]"
+    sleep 1
+    QueueNetworkConn=0
+    testrun=$(date +%s)
+  fi
+
+  if [ -z $testrun ]; then
+    lastrun="Not Current"
+  else
+    currtime=$(date +%s)
+    mindiffs=$(( ($currtime - $testrun)/60 ))
+    lastrun="$mindiffs Minute(s) ago"
+  fi
+
+  printf "\r${InvGreen} ${CClear} ${CGreen}Refresh ${CRed}(C)${CGreen}urrent Statistics${CClear}  |  ${CGreen}Stats Age: ${CCyan}$lastrun${CClear}"
+  echo ""
+
+  if [ "$NCView" == "WAN" ]; then
+    if [ "$vpnon" == "True" ]; then
+      echo -e "${CGreen} _____     _____     _____${CClear}"
+      echo -e "${CGreen}/(W)${CRed}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\___/(V)${CDkGray}PN${CGreen}\________________________________________${CClear}"
+      echo ""
+    else
+      echo -e "${CGreen} _____     _____${CClear}"
+      echo -e "${CGreen}/(W)${CRed}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\__________________________________________________${CClear}"
+      echo ""
+    fi
+
+    wansegments1=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
+
+    line1="$(echo $wansegments1 | awk '{print $1}')"
+    dest1="$(echo $wansegments1 | awk '{print $2}')"
+    out1="$(echo $wansegments1 | awk '{print $3}')"
+    src1="$(echo $wansegments1 | awk '{print $4}')"
+    in1="$(echo $wansegments1 | awk '{print $5}')"
+
+    wansegments2=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==9 {print $1, $2, $4} NR==10 {print $1, $3}')
+
+    line2="$(echo $wansegments2 | awk '{print $1}')"
+    dest2="$(echo $wansegments2 | awk '{print $2}')"
+    out2="$(echo $wansegments2 | awk '{print $3}')"
+    src2="$(echo $wansegments2 | awk '{print $4}')"
+    in2="$(echo $wansegments2 | awk '{print $5}')"
+
+    wansegments3=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==11 {print $1, $2, $4} NR==12 {print $1, $3}')
+
+    line3="$(echo $wansegments3 | awk '{print $1}')"
+    dest3="$(echo $wansegments3 | awk '{print $2}')"
+    out3="$(echo $wansegments3 | awk '{print $3}')"
+    src3="$(echo $wansegments3 | awk '{print $4}')"
+    in3="$(echo $wansegments3 | awk '{print $5}')"
+
+    wansegments4=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==13 {print $1, $2, $4} NR==14 {print $1, $3}')
+
+    line4="$(echo $wansegments4 | awk '{print $1}')"
+    dest4="$(echo $wansegments4 | awk '{print $2}')"
+    out4="$(echo $wansegments4 | awk '{print $3}')"
+    src4="$(echo $wansegments4 | awk '{print $4}')"
+    in4="$(echo $wansegments4 | awk '{print $5}')"
+
+    wansegments5=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==15 {print $1, $2, $4} NR==16 {print $1, $3}')
+
+    line5="$(echo $wansegments5 | awk '{print $1}')"
+    dest5="$(echo $wansegments5 | awk '{print $2}')"
+    out5="$(echo $wansegments5 | awk '{print $3}')"
+    src5="$(echo $wansegments5 | awk '{print $4}')"
+    in5="$(echo $wansegments5 | awk '{print $5}')"
+
+    wansegments6=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==17 {print $1, $2, $4} NR==18 {print $1, $3}')
+
+    line6="$(echo $wansegments6 | awk '{print $1}')"
+    dest6="$(echo $wansegments6 | awk '{print $2}')"
+    out6="$(echo $wansegments6 | awk '{print $3}')"
+    src6="$(echo $wansegments6 | awk '{print $4}')"
+    in6="$(echo $wansegments6 | awk '{print $5}')"
+
+    wansegments7=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==19 {print $1, $2, $4} NR==20 {print $1, $3}')
+
+    line7="$(echo $wansegments7 | awk '{print $1}')"
+    dest7="$(echo $wansegments7 | awk '{print $2}')"
+    out7="$(echo $wansegments7 | awk '{print $3}')"
+    src7="$(echo $wansegments7 | awk '{print $4}')"
+    in7="$(echo $wansegments7 | awk '{print $5}')"
+
+    wansegments8=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==21 {print $1, $2, $4} NR==22 {print $1, $3}')
+
+    line8="$(echo $wansegments8 | awk '{print $1}')"
+    dest8="$(echo $wansegments8 | awk '{print $2}')"
+    out8="$(echo $wansegments8 | awk '{print $3}')"
+    src8="$(echo $wansegments8 | awk '{print $4}')"
+    in8="$(echo $wansegments8 | awk '{print $5}')"
+
+    wansegments9=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==23 {print $1, $2, $4} NR==24 {print $1, $3}')
+
+    line9="$(echo $wansegments9 | awk '{print $1}')"
+    dest9="$(echo $wansegments9 | awk '{print $2}')"
+    out9="$(echo $wansegments9 | awk '{print $3}')"
+    src9="$(echo $wansegments9 | awk '{print $4}')"
+    in9="$(echo $wansegments9 | awk '{print $5}')"
+
+    wansegments10=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==25 {print $1, $2, $4} NR==26 {print $1, $3}')
+
+    line10="$(echo $wansegments10 | awk '{print $1}')"
+    dest10="$(echo $wansegments10 | awk '{print $2}')"
+    out10="$(echo $wansegments10 | awk '{print $3}')"
+    src10="$(echo $wansegments10 | awk '{print $4}')"
+    in10="$(echo $wansegments10 | awk '{print $5}')"
+
+    if [ "$line1" == "1" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
+    else
+      echo "No Data"
+    fi
+
+    if [ "$line2" == "2" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
+    fi
+
+    if [ "$line3" == "3" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
+    fi
+
+    if [ "$line4" == "4" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
+    fi
+
+    if [ "$line5" == "5" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
+    fi
+
+    if [ "$line6" == "6" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
+    fi
+
+    if [ "$line7" == "7" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
+    fi
+
+    if [ "$line8" == "8" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
+    fi
+
+    if [ "$line9" == "9" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
+    fi
+
+    if [ "$line10" == "10" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
+    fi
+  fi
+
+  if [ "$NCView" == "LAN" ]; then
+    if [ "$vpnon" == "True" ]; then
+      echo -e "${CGreen} _____     _____     _____${CClear}"
+      echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CRed}AN${CGreen}\___/(V)${CDkGray}PN${CGreen}\________________________________________${CClear}"
+      echo ""
+    else
+      echo -e "${CGreen} _____     _____ ${CClear}"
+      echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CRed}AN${CGreen}\__________________________________________________${CClear}"
+      echo ""
+    fi
+
+    lansegments1=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
+
+    line1="$(echo $lansegments1 | awk '{print $1}')"
+    dest1="$(echo $lansegments1 | awk '{print $2}')"
+    out1="$(echo $lansegments1 | awk '{print $3}')"
+    src1="$(echo $lansegments1 | awk '{print $4}')"
+    in1="$(echo $lansegments1 | awk '{print $5}')"
+
+    lansegments2=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==9 {print $1, $2, $4} NR==10 {print $1, $3}')
+
+    line2="$(echo $lansegments2 | awk '{print $1}')"
+    dest2="$(echo $lansegments2 | awk '{print $2}')"
+    out2="$(echo $lansegments2 | awk '{print $3}')"
+    src2="$(echo $lansegments2 | awk '{print $4}')"
+    in2="$(echo $lansegments2 | awk '{print $5}')"
+
+    lansegments3=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==11 {print $1, $2, $4} NR==12 {print $1, $3}')
+
+    line3="$(echo $lansegments3 | awk '{print $1}')"
+    dest3="$(echo $lansegments3 | awk '{print $2}')"
+    out3="$(echo $lansegments3 | awk '{print $3}')"
+    src3="$(echo $lansegments3 | awk '{print $4}')"
+    in3="$(echo $lansegments3 | awk '{print $5}')"
+
+    lansegments4=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==13 {print $1, $2, $4} NR==14 {print $1, $3}')
+
+    line4="$(echo $lansegments4 | awk '{print $1}')"
+    dest4="$(echo $lansegments4 | awk '{print $2}')"
+    out4="$(echo $lansegments4 | awk '{print $3}')"
+    src4="$(echo $lansegments4 | awk '{print $4}')"
+    in4="$(echo $lansegments4 | awk '{print $5}')"
+
+    lansegments5=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==15 {print $1, $2, $4} NR==16 {print $1, $3}')
+
+    line5="$(echo $lansegments5 | awk '{print $1}')"
+    dest5="$(echo $lansegments5 | awk '{print $2}')"
+    out5="$(echo $lansegments5 | awk '{print $3}')"
+    src5="$(echo $lansegments5 | awk '{print $4}')"
+    in5="$(echo $lansegments5 | awk '{print $5}')"
+
+    lansegments6=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==17 {print $1, $2, $4} NR==18 {print $1, $3}')
+
+    line6="$(echo $lansegments6 | awk '{print $1}')"
+    dest6="$(echo $lansegments6 | awk '{print $2}')"
+    out6="$(echo $lansegments6 | awk '{print $3}')"
+    src6="$(echo $lansegments6 | awk '{print $4}')"
+    in6="$(echo $lansegments6 | awk '{print $5}')"
+
+    lansegments7=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==19 {print $1, $2, $4} NR==20 {print $1, $3}')
+
+    line7="$(echo $lansegments7 | awk '{print $1}')"
+    dest7="$(echo $lansegments7 | awk '{print $2}')"
+    out7="$(echo $lansegments7 | awk '{print $3}')"
+    src7="$(echo $lansegments7 | awk '{print $4}')"
+    in7="$(echo $lansegments7 | awk '{print $5}')"
+
+    lansegments8=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==21 {print $1, $2, $4} NR==22 {print $1, $3}')
+
+    line8="$(echo $lansegments8 | awk '{print $1}')"
+    dest8="$(echo $lansegments8 | awk '{print $2}')"
+    out8="$(echo $lansegments8 | awk '{print $3}')"
+    src8="$(echo $lansegments8 | awk '{print $4}')"
+    in8="$(echo $lansegments8 | awk '{print $5}')"
+
+    lansegments9=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==23 {print $1, $2, $4} NR==24 {print $1, $3}')
+
+    line9="$(echo $lansegments9 | awk '{print $1}')"
+    dest9="$(echo $lansegments9 | awk '{print $2}')"
+    out9="$(echo $lansegments9 | awk '{print $3}')"
+    src9="$(echo $lansegments9 | awk '{print $4}')"
+    in9="$(echo $lansegments9 | awk '{print $5}')"
+
+    lansegments10=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==25 {print $1, $2, $4} NR==26 {print $1, $3}')
+
+    line10="$(echo $lansegments10 | awk '{print $1}')"
+    dest10="$(echo $lansegments10 | awk '{print $2}')"
+    out10="$(echo $lansegments10 | awk '{print $3}')"
+    src10="$(echo $lansegments10 | awk '{print $4}')"
+    in10="$(echo $lansegments10 | awk '{print $5}')"
+
+    if [ "$line1" == "1" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
+    else
+      echo "No Data"
+    fi
+
+    if [ "$line2" == "2" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
+    fi
+
+    if [ "$line3" == "3" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
+    fi
+
+    if [ "$line4" == "4" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
+    fi
+
+    if [ "$line5" == "5" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
+    fi
+
+    if [ "$line6" == "6" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
+    fi
+
+    if [ "$line7" == "7" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
+    fi
+
+    if [ "$line8" == "8" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
+    fi
+
+    if [ "$line9" == "9" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
+    fi
+
+    if [ "$line10" == "10" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
+    fi
+  fi
+
+  if [ "$NCView" == "VPN" ]; then
+    echo -e "${CGreen} _____     _____     _____${CClear}"
+    echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\___/(V)${CRed}PN${CGreen}\________________________________________${CClear}"
+    echo ""
+
+    vpnsegments1=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
+
+    line1="$(echo $vpnsegments1 | awk '{print $1}')"
+    dest1="$(echo $vpnsegments1 | awk '{print $2}')"
+    out1="$(echo $vpnsegments1 | awk '{print $3}')"
+    src1="$(echo $vpnsegments1 | awk '{print $4}')"
+    in1="$(echo $vpnsegments1 | awk '{print $5}')"
+
+    vpnsegments2=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==9 {print $1, $2, $4} NR==10 {print $1, $3}')
+
+    line2="$(echo $vpnsegments2 | awk '{print $1}')"
+    dest2="$(echo $vpnsegments2 | awk '{print $2}')"
+    out2="$(echo $vpnsegments2 | awk '{print $3}')"
+    src2="$(echo $vpnsegments2 | awk '{print $4}')"
+    in2="$(echo $vpnsegments2 | awk '{print $5}')"
+
+    vpnsegments3=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==11 {print $1, $2, $4} NR==12 {print $1, $3}')
+
+    line3="$(echo $vpnsegments3 | awk '{print $1}')"
+    dest3="$(echo $vpnsegments3 | awk '{print $2}')"
+    out3="$(echo $vpnsegments3 | awk '{print $3}')"
+    src3="$(echo $vpnsegments3 | awk '{print $4}')"
+    in3="$(echo $vpnsegments3 | awk '{print $5}')"
+
+    vpnsegments4=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==13 {print $1, $2, $4} NR==14 {print $1, $3}')
+
+    line4="$(echo $vpnsegments4 | awk '{print $1}')"
+    dest4="$(echo $vpnsegments4 | awk '{print $2}')"
+    out4="$(echo $vpnsegments4 | awk '{print $3}')"
+    src4="$(echo $vpnsegments4 | awk '{print $4}')"
+    in4="$(echo $vpnsegments4 | awk '{print $5}')"
+
+    vpnsegments5=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==15 {print $1, $2, $4} NR==16 {print $1, $3}')
+
+    line5="$(echo $vpnsegments5 | awk '{print $1}')"
+    dest5="$(echo $vpnsegments5 | awk '{print $2}')"
+    out5="$(echo $vpnsegments5 | awk '{print $3}')"
+    src5="$(echo $vpnsegments5 | awk '{print $4}')"
+    in5="$(echo $vpnsegments5 | awk '{print $5}')"
+
+    vpnsegments6=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==17 {print $1, $2, $4} NR==18 {print $1, $3}')
+
+    line6="$(echo $vpnsegments6 | awk '{print $1}')"
+    dest6="$(echo $vpnsegments6 | awk '{print $2}')"
+    out6="$(echo $vpnsegments6 | awk '{print $3}')"
+    src6="$(echo $vpnsegments6 | awk '{print $4}')"
+    in6="$(echo $vpnsegments6 | awk '{print $5}')"
+
+    vpnsegments7=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==19 {print $1, $2, $4} NR==20 {print $1, $3}')
+
+    line7="$(echo $vpnsegments7 | awk '{print $1}')"
+    dest7="$(echo $vpnsegments7 | awk '{print $2}')"
+    out7="$(echo $vpnsegments7 | awk '{print $3}')"
+    src7="$(echo $vpnsegments7 | awk '{print $4}')"
+    in7="$(echo $vpnsegments7 | awk '{print $5}')"
+
+    vpnsegments8=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==21 {print $1, $2, $4} NR==22 {print $1, $3}')
+
+    line8="$(echo $vpnsegments8 | awk '{print $1}')"
+    dest8="$(echo $vpnsegments8 | awk '{print $2}')"
+    out8="$(echo $vpnsegments8 | awk '{print $3}')"
+    src8="$(echo $vpnsegments8 | awk '{print $4}')"
+    in8="$(echo $vpnsegments8 | awk '{print $5}')"
+
+    vpnsegments9=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==23 {print $1, $2, $4} NR==24 {print $1, $3}')
+
+    line9="$(echo $vpnsegments9 | awk '{print $1}')"
+    dest9="$(echo $vpnsegments9 | awk '{print $2}')"
+    out9="$(echo $vpnsegments9 | awk '{print $3}')"
+    src9="$(echo $vpnsegments9 | awk '{print $4}')"
+    in9="$(echo $vpnsegments9 | awk '{print $5}')"
+
+    vpnsegments10=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==25 {print $1, $2, $4} NR==26 {print $1, $3}')
+
+    line10="$(echo $vpnsegments10 | awk '{print $1}')"
+    dest10="$(echo $vpnsegments10 | awk '{print $2}')"
+    out10="$(echo $vpnsegments10 | awk '{print $3}')"
+    src10="$(echo $vpnsegments10 | awk '{print $4}')"
+    in10="$(echo $vpnsegments10 | awk '{print $5}')"
+
+    if [ "$line1" == "1" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
+    else
+      echo "No Data"
+    fi
+
+    if [ "$line2" == "2" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
+    fi
+
+    if [ "$line3" == "3" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
+    fi
+
+    if [ "$line4" == "4" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
+    fi
+
+    if [ "$line5" == "5" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
+    fi
+
+    if [ "$line6" == "6" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
+    fi
+
+    if [ "$line7" == "7" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
+    fi
+
+    if [ "$line8" == "8" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
+    fi
+
+    if [ "$line9" == "9" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
+    fi
+
+    if [ "$line10" == "10" ]; then
+      echo -en "${CGreen}"
+      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
+      echo -en "${CCyan}"
+      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
+    fi
+  fi
+
+}
+
+
+# -------------------------------------------------------------------------------------------------------------------------
 # Begin Commandline Argument Gatekeeper and Configuration Utility Functionality
 # -------------------------------------------------------------------------------------------------------------------------
 
@@ -2373,7 +2907,7 @@ fi
   clear
   logoNM
   echo ""
-  echo -e "  ${CGreen}[Initiating Boot Sequence - Gathering Initial Stats...]"
+  echo -e "${CGreen}[Initiating Boot Sequence - Gathering Initial Stats...]"
   echo ""
   INITIALBOOT=1
   echo -e "$(date) - RTRMON - Initial Boot Sequence - Gathering Initial Stats..." >> $LOGFILE
@@ -2556,6 +3090,10 @@ while true; do
     clear
     DisplayPage5
     #echo ""
+  elif [ "$NextPage" == "6" ]; then
+    clear
+    DisplayPage6
+    #echo ""
   fi
 
   # Reset stats after the UI has finished drawing
@@ -2716,7 +3254,8 @@ while true; do
     elif [ "$NextPage" == "2" ]; then clear; NextPage=3 #DisplayPage3
     elif [ "$NextPage" == "3" ]; then clear; NextPage=4 #DisplayPage4
     elif [ "$NextPage" == "4" ]; then clear; NextPage=5 #DisplayPage5
-    elif [ "$NextPage" == "5" ]; then clear; NextPage=1 #DisplayPage1
+    elif [ "$NextPage" == "5" ]; then clear; NextPage=6 #DisplayPage1
+    elif [ "$NextPage" == "6" ]; then clear; NextPage=1 #DisplayPage1
     fi
   fi
 
