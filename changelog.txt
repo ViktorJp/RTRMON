@@ -1,3 +1,10 @@
+v1.43     - (November 25, 2022)
+          - MAJOR: Added a 6th page of statistics... this time borrowing a little magic from the iftop command, and giving you
+            the top 10 network connections/bandwidth info currently taking place on your WAN, LAN and VPN connections!  This info
+            gives you a quick snapshot in time showing you current activity to satisfy any curiocity you may have on what servers
+            or services your network clients are currently interacting with, or could be helpful determining bandwidth hogs, or
+            tracking down curious outbound connections that require a bit more scrutiny and research. Happy Thanksgiving!
+          
 v1.41     - (November 2, 2022) HOTFIX 1
           - CHANGED: Added a prerequisite check for the existence of JQ, which is now required when pulling info about your VPN
             connection.  Thanks for the heads-up, @ugandy!
