@@ -1,4 +1,4 @@
-v1.43     - (November 25, 2022)
+v1.45     - (November 25, 2022)
           - MAJOR: Added a 6th page of statistics... this time borrowing a little magic from the iftop command, and giving you
             the top 10 network connections/bandwidth info currently taking place on your WAN, LAN and VPN connections!  This info
             gives you a quick snapshot in time showing you current activity to satisfy any curiocity you may have on what servers
