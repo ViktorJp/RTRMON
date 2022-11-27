@@ -1,3 +1,8 @@
+v1.46     - (November 26, 2022)
+          - HOTFIX: Added the requirement to check for the iftop binary, and if it's not installed, will prompt you through the
+            setup menu to install/re-install entware dependencies.  iftop is used to gather connections and bandwidth stats and
+            give you the top 10 connections for WAN, LAN and VPN interfaces.
+
 v1.45     - (November 25, 2022)
           - MAJOR: Added a 6th page of statistics... this time borrowing a little magic from the iftop command, and giving you
             the top 10 network connections/bandwidth info currently taking place on your WAN, LAN and VPN connections!  This info
