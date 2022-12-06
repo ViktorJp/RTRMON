@@ -1,4 +1,4 @@
-v1.47b     - (TBA)
+v1.47b    - (TBA)
           - CHANGED: Modified the minimalist progress bar to show "[Selection? X]", indicating when it is acceptable to use a
             keypress, and added another banner indicating "[Refreshing Stats]".
           - ADDED: The version number now shows when RTRMON is kicked off with the -screen switch.
