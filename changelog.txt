@@ -1,3 +1,8 @@
+v1.47     - (TBA)
+          - CHANGED: Modified the minimalist progress bar to show "[Selection? X]", indicating when it is acceptable to use a
+            keypress, and added another banner indicating "[Refreshing Stats]".
+          - ADDED: The version number now shows when RTRMON is kicked off with the -screen switch.
+
 v1.46     - (November 26, 2022)
           - HOTFIX: Added the requirement to check for the iftop binary, and if it's not installed, will prompt you through the
             setup menu to install/re-install entware dependencies.  iftop is used to gather connections and bandwidth stats and
