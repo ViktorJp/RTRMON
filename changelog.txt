@@ -1,7 +1,13 @@
 v1.47b    - (TBA)
+          - CHANDED: Updated the script to point to the new Ookla Speedtest CLI version. Ookla updated the CLI (commandline-
+            based speedtest executable) from v1.1.1 to v1.2.0. In order to update to the latest version, please visit the
+            RTRMON config, disable/uninstall Speedtest, and re-enable/install it again. This will cause RTRMON to uninstall the
+            old version, and download/install the new version.
           - CHANGED: Modified the minimalist progress bar to show "[Selection? X]", indicating when it is acceptable to use a
             keypress, and added another banner indicating "[Refreshing Stats]".
           - ADDED: The version number now shows when RTRMON is kicked off with the -screen switch.
+          - FIXED: The inputs on the config screen will now filter out any invalid characters, in the case someone uses decimals
+            or accidentally adds letters.  The temperature question will now also force input for C, K or F only now.
 
 v1.46     - (November 26, 2022)
           - HOTFIX: Added the requirement to check for the iftop binary, and if it's not installed, will prompt you through the
