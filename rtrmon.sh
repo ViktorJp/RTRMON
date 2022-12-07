@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.46 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.49 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.46"
+Version="1.49"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -259,8 +259,10 @@ progressbaroverride() {
 
     if [ ! -z $6 ]; then AltNum=$6; else AltNum=$1; fi
 
-    if [ "$5" == "Standard" ]; then
-      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+    if [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 0 ]; then
+      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear} ${CGreen}[Selection? ${InvGreen} ${CClear}${CGreen}]\r${CClear}" "$barchars" "$barspaces"
+    elif [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 1 ]; then
+      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear}\r${CClear}" "$barchars" "$barspaces"
     fi
   fi
 }
@@ -383,7 +385,8 @@ vconfig () {
               echo -e "${CCyan}1. How many seconds would you like to use to refresh your stats?"
               echo -e "${CYellow}(Default = 10)${CClear}"
               read -p 'Interval (seconds): ' Interval1
-              if [ -z "$Interval1" ]; then Interval=10; else Interval=$Interval1; fi
+              Interval2=$(echo $Interval1 | tr -d -c 0-9)
+              if [ -z "$Interval1" ]; then Interval=10; else Interval=$Interval2; fi
             ;;
 
             2) # -----------------------------------------------------------------------------------------
@@ -391,7 +394,8 @@ vconfig () {
               echo -e "${CCyan}2. What is your maximum internet D/L bandwidth/speed in Mbps?"
               echo -e "${CYellow}(Default = 1000)${CClear}"
               read -p 'Max Internet D/L Speed (Mbps): ' MaxSpeedInet1
-              if [ -z "$MaxSpeedInet1" ]; then MaxSpeedInet=50; else MaxSpeedInet=$MaxSpeedInet1; fi
+              MaxSpeedInet2=$(echo $MaxSpeedInet1 | tr -d -c 0-9)
+              if [ -z "$MaxSpeedInet1" ]; then MaxSpeedInet=50; else MaxSpeedInet=$MaxSpeedInet2; fi
             ;;
 
             3) # -----------------------------------------------------------------------------------------
@@ -399,7 +403,8 @@ vconfig () {
               echo -e "${CCyan}3. What is your maximum internet U/L bandwidth/speed in Mbps?"
               echo -e "${CYellow}(Default = 50)${CClear}"
               read -p 'Max Internet U/L Speed (Mbps): ' MaxSpeedInetUL1
-              if [ -z "$MaxSpeedInetUL1" ]; then MaxSpeedInetUL=50; else MaxSpeedInetUL=$MaxSpeedInetUL1; fi
+              MaxSpeedInetUL2=$(echo $MaxSpeedInetUL1 | tr -d -c 0-9)
+              if [ -z "$MaxSpeedInetUL1" ]; then MaxSpeedInetUL=50; else MaxSpeedInetUL=$MaxSpeedInetUL2; fi
             ;;
 
             4) # -----------------------------------------------------------------------------------------
@@ -407,7 +412,8 @@ vconfig () {
               echo -e "${CCyan}4. What is your maximum LAN switch bandwidth/speed in Mbps?"
               echo -e "${CYellow}(Default = 1000)${CClear}"
               read -p 'Max LAN Speed (Mbps): ' MaxSpeedLAN1
-              if [ -z "$MaxSpeedLAN1" ]; then MaxSpeedLAN=1000; else MaxSpeedLAN=$MaxSpeedLAN1; fi
+              MaxSpeedLAN2=$(echo $MaxSpeedLAN1 | tr -d -c 0-9)
+              if [ -z "$MaxSpeedLAN1" ]; then MaxSpeedLAN=1000; else MaxSpeedLAN=$MaxSpeedLAN2; fi
             ;;
 
             5) # -----------------------------------------------------------------------------------------
@@ -415,7 +421,8 @@ vconfig () {
               echo -e "${CCyan}5. What is your maximum realistic 2.4Ghz speed in Mbps?"
               echo -e "${CYellow}(Default = 450)${CClear}"
               read -p 'Max 2.4Ghz Speed (Mbps): ' MaxSpeed24Ghz1
-              if [ -z "$MaxSpeed24Ghz1" ]; then MaxSpeed24Ghz=450; else MaxSpeed24Ghz=$MaxSpeed24Ghz1; fi
+              MaxSpeed24Ghz2=$(echo $MaxSpeed24Ghz1 | tr -d -c 0-9)
+              if [ -z "$MaxSpeed24Ghz1" ]; then MaxSpeed24Ghz=450; else MaxSpeed24Ghz=$MaxSpeed24Ghz2; fi
             ;;
 
             6) # -----------------------------------------------------------------------------------------
@@ -423,7 +430,8 @@ vconfig () {
               echo -e "${CCyan}6. What is your maximum realistic 5Ghz speed in Mbps?"
               echo -e "${CYellow}(Default = 780)${CClear}"
               read -p 'Max 5Ghz Speed (Mbps): ' MaxSpeed5Ghz1
-              if [ -z "$MaxSpeed5Ghz1" ]; then MaxSpeed5Ghz=780; else MaxSpeed5Ghz=$MaxSpeed5Ghz1; fi
+              MaxSpeed5Ghz2=$(echo $MaxSpeed5Ghz1 | tr -d -c 0-9)
+              if [ -z "$MaxSpeed5Ghz1" ]; then MaxSpeed5Ghz=780; else MaxSpeed5Ghz=$MaxSpeed5Ghz2; fi
             ;;
 
             7) # -----------------------------------------------------------------------------------------
@@ -432,7 +440,8 @@ vconfig () {
                 echo -e "${CCyan}7. What is your maximum realistic 6Ghz speed in Mbps?"
                 echo -e "${CYellow}(Default = 920)${CClear}"
                 read -p 'Max 6Ghz Speed (Mbps): ' MaxSpeed6Ghz1
-                if [ -z "$MaxSpeed6Ghz1" ]; then MaxSpeed6Ghz=920; else MaxSpeed6Ghz=$MaxSpeed6Ghz1; fi
+                MaxSpeed6Ghz2=$(echo $MaxSpeed6Ghz1 | tr -d -c 0-9)
+                if [ -z "$MaxSpeed6Ghz1" ]; then MaxSpeed6Ghz=920; else MaxSpeed6Ghz=$MaxSpeed6Ghz2; fi
               else
                 echo -e "${CRed}This item is currently only available for router"
                 echo -e "${CRed}models: GT-AXE11000 and GT-AXE16000.  Exiting..."
@@ -442,13 +451,34 @@ vconfig () {
             ;;
 
             8) # -----------------------------------------------------------------------------------------
-              echo ""
-              echo -e "${CCyan}8. Which Temperature Units would you prefer? (C)elcius,"
-              echo -e "${CCyan}(Fahrenheit) or (K)elvin?"
-              echo -e "${CYellow}(Default = C)${CClear}"
-              read -p 'Temp Units (C/F/K): ' TempUnits1
-              TempUnits2=$(echo $TempUnits1 | tr '[a-z]' '[A-Z]')
-              if [ -z "$TempUnits1" ]; then TempUnits="C"; else TempUnits=$TempUnits2; fi
+              while true; do
+                echo ""
+                echo -e "${CCyan}8. Which Temperature Units would you prefer? (C)elcius,"
+                echo -e "${CCyan}(Fahrenheit) or (K)elvin?"
+                echo -e "${CYellow}(Default = C)${CClear}"
+                read -p 'Temp Units (C/F/K): ' TempUnits1
+                case "$TempUnits1" in
+                [Cc])
+                  TempUnits="C"
+                  break
+                ;;
+                [Ff])
+                  TempUnits="F"
+                  break
+                ;;
+                [Kk])
+                  TempUnits="K"
+                  break
+                ;;
+                *)
+                  echo ""
+                  echo -e "Invalid choice - Please enter a valid option...${CClear}"
+                  echo ""
+                  sleep 2
+                ;;
+              esac
+            done
+            if [ -z "$TempUnits1" ]; then TempUnits="C"; fi
             ;;
 
             9) # -----------------------------------------------------------------------------------------
@@ -508,12 +538,12 @@ vconfig () {
                   echo -e "${CGreen}Installing Ookla Speedtest binaries...${CClear}"
                   echo ""
                   if [ "$(uname -m)" = "aarch64" ]; then
-                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.1.1-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
+                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtst64.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtst64.tgz
                   else
-                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.1.1-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
+                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtstel.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtstel.tgz
@@ -556,7 +586,7 @@ vconfig () {
               echo -e "${CCyan}closest server to you."
               echo -e "${CYellow}(Default = 0)${CClear}"
               read -p 'Server ID: ' spdtestsvrID1
-              spdtestsvrID2=$(echo $spdtestsvrID1 | tr '[0-9]')
+              spdtestsvrID2=$(echo $spdtestsvrID1 | tr -d -c 0-9)
               if [ -z "$spdtestsvrID1" ]; then spdtestsvrID=0; else spdtestsvrID=$spdtestsvrID2; fi
 
             ;;
@@ -617,7 +647,7 @@ vconfig () {
               echo -e "${CCyan}(0 = Standard) or (1 = Minimalist)?"
               echo -e "${CYellow}(Default = 0)${CClear}"
               read -p 'Progress Bar Pref: ' ProgPref1
-              ProgPref2=$(echo $ProgPref1 | tr '[0-1]')
+              ProgPref2=$(echo $ProgPref1 | tr -d -c 0-1)
               if [ -z "$ProgPref1" ]; then ProgPref=0; else ProgPref=$ProgPref2; fi
             ;;
 
@@ -1569,10 +1599,20 @@ DisplaySpdtst () {
     SpdDate=$(date)
     SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
     SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
+    SpdLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $20}' | sed -e 's/^"//' -e 's/"$//')
+    SpdLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $21}' | sed -e 's/^"//' -e 's/"$//')
     SpdJitter=$(echo $speed | awk -F '","' 'NR==1 {print $4}' | sed -e 's/^"//' -e 's/"$//')
     SpdPacketLoss=$(echo $speed | awk -F '","' 'NR==1 {print $5}' | sed -e 's/^"//' -e 's/"$//')
     SpdDownload=$(echo $speed | awk -F '","' 'NR==1 {print $6}' | sed -e 's/^"//' -e 's/"$//')
     SpdUpload=$(echo $speed | awk -F '","' 'NR==1 {print $7}' | sed -e 's/^"//' -e 's/"$//')
+    SpdDLLatency=$(echo $speed | awk -F '","' 'NR==1 {print $12}' | sed -e 's/^"//' -e 's/"$//')
+    SpdDLLatencyJt=$(echo $speed | awk -F '","' 'NR==1 {print $13}' | sed -e 's/^"//' -e 's/"$//')
+    SpdDLLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $14}' | sed -e 's/^"//' -e 's/"$//')
+    SpdDLLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $15}' | sed -e 's/^"//' -e 's/"$//')
+    SpdULLatency=$(echo $speed | awk -F '","' 'NR==1 {print $16}' | sed -e 's/^"//' -e 's/"$//')
+    SpdULLatencyJt=$(echo $speed | awk -F '","' 'NR==1 {print $17}' | sed -e 's/^"//' -e 's/"$//')
+    SpdULLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $18}' | sed -e 's/^"//' -e 's/"$//')
+    SpdULLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $19}' | sed -e 's/^"//' -e 's/"$//')
 
     if [ $SpdDownload -eq 0 ]; then SpdDownload=1; fi
     if [ $SpdUpload -eq 0 ]; then SpdUpload=1; fi
@@ -1585,10 +1625,20 @@ DisplaySpdtst () {
     { echo 'SpdDate="'"$SpdDate"'"'
       echo 'SpdServer="'"$SpdServer"'"'
       echo 'SpdLatency='$SpdLatency
+      echo 'SpdLatencyLo='$SpdLatencyLo
+      echo 'SpdLatencyHi='$SpdDLLatencyHi
       echo 'SpdJitter='$SpdJitter
       echo 'SpdPacketLoss='$SpdPacketLoss
       echo 'SpdDownload='$SpdDownload
       echo 'SpdUpload='$SpdUpload
+      echo 'SpdDLLatency='$SpdDLLatency
+      echo 'SpdDLLatencyJt='$SpdDLLatencyJt
+      echo 'SpdDLLatencyLo='$SpdDLLatencyLo
+      echo 'SpdDLLatencyHi='$SpdDLLatencyHi
+      echo 'SpdULLatency='$SpdULLatency
+      echo 'SpdULLatencyJt='$SpdULLatencyJt
+      echo 'SpdULLatencyLo='$SpdULLatencyLo
+      echo 'SpdULLatencyHi='$SpdULLatencyHi
     } > $SPDRESPATH
     printf "${CGreen}\r"
     QueueSpdtst=0
@@ -1604,15 +1654,21 @@ DisplaySpdtst () {
   #SpdServer="Your Local Test Server name/location"
   echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate Speedtest${CClear}"
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Date       ${CGreen}[ ${CCyan}$SpdDate${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Server     ${CGreen}[ ${CCyan}$SpdServer${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Date         ${CGreen}[ ${CCyan}$SpdDate${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Server       ${CGreen}[ ${CCyan}$SpdServer${CClear}"
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Latency    ${CGreen}[ ${CCyan}$SpdLatency (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Jitter     ${CGreen}[ ${CCyan}$SpdJitter (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}PacketLoss ${CGreen}[ ${CCyan}$SpdPacketLoss (%)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Idle Latency ${CGreen}[ ${CCyan}$SpdLatency (ms) ${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdLatencyLo (ms) ${CGreen}| High: ${CCyan}$SpdLatencyHi (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Idle Jitter  ${CGreen}[ ${CCyan}$SpdJitter (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}PacketLoss   ${CGreen}[ ${CCyan}$SpdPacketLoss (%)${CClear}"
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Download   ${CGreen}[ ${CCyan}$SpdDownload (Mbps)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Upload     ${CGreen}[ ${CCyan}$SpdUpload (Mbps)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Download     ${CGreen}[ ${CCyan}$SpdDownload (Mbps)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency: ${CCyan}$SpdDLLatency (ms)${CGreen} | Jitter: ${CCyan}$SpdDLLatencyJt (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdDLLatencyLo (ms) ${CGreen}| Hi: ${CCyan}$SpdDLLatencyHi (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Upload       ${CGreen}[ ${CCyan}$SpdUpload (Mbps)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency: ${CCyan}$SpdULLatency (ms)${CGreen} | Jitter: ${CCyan}$SpdULLatencyJt (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdULLatencyLo (ms) ${CGreen}| Hi: ${CCyan}$SpdULLatencyHi (ms)${CClear}"
   echo ""
   preparebar 35 "|"
   progressbar $SpdDownload $MaxSpeedInet " DL vs WAN " "Mbps" "Reverse" $SpdDownload $MaxSpeedInet
@@ -2797,7 +2853,7 @@ DisplayPage6 () {
       ScreenSess=$(screen -ls | grep "rtrmon" | awk '{print $1}' | cut -d . -f 1)
       if [ -z $ScreenSess ]; then
         clear
-        echo -e "${CGreen}Executing RTRMON using the SCREEN utility...${CClear}"
+        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
         echo ""
         echo -e "${CCyan}IMPORTANT:${CClear}"
         echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
@@ -2813,7 +2869,7 @@ DisplayPage6 () {
         exit 0
       else
         clear
-        echo -e "${CGreen}Connecting to existing RTRMON SCREEN session...${CClear}"
+        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
         echo ""
         echo -e "${CCyan}IMPORTANT:${CClear}"
         echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
@@ -3148,6 +3204,7 @@ while true; do
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
 
   # Get fresh VPN stats
+  echo ""
   vpn=0
   while [ $vpn -ne 5 ]; do
     vpn=$(($vpn+1))
@@ -3155,6 +3212,7 @@ while true; do
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
+      printf "${CGreen}\r[Refreshing Stats...]"
       NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
@@ -3180,6 +3238,7 @@ while true; do
           if [ $VPN2State -eq 2 ]; then
             TUN2="tun1"$vpn2
             NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
+            printf "${CGreen}\r[Refreshing Stats...]"
             NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
             if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
@@ -3238,8 +3297,11 @@ while true; do
 
   fi
 
+  printf "${CGreen}\r                     "
+  printf "${CGreen}\r"
+
   # Run through the stats gathering loop based on the current interval
-  echo ""
+  #echo ""
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
