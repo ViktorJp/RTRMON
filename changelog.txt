@@ -3,7 +3,7 @@ v1.49     - (December 7, 2022)
             based speedtest executable) from v1.1.1 to v1.2.0. In order to update to the latest version, please visit the
             RTRMON config, disable/uninstall Speedtest, and re-enable/install it again. This will cause RTRMON to uninstall the
             old version, and download/install the new version. Thanks for the heads-up, @Matthew Patrick!
-          - CHANGED: As as results of the new Speedtest CLI, page 4 has been significantly modified to show additional
+          - CHANGED: As as result of the new Speedtest CLI, page 4 has been significantly modified to show additional
             information as low/high idle, download and upload latencies as well as download and upload jitter, hopefully giving
             you a better idea on bufferbloat.
           - CHANGED: Modified the minimalist progress bar to show "[Selection? X]", indicating when it is acceptable to use a
