@@ -667,7 +667,7 @@ vconfig () {
                 echo 'WANOverride="'"$WANOverride"'"'
               } > $CFGPATH
               echo ""
-              echo -e "${CCyan} Applying config changes to RTRMON..."
+              echo -e "${CCyan}Applying config changes to RTRMON..."
               echo -e "$(date) - RTRMON - Successfully wrote a new config file" >> $LOGFILE
               sleep 3
               return
