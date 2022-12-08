@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.49 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.50 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.49"
+Version="1.50"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1626,7 +1626,7 @@ DisplaySpdtst () {
       echo 'SpdServer="'"$SpdServer"'"'
       echo 'SpdLatency='$SpdLatency
       echo 'SpdLatencyLo='$SpdLatencyLo
-      echo 'SpdLatencyHi='$SpdDLLatencyHi
+      echo 'SpdLatencyHi='$SpdLatencyHi
       echo 'SpdJitter='$SpdJitter
       echo 'SpdPacketLoss='$SpdPacketLoss
       echo 'SpdDownload='$SpdDownload
@@ -1659,6 +1659,7 @@ DisplaySpdtst () {
   echo ""
   echo -e "${InvCyan} ${CClear} ${CCyan}Idle Latency ${CGreen}[ ${CCyan}$SpdLatency (ms) ${CClear}"
   echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdLatencyLo (ms) ${CGreen}| High: ${CCyan}$SpdLatencyHi (ms)${CClear}"
+  echo -e "${InvCyan} ${CClear}"
   echo -e "${InvCyan} ${CClear} ${CCyan}Idle Jitter  ${CGreen}[ ${CCyan}$SpdJitter (ms)${CClear}"
   echo -e "${InvCyan} ${CClear} ${CCyan}PacketLoss   ${CGreen}[ ${CCyan}$SpdPacketLoss (%)${CClear}"
   echo ""
