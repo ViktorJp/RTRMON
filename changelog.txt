@@ -1,6 +1,7 @@
-v1.51     - (TBA)
-          - FIXED: Some logic was causing issues pulling up the NVRAM stats, and am guessing there was a difference between the
-            way 386 did it vs. 388. This fix should be backwards compatible, and am now also testing things on my old AC86U.
+v1.51     - (December 31, 2022)
+          - FIXED: Some logic was causing issues pulling up the NVRAM stats and causing a "malformed ?: operator" full-stop. I
+            am guessing there was a difference between the way 386 reported these stats vs. 388. This fix should be backwards
+            compatible, and was able to test it continues to work on the old AC86U running 386.7_2.
 
 v1.50     - (December 7, 2022) HOTFIX
           - FIXED: Due to a variable name that was already being used, one of the UI figures was being misreported for the new
