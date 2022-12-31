@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.50 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.51 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.50"
+Version="1.51"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -436,7 +436,7 @@ vconfig () {
 
             7) # -----------------------------------------------------------------------------------------
               echo ""
-              if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+              if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
                 echo -e "${CCyan}7. What is your maximum realistic 6Ghz speed in Mbps?"
                 echo -e "${CYellow}(Default = 920)${CClear}"
                 read -p 'Max 6Ghz Speed (Mbps): ' MaxSpeed6Ghz1
@@ -1207,12 +1207,12 @@ oldstats () {
   oldw5txmbrate=$w5txmbrate
   oldw24temp=$w24temp
   oldw5temp=$w5temp
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     oldw52rxmbrate=$w52rxmbrate
     oldw52txmbrate=$w52txmbrate
     oldw52temp=$w52temp
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
     oldw6rxmbrate=$w6rxmbrate
     oldw6txmbrate=$w6txmbrate
     oldw6temp=$w6temp
@@ -1235,11 +1235,11 @@ oldstats () {
   oldw24txmbratedisplay=$w24txmbratedisplay
   oldw5rxmbratedisplay=$w5rxmbratedisplay
   oldw5txmbratedisplay=$w5txmbratedisplay
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     oldw52rxmbratedisplay=$w52rxmbratedisplay
     oldw52txmbratedisplay=$w52txmbratedisplay
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
     oldw6rxmbratedisplay=$w6rxmbratedisplay
     oldw6txmbratedisplay=$w6txmbratedisplay
   fi
@@ -1294,7 +1294,7 @@ calculatestats () {
     totalmemory=$((($memused1 + $memfree1) / 1024 ))
 
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
-    eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
+    nvramtotals=$($timeoutcmd$timeoutsec nvram show | grep size: | awk '{print $2, $4}') >/tmp/output.txt 2> /tmp/size.txt
     chmod 755 /tmp/size.txt
     nvramtotals=$(awk '{print $2, $4}' /tmp/size.txt 2>/dev/null)
     nvramused="$(echo $nvramtotals | awk '{print $1}')"
@@ -1319,7 +1319,7 @@ calculatestats () {
     swapused="$(echo $swap_use | awk '{print $2}')"
     swaptotal="$(($swaptotal / 1024))"
     swapused="$(($swapused / 1024))"
-    if [ $swaptotal == "0" ]; then swaptotal=100; fi
+    if [ "$swaptotal" == "0" ]; then swaptotal=100; fi
 
   # Network - WAN/LAN/DNS IP Addresses
     wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
@@ -1395,8 +1395,8 @@ calculatestats () {
     if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
-    if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
-    if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
+    if [ "$dns1ip" == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
+    if [ "$dns2ip" == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
     if [ "$vpnon" == "False" ]; then vpnip="0.0.0.0"; fi
     if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
 
@@ -1414,13 +1414,13 @@ calculatestats () {
     w5temp=$(awk -v v1=$w5tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
 
     # Tri or Quad Band 5GHz
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
       if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=1; fi
       w52temp=$(awk -v v1=$w52tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
     # Tri or Quad-Band 6GHz
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
       w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
       if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=1; fi
       w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
@@ -1434,12 +1434,12 @@ calculatestats () {
     new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
 
     # Tri or Quad Band 5GHz
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
       new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
     fi
     # Tri or Quad Band 6GHz
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
       new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
       new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
     fi
@@ -1449,7 +1449,7 @@ calculatestats () {
     newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
 
   # Network - WAN - Traffic
-    if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+    if [ "$WANOverride" == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
     newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
 
@@ -1494,11 +1494,11 @@ calculatestats () {
     diff5txbytes=$(awk -v new=$new5txbytes -v old=$old5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     difflanrxbytes=$(awk -v new=$newlanrxbytes -v old=$oldlanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     difflantxbytes=$(awk -v new=$newlantxbytes -v old=$oldlantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       diff52rxbytes=$(awk -v new=$new52rxbytes -v old=$old52rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff52txbytes=$(awk -v new=$new52txbytes -v old=$old52txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
       diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
@@ -1520,11 +1520,11 @@ calculatestats () {
     w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
     lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
       w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
@@ -1544,11 +1544,11 @@ calculatestats () {
     w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
     lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
-    if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
       w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
@@ -1591,7 +1591,7 @@ DisplaySpdtst () {
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
     printf "${CGreen}\r[Initializing Speedtest]"
-    if [ $spdtestsvrID == "0" ]; then
+    if [ "$spdtestsvrID" == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     else
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
@@ -1765,9 +1765,9 @@ DisplayPage2 () {
   echo -e "${CGreen} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
   if [ ! -z $oldwanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}WAN 0/1 I6 ${CGreen}[ ${CCyan}$oldwanip6${CClear}"; fi
   echo -en "${InvCyan} ${CClear} ${CCyan}WAN DNS IP ${CGreen}[ ${CCyan}"
-  if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
+  if [ "$olddns1ip" = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
   echo -en " / "
-  if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
+  if [ "$olddns2ip" = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
   echo -e "${CGreen} ]${CClear}"
   preparebar 35 "|"
   progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
@@ -1885,7 +1885,7 @@ DisplayPage3 () {
   else
     echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed5Ghz" != "0" ]; then
       echo ""
       echo ""
@@ -1903,7 +1903,7 @@ DisplayPage3 () {
       echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (2) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
     fi
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
     if [ "$MaxSpeed6Ghz" != "0" ]; then
       echo ""
       echo ""
@@ -2740,13 +2740,13 @@ DisplayPage6 () {
   ThreeBand2456="False"
   ThreeBand2455="False"
   [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-  if [ $RouterModel == "GT-AXE16000" ]; then
+  if [ "$RouterModel" == "GT-AXE16000" ]; then
     FourBandCustomAXE16000="True"
   fi
-  if [ $RouterModel == "GT-AXE11000" ]; then
+  if [ "$RouterModel" == "GT-AXE11000" ]; then
     ThreeBand2456="True"
   fi
-  if [ $RouterModel == "GT-AX11000_PRO" ] || [ $RouterModel == "GT-AX11000" ] || [ $RouterModel == "ZenWiFi_Pro_XT12" ] || [ $RouterModel == "ZenWIFI_AX" ]; then
+  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ]; then
     ThreeBand2455="True"
   fi
 
@@ -2913,7 +2913,7 @@ DisplayPage6 () {
           fi
 
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
-            if [ $FourBandCustomAXE16000 == "True" ]; then
+            if [ "$FourBandCustomAXE16000" == "True" ]; then
               if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
                 MaxSpeed5Ghz=0
               fi
@@ -2926,7 +2926,7 @@ DisplayPage6 () {
               if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
                 MaxSpeed6Ghz=0
               fi
-            elif [ $ThreeBand2456 == "True" ]; then
+            elif [ "$ThreeBand2456" == "True" ]; then
               if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
                 MaxSpeed24Ghz=0
               fi
@@ -2936,7 +2936,7 @@ DisplayPage6 () {
               if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
                 MaxSpeed6Ghz=0
               fi
-            elif [ $ThreeBand2455 == "True" ]; then
+            elif [ "$ThreeBand2455" == "True" ]; then
               if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
                 MaxSpeed24Ghz=0
               fi
@@ -2982,21 +2982,21 @@ DisplayPage6 () {
   echo -e "$(date) - RTRMON - Initial Boot Sequence - Gathering Initial Stats..." >> $LOGFILE
 
 # Capture initial traffic and store current WAN/WiFi bytes stats
-  if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+  if [ "$WANOverride" == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
   if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
   oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
   oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
 
-  if [ $FourBandCustomAXE16000 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ]; then
     ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
     ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
     ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
-  elif [ $ThreeBand2456 == "True" ]; then
+  elif [ "$ThreeBand2456" == "True" ]; then
     ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
     ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
-  elif [ $ThreeBand2455 == "True" ]; then
+  elif [ "$ThreeBand2455" == "True" ]; then
     ifname24=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
     ifname52=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
@@ -3009,11 +3009,11 @@ DisplayPage6 () {
   old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
   old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
   old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
     old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
     old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
     old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
   fi
@@ -3193,11 +3193,11 @@ while true; do
   old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
   old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
   old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2455 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
     old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
   fi
-  if [ $FourBandCustomAXE16000 == "True" ] || [ $ThreeBand2456 == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
     old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
     old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
   fi
