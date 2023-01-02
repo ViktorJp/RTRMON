@@ -1,3 +1,8 @@
+v1.52     - (TBA)
+          - Thanks to @jtp10181 for identifying an issue with the free command, and have inserted an explicit call to /usr/bin/
+            free in case another version of free is present on the system returning invalid info.  Also added another catch to
+            make sure some value is present if it comes back null.
+
 v1.51     - (December 31, 2022)
           - FIXED: Some logic was causing issues pulling up the NVRAM stats and causing a "malformed ?: operator" full-stop. I
             am guessing there was a difference between the way 386 reported these stats vs. 388. This fix should be backwards
