@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.51 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.54 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.51"
+Version="1.54"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -96,6 +96,14 @@ displaycpusys1=0
 displaycpunice1=0
 displaycpuidle1=0
 displaycpuirq1=0
+w24udsched="Scheduler Inactive"
+w5udsched="Scheduler Inactive"
+w52udsched="Scheduler Inactive"
+w6udsched="Scheduler Inactive"
+w24updown="UP"
+w5updown="UP"
+w52updown="UP"
+w6updown="UP"
 
 # Color variables
 CBlack="\e[1;30m"
@@ -1294,9 +1302,9 @@ calculatestats () {
     totalmemory=$((($memused1 + $memfree1) / 1024 ))
 
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
-    nvramtotals=$($timeoutcmd$timeoutsec nvram show | grep size: | awk '{print $2, $4}') >/tmp/output.txt 2> /tmp/size.txt
+    eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
     chmod 755 /tmp/size.txt
-    nvramtotals=$(awk '{print $2, $4}' /tmp/size.txt 2>/dev/null)
+    nvramtotals=$(cat /tmp/size.txt | grep size: | awk '{print $2, $4}' 2>/dev/null)
     nvramused="$(echo $nvramtotals | awk '{print $1}')"
     nvramfree="$(echo $nvramtotals | awk '{print $2}' | sed 's/[)(]//g')"
     if [ -z $nvramused ] || [ -z $nvramfree ]; then
@@ -1314,12 +1322,12 @@ calculatestats () {
     jffsused="$(($jffsused / 1024))"
 
   # Disk - Swap file
-    swap_use=$($timeoutcmd$timeoutsec free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
+    swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
     swaptotal="$(echo $swap_use | awk '{print $1}')"
     swapused="$(echo $swap_use | awk '{print $2}')"
     swaptotal="$(($swaptotal / 1024))"
     swapused="$(($swapused / 1024))"
-    if [ "$swaptotal" == "0" ]; then swaptotal=100; fi
+    if [ $swaptotal == "0" ]; then swaptotal=100; fi
 
   # Network - WAN/LAN/DNS IP Addresses
     wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
@@ -1395,8 +1403,8 @@ calculatestats () {
     if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
-    if [ "$dns1ip" == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
-    if [ "$dns2ip" == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
+    if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
+    if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
     if [ "$vpnon" == "False" ]; then vpnip="0.0.0.0"; fi
     if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
 
@@ -1426,6 +1434,41 @@ calculatestats () {
       w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
 
+  # Network - Wifi - Up/Down via Scheduler
+  if [ "$FourBandCustomAXE16000" == "True" ]; then
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl3_sched_v2) ]; then w24udsched="Scheduler[+]"; else w24udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w52udsched="Scheduler[+]"; else w52udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl2_sched_v2) ]; then w6udsched="Scheduler[+]"; else w6udsched="Scheduler[-]"; fi
+  elif [ "$ThreeBand2456" == "True" ]; then
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w24udsched="Scheduler[+]"; else w24udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl2_sched_v2) ]; then w6udsched="Scheduler[+]"; else w6udsched="Scheduler[-]"; fi
+  elif [ "$ThreeBand2455" == "True" ]; then
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w24udsched="Scheduler[+]"; else w24udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl2_sched_v2) ]; then w52udsched="Scheduler[+]"; else w52udsched="Scheduler[-]"; fi
+  else
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w24udsched="Scheduler[+]"; else w24udsched="Scheduler[-]"; fi
+    if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
+  fi
+
+  w24updown=$($timeoutcmd$timeoutsec wl -i $ifname24 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
+  w5updown=$($timeoutcmd$timeoutsec wl -i $ifname5 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
+  if [ -z "$w24updown" ]; then w24updown="UP"; fi
+  if [ -z "$w5updown" ]; then w5updown="UP"; fi
+
+  # Tri or Quad Band 5GHz
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    w52updown=$($timeoutcmd$timeoutsec wl -i $ifname52 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
+    if [ -z "$w52updown" ]; then w52updown="UP"; fi
+  fi
+  # Tri or Quad-Band 6GHz
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
+    w6updown=$($timeoutcmd$timeoutsec wl -i $ifname6 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
+    if [ -z $w6updown ]; then w6updown="UP"; fi
+  fi
+
   # Network - Wifi - Traffic
     # Standard Dual Band
     new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
@@ -1449,7 +1492,7 @@ calculatestats () {
     newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
 
   # Network - WAN - Traffic
-    if [ "$WANOverride" == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+    if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
     newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
 
@@ -1591,7 +1634,7 @@ DisplaySpdtst () {
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
     printf "${CGreen}\r[Initializing Speedtest]"
-    if [ "$spdtestsvrID" == "0" ]; then
+    if [ $spdtestsvrID == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     else
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
@@ -1765,9 +1808,9 @@ DisplayPage2 () {
   echo -e "${CGreen} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
   if [ ! -z $oldwanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}WAN 0/1 I6 ${CGreen}[ ${CCyan}$oldwanip6${CClear}"; fi
   echo -en "${InvCyan} ${CClear} ${CCyan}WAN DNS IP ${CGreen}[ ${CCyan}"
-  if [ "$olddns1ip" = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
+  if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
   echo -en " / "
-  if [ "$olddns2ip" = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
+  if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
   echo -e "${CGreen} ]${CClear}"
   preparebar 35 "|"
   progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
@@ -1855,7 +1898,11 @@ DisplayPage3 () {
   echo -e "${CGreen}/${CRed}WiFi${CClear}${CGreen}\_____________________________________________________________${CClear}"
   echo ""
   if [ "$MaxSpeed24Ghz" != "0" ]; then
-    echo -e "${InvCyan} ${CClear} ${CCyan}2.4GHz     ${CGreen}[ ${CCyan}Enabled                           ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+    if [ "$w24updown" == "UP" ]; then
+      echo -e "${InvCyan} ${CClear} ${CCyan}2.4GHz     ${CGreen}[ ${CCyan}Enabled - $w24udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+    else
+      echo -e "${InvCyan} ${CClear} ${CCyan}2.4GHz     ${CGreen}[ ${CCyan}Enabled - $w24udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+    fi
     preparebar 35 "|"
     progressbar $oldw24rxmbrate $MaxSpeed24Ghz " Avg 24G RX" "Mbps" "Standard" $oldw24rxmbratedisplay $MaxSpeed24Ghz
     echo ""
@@ -1872,7 +1919,11 @@ DisplayPage3 () {
   if [ "$MaxSpeed5Ghz" != "0" ]; then
     echo ""
     echo ""
-    echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (1) ${CGreen}[ ${CCyan}Enabled                           ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+    if [ "$w5updown" == "UP" ]; then
+      echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (1) ${CGreen}[ ${CCyan}Enabled - $w5udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+    else
+      echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (1) ${CGreen}[ ${CCyan}Enabled - $w5udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+    fi
     preparebar 35 "|"
     progressbar $oldw5rxmbrate $MaxSpeed5Ghz " Avg 5G1 RX" "Mbps" "Standard" $oldw5rxmbratedisplay $MaxSpeed5Ghz
     echo ""
@@ -1886,10 +1937,14 @@ DisplayPage3 () {
     echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
   fi
   if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    if [ "$MaxSpeed5Ghz" != "0" ]; then
+    if [ "$MaxSpeed52Ghz" != "0" ]; then
       echo ""
       echo ""
-      echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (2) ${CGreen}[ ${CCyan}Enabled                           ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+      if [ "$w52updown" == "UP" ]; then
+        echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (2) ${CGreen}[ ${CCyan}Enabled - $w52udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+      else
+        echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (2) ${CGreen}[ ${CCyan}Enabled - $w52udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+      fi
       preparebar 35 "|"
       progressbar $oldw52rxmbrate $MaxSpeed5Ghz " Avg 5G2 RX" "Mbps" "Standard" $oldw52rxmbratedisplay $MaxSpeed5Ghz
       echo ""
@@ -1907,7 +1962,11 @@ DisplayPage3 () {
     if [ "$MaxSpeed6Ghz" != "0" ]; then
       echo ""
       echo ""
-      echo -e "${InvCyan} ${CClear} ${CCyan}6.0GHz     ${CGreen}[ ${CCyan}Enabled                           ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+      if [ "$w52updown" == "UP" ]; then
+        echo -e "${InvCyan} ${CClear} ${CCyan}6.0GHz     ${CGreen}[ ${CCyan}Enabled - $w6udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+      else
+        echo -e "${InvCyan} ${CClear} ${CCyan}6.0GHz     ${CGreen}[ ${CCyan}Enabled - $w6udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+      fi
       preparebar 35 "|"
       progressbar $oldw6rxmbrate $MaxSpeed6Ghz " Avg 60G RX" "Mbps" "Standard" $oldw6rxmbratedisplay $MaxSpeed6Ghz
       echo ""
@@ -2740,13 +2799,13 @@ DisplayPage6 () {
   ThreeBand2456="False"
   ThreeBand2455="False"
   [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-  if [ "$RouterModel" == "GT-AXE16000" ]; then
+  if [ $RouterModel == "GT-AXE16000" ]; then
     FourBandCustomAXE16000="True"
   fi
-  if [ "$RouterModel" == "GT-AXE11000" ]; then
+  if [ $RouterModel == "GT-AXE11000" ]; then
     ThreeBand2456="True"
   fi
-  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ]; then
+  if [ $RouterModel == "GT-AX11000_PRO" ] || [ $RouterModel == "GT-AX11000" ] || [ $RouterModel == "ZenWiFi_Pro_XT12" ] || [ $RouterModel == "ZenWIFI_AX" ]; then
     ThreeBand2455="True"
   fi
 
@@ -2982,7 +3041,7 @@ DisplayPage6 () {
   echo -e "$(date) - RTRMON - Initial Boot Sequence - Gathering Initial Stats..." >> $LOGFILE
 
 # Capture initial traffic and store current WAN/WiFi bytes stats
-  if [ "$WANOverride" == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+  if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
   if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
   oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
   oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
