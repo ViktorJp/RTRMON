@@ -8,6 +8,10 @@ To-Do:
 * Reboot router if it fails regular diagnostics check/scheduler
 
 In Progress:
+------------
+
+Completed:
+----------
 * Snapshot of top bandwidth usage on br0 and eth* and vpn*
 * Allow user to pick own custom speedtest server by ID
 * maybe an option to disable the countdown bar? i find it distracting (@ugandy)
@@ -17,9 +21,6 @@ In Progress:
 * Show VPN traffic usage on WAN/LAN page
 * Add log events for boot, speedtest and vpn api calls
 * Force update (like in vpnmon-r2)
-
-Completed:
-----------
 * Add UDP open ports tab
 * WAN diagnostics/test page
 * Allow percentage results to indicate > 100%
