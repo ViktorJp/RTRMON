@@ -1,3 +1,7 @@
+v1.55     - (May 13, 2023)
+          - ADDED: Added functionality to the speedtest section to either test your WAN connection, or if one exists, your
+            VPN connection! Thanks to @Shades for the suggestion/idea! :)
+
 v1.54     - (January 3, 2023)
           - ADDED: Now giving more visibility to the status of the Wi-Fi scheduler, and showing whether or not the Wi-Fi is
             up or down based on the scheduler.  Please note, when the scheduler disables Wi-Fi for a certain time period, the
