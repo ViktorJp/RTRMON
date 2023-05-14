@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.54 - Asus-Merlin Router Monitor by Viktor Jaep, 2022
+# RTRMON v1.55 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.54"
+Version="1.55"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -65,6 +65,8 @@ spdtestsvrID=0
 ProgPref=0
 autorotate=0
 autorotateindicator="OFF"
+QueueSpdtst=0
+QueueVPNSpdtst=0
 vpn=0
 vpn2=0
 VPNState=0
@@ -1153,7 +1155,8 @@ if [ "$INITIALBOOT" == "0" ]; then
   if [ $key_press ]; then
       case $key_press in
           [Ss]) FromUI=1; (vsetup); source $CFGPATH; echo -e "${CGreen}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-          [Ii]) QueueSpdtst=1; echo -e "${CGreen}[Queuing Speedtest]                                                      "; sleep 1; clear; DisplayPage4; echo -e "\n";;
+          [Ii]) QueueSpdtst=1; echo -e "${CGreen}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; DisplayPage4; echo -e "\n";;
+          [Jj]) QueueVPNSpdtst=1; echo -e "${CGreen}[Queuing VPN Speedtest]                                                  "; sleep 1; clear; DisplayPage4; echo -e "\n";;
           [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
           [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
           [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}[Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
@@ -1662,11 +1665,13 @@ DisplaySpdtst () {
 
     SpdDownloadLog=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
     SpdUploadLog=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
+    SpdInterface=$WANIFNAME
 
     echo -e "$(date) - RTRMON - New Speedtest Results -- Down:$SpdDownloadLog Mbps | Up:$SpdUploadLog Mbps | Latency:$SpdLatency ms | Jitter:$SpdJitter ms | PacketLoss:$SpdPacketLoss %" >> $LOGFILE
 
     { echo 'SpdDate="'"$SpdDate"'"'
       echo 'SpdServer="'"$SpdServer"'"'
+      echo 'SpdInterface="'"$SpdInterface"'"'
       echo 'SpdLatency='$SpdLatency
       echo 'SpdLatencyLo='$SpdLatencyLo
       echo 'SpdLatencyHi='$SpdLatencyHi
@@ -1687,6 +1692,72 @@ DisplaySpdtst () {
     QueueSpdtst=0
   fi
 
+  if [ "$QueueVPNSpdtst" == "1" ]; then
+    #run VPN speedtest and save Results
+    if [ "$vpnon" == "True" ]; then
+      printf "${CGreen}\r[Initializing Speedtest]"
+      if [ $spdtestsvrID == "0" ]; then
+        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$vpn --accept-license --accept-gdpr 2>&1)"
+      else
+        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$vpn --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
+      fi
+      SpdDate=$(date)
+      SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
+      SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
+      SpdLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $20}' | sed -e 's/^"//' -e 's/"$//')
+      SpdLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $21}' | sed -e 's/^"//' -e 's/"$//')
+      SpdJitter=$(echo $speed | awk -F '","' 'NR==1 {print $4}' | sed -e 's/^"//' -e 's/"$//')
+      SpdPacketLoss=$(echo $speed | awk -F '","' 'NR==1 {print $5}' | sed -e 's/^"//' -e 's/"$//')
+      SpdDownload=$(echo $speed | awk -F '","' 'NR==1 {print $6}' | sed -e 's/^"//' -e 's/"$//')
+      SpdUpload=$(echo $speed | awk -F '","' 'NR==1 {print $7}' | sed -e 's/^"//' -e 's/"$//')
+      SpdDLLatency=$(echo $speed | awk -F '","' 'NR==1 {print $12}' | sed -e 's/^"//' -e 's/"$//')
+      SpdDLLatencyJt=$(echo $speed | awk -F '","' 'NR==1 {print $13}' | sed -e 's/^"//' -e 's/"$//')
+      SpdDLLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $14}' | sed -e 's/^"//' -e 's/"$//')
+      SpdDLLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $15}' | sed -e 's/^"//' -e 's/"$//')
+      SpdULLatency=$(echo $speed | awk -F '","' 'NR==1 {print $16}' | sed -e 's/^"//' -e 's/"$//')
+      SpdULLatencyJt=$(echo $speed | awk -F '","' 'NR==1 {print $17}' | sed -e 's/^"//' -e 's/"$//')
+      SpdULLatencyLo=$(echo $speed | awk -F '","' 'NR==1 {print $18}' | sed -e 's/^"//' -e 's/"$//')
+      SpdULLatencyHi=$(echo $speed | awk -F '","' 'NR==1 {print $19}' | sed -e 's/^"//' -e 's/"$//')
+
+      if [ $SpdDownload -eq 0 ]; then SpdDownload=1; fi
+      if [ $SpdUpload -eq 0 ]; then SpdUpload=1; fi
+
+      SpdDownloadLog=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
+      SpdUploadLog=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
+      SpdInterface="tun1$vpn"
+
+      echo -e "$(date) - RTRMON - New Speedtest Results -- Down:$SpdDownloadLog Mbps | Up:$SpdUploadLog Mbps | Latency:$SpdLatency ms | Jitter:$SpdJitter ms | PacketLoss:$SpdPacketLoss %" >> $LOGFILE
+
+      { echo 'SpdDate="'"$SpdDate"'"'
+        echo 'SpdServer="'"$SpdServer"'"'
+        echo 'SpdInterface="'"$SpdInterface"'"'
+        echo 'SpdLatency='$SpdLatency
+        echo 'SpdLatencyLo='$SpdLatencyLo
+        echo 'SpdLatencyHi='$SpdLatencyHi
+        echo 'SpdJitter='$SpdJitter
+        echo 'SpdPacketLoss='$SpdPacketLoss
+        echo 'SpdDownload='$SpdDownload
+        echo 'SpdUpload='$SpdUpload
+        echo 'SpdDLLatency='$SpdDLLatency
+        echo 'SpdDLLatencyJt='$SpdDLLatencyJt
+        echo 'SpdDLLatencyLo='$SpdDLLatencyLo
+        echo 'SpdDLLatencyHi='$SpdDLLatencyHi
+        echo 'SpdULLatency='$SpdULLatency
+        echo 'SpdULLatencyJt='$SpdULLatencyJt
+        echo 'SpdULLatencyLo='$SpdULLatencyLo
+        echo 'SpdULLatencyHi='$SpdULLatencyHi
+      } > $SPDRESPATH
+      printf "${CGreen}\r"
+      QueueVPNSpdtst=0
+
+    else 
+      printf "${CRed}\r[No valid VPN tunnel detected to run Speedtest on]${CClear}"
+      sleep 3
+      printf "${CRed}\r${CClear}"
+      QueueVPNSpdtst=0
+    fi
+  fi
+
   # Display previous results
   if [ $SpdDownload -eq 0 ]; then SpdDownload=1; fi
   if [ $SpdUpload -eq 0 ]; then SpdUpload=1; fi
@@ -1695,10 +1766,16 @@ DisplaySpdtst () {
   SpdUpload=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
 
   #SpdServer="Your Local Test Server name/location"
-  echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate Speedtest${CClear}"
+
+  if [ "$vpnon" == "True" ]; then
+    echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate WAN Speedtest / ${CRed}(J)${CGreen}Initiate VPN Speedtest${CClear}"
+  else
+    echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate WAN Speedtest${CClear}                                            "
+  fi
   echo ""
   echo -e "${InvCyan} ${CClear} ${CCyan}Date         ${CGreen}[ ${CCyan}$SpdDate${CClear}"
   echo -e "${InvCyan} ${CClear} ${CCyan}Server       ${CGreen}[ ${CCyan}$SpdServer${CClear}"
+  echo -e "${InvCyan} ${CClear} ${CCyan}Interface    ${CGreen}[ ${CCyan}$SpdInterface${CClear}"
   echo ""
   echo -e "${InvCyan} ${CClear} ${CCyan}Idle Latency ${CGreen}[ ${CCyan}$SpdLatency (ms) ${CClear}"
   echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdLatencyLo (ms) ${CGreen}| High: ${CCyan}$SpdLatencyHi (ms)${CClear}"
