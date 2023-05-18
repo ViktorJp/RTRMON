@@ -1,3 +1,7 @@
+v1.56     - (TBA)
+          - FIXED: There were a few instances of "Ghz" wording on the setup screen that now have been corrected to GHz. Many
+            thanks to @ColinTaylor for uncovering these unforgivable semantic errors.
+
 v1.55     - (May 13, 2023)
           - ADDED: Added functionality to the speedtest section to either test your WAN connection, or if one exists, your
             VPN connection! Thanks to @Shades for the suggestion/idea! :)
