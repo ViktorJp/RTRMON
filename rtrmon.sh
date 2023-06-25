@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.55 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
+# RTRMON v1.56 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.55"
+Version="1.56"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -355,12 +355,12 @@ vconfig () {
       echo -e "${InvDkGray}${CWhite}  2 ${CClear}${CCyan}: Max Internet D/L Speed (Mbps) :"${CGreen}$MaxSpeedInet
       echo -e "${InvDkGray}${CWhite}  3 ${CClear}${CCyan}: Max Internet U/L Speed (Mbps) :"${CGreen}$MaxSpeedInetUL
       echo -e "${InvDkGray}${CWhite}  4 ${CClear}${CCyan}: Max LAN Speed (Mbps)          :"${CGreen}$MaxSpeedLAN
-      echo -e "${InvDkGray}${CWhite}  5 ${CClear}${CCyan}: Max 2.4Ghz Speed (Mbps)       :"${CGreen}$MaxSpeed24Ghz
-      echo -e "${InvDkGray}${CWhite}  6 ${CClear}${CCyan}: Max 5Ghz Speed (Mbps)         :"${CGreen}$MaxSpeed5Ghz
+      echo -e "${InvDkGray}${CWhite}  5 ${CClear}${CCyan}: Max 2.4GHz Speed (Mbps)       :"${CGreen}$MaxSpeed24Ghz
+      echo -e "${InvDkGray}${CWhite}  6 ${CClear}${CCyan}: Max 5GHz Speed (Mbps)         :"${CGreen}$MaxSpeed5Ghz
       if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
-        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CCyan}: Max 6Ghz Speed (Mbps)         :"${CGreen}$MaxSpeed6Ghz
+        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CCyan}: Max 6GHz Speed (Mbps)         :"${CGreen}$MaxSpeed6Ghz
       else
-        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CDkGray}: Max 6Ghz Speed (Mbps)         :${CDkGray}N/A"
+        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CDkGray}: Max 6GHz Speed (Mbps)         :${CDkGray}N/A"
       fi
       echo -e "${InvDkGray}${CWhite}  8 ${CClear}${CCyan}: Temperature Units (C/F/K)     :"${CGreen}$TempUnits
       echo -en "${InvDkGray}${CWhite}  9 ${CClear}${CCyan}: Enable Ookla Speedtest? (Y/N) :"${CGreen}
@@ -428,7 +428,7 @@ vconfig () {
 
             5) # -----------------------------------------------------------------------------------------
               echo ""
-              echo -e "${CCyan}5. What is your maximum realistic 2.4Ghz speed in Mbps?"
+              echo -e "${CCyan}5. What is your maximum realistic 2.4GHz speed in Mbps?"
               echo -e "${CYellow}(Default = 450)${CClear}"
               read -p 'Max 2.4Ghz Speed (Mbps): ' MaxSpeed24Ghz1
               MaxSpeed24Ghz2=$(echo $MaxSpeed24Ghz1 | tr -d -c 0-9)
@@ -437,7 +437,7 @@ vconfig () {
 
             6) # -----------------------------------------------------------------------------------------
               echo ""
-              echo -e "${CCyan}6. What is your maximum realistic 5Ghz speed in Mbps?"
+              echo -e "${CCyan}6. What is your maximum realistic 5GHz speed in Mbps?"
               echo -e "${CYellow}(Default = 780)${CClear}"
               read -p 'Max 5Ghz Speed (Mbps): ' MaxSpeed5Ghz1
               MaxSpeed5Ghz2=$(echo $MaxSpeed5Ghz1 | tr -d -c 0-9)
@@ -447,7 +447,7 @@ vconfig () {
             7) # -----------------------------------------------------------------------------------------
               echo ""
               if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
-                echo -e "${CCyan}7. What is your maximum realistic 6Ghz speed in Mbps?"
+                echo -e "${CCyan}7. What is your maximum realistic 6GHz speed in Mbps?"
                 echo -e "${CYellow}(Default = 920)${CClear}"
                 read -p 'Max 6Ghz Speed (Mbps): ' MaxSpeed6Ghz1
                 MaxSpeed6Ghz2=$(echo $MaxSpeed6Ghz1 | tr -d -c 0-9)
@@ -769,6 +769,7 @@ vupdate () {
       echo -e "${CCyan}This will overwrite your local copy with the current build.${CClear}"
       if promptyn "(y/n): "; then
         echo ""
+        echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
         curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
         echo ""
@@ -791,6 +792,7 @@ vupdate () {
     else
       echo -e "${CCyan}Score! There is a new version out there! Would you like to update?${CClear}"
       if promptyn " (y/n): "; then
+        echo ""
         echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
         curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
@@ -1750,7 +1752,7 @@ DisplaySpdtst () {
       printf "${CGreen}\r"
       QueueVPNSpdtst=0
 
-    else 
+    else
       printf "${CRed}\r[No valid VPN tunnel detected to run Speedtest on]${CClear}"
       sleep 3
       printf "${CRed}\r${CClear}"
@@ -2876,10 +2878,10 @@ DisplayPage6 () {
   ThreeBand2456="False"
   ThreeBand2455="False"
   [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-  if [ $RouterModel == "GT-AXE16000" ]; then
+  if [ $RouterModel == "GT-AXE16000" ]; then # || [ $RouterModel == "GT-BE98" ]; then
     FourBandCustomAXE16000="True"
   fi
-  if [ $RouterModel == "GT-AXE11000" ]; then
+  if [ $RouterModel == "GT-AXE11000" ]; then # || [ $RouterModel == "RT-BE96U"]; then
     ThreeBand2456="True"
   fi
   if [ $RouterModel == "GT-AX11000_PRO" ] || [ $RouterModel == "GT-AX11000" ] || [ $RouterModel == "ZenWiFi_Pro_XT12" ] || [ $RouterModel == "ZenWIFI_AX" ]; then
