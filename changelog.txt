@@ -1,4 +1,4 @@
-v1.56     - (TBA)
+v1.56     - (June 24, 2023)
           - FIXED: There were a few instances of "Ghz" wording on the setup screen that now have been corrected to GHz. Many
             thanks to @ColinTaylor for uncovering these unforgivable semantic errors.
 
