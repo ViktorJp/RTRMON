@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.56 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
+# RTRMON v1.57 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.56"
+Version="1.57"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1348,6 +1348,7 @@ calculatestats () {
     while [ $vpn -ne 5 ]; do
       vpn=$(($vpn+1))
       VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+      if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
       if [ $VPNState -eq 2 ]; then
         TUN="tun1"$vpn
         NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
@@ -3162,6 +3163,7 @@ DisplayPage6 () {
   while [ $vpn -ne 5 ]; do
     vpn=$(($vpn+1))
     VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
@@ -3348,6 +3350,7 @@ while true; do
   while [ $vpn -ne 5 ]; do
     vpn=$(($vpn+1))
     VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
