@@ -1,3 +1,8 @@
+v1.57     - (September 12, 2023)
+          - FIXED: Issue where on certain routers, whether it was a new install, or perhaps openvpn was never configured, or
+            perhaps only wireguard was being used, needless to say, the NVRAM variables for all 5 openvpn slots were returning
+            null values, instead of an expected 0.  Now assumes a zero if it returns null.
+
 v1.56     - (June 24, 2023)
           - FIXED: There were a few instances of "Ghz" wording on the setup screen that now have been corrected to GHz. Many
             thanks to @ColinTaylor for uncovering these unforgivable semantic errors.
