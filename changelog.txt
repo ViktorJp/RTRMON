@@ -1,3 +1,7 @@
+v1.58     - (TBA)
+          - FIXED: Issue where RTRMON would be returning invalid operand errors due to null vpnclient state entries in NVRAM.
+            Used @Martinski's excellent function to catch for these now.
+
 v1.57     - (September 12, 2023)
           - FIXED: Issue where on certain routers, whether it was a new install, or perhaps openvpn was never configured, or
             perhaps only wireguard was being used, needless to say, the NVRAM variables for all 5 openvpn slots were returning
