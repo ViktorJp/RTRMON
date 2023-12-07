@@ -1,4 +1,4 @@
-v1.58     - (TBA)
+v1.58     - (December 7, 2023)
           - FIXED: Issue where RTRMON would be returning invalid operand errors due to null vpnclient state entries in NVRAM.
             Used @Martinski's excellent function to catch for these now.
 
