@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.57 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
+# RTRMON v1.58 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.57"
+Version="1.58"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1347,7 +1347,7 @@ calculatestats () {
     vpn=0
     while [ $vpn -ne 5 ]; do
       vpn=$(($vpn+1))
-      VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+      VPNState="$(_VPN_GetClientState_ ${vpn})"
       if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
       if [ $VPNState -eq 2 ]; then
         TUN="tun1"$vpn
@@ -1372,7 +1372,7 @@ calculatestats () {
           vpn2=$vpn
           while [ $vpn2 -ne 5 ]; do
             vpn2=$(($vpn2+1))
-            VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+            VPN2State="$(_VPN_GetClientState_ ${vpn2})"
             if [ $VPN2State -eq 2 ]; then
               TUN2="tun1"$vpn2
               NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
@@ -2858,6 +2858,20 @@ DisplayPage6 () {
 
 }
 
+# -------------------------------------------------------------------------------------------------------------------------
+# VPN_GetClientState was created by @Martinski in many thanks to trying to eliminate unknown operand errors due to null
+# vpn_clientX_state values
+
+_VPN_GetClientState_()
+{
+    if [ $# -lt 1 ] || [ -z "$1" ] || ! echo "$1" | grep -qE "^[1-5]$"
+    then echo "**ERROR**" ; return 1 ; fi
+
+    local nvramVal="$($timeoutcmd$timeoutsec nvram get "vpn_client${1}_state")"
+    if [ -z "$nvramVal" ] || ! echo "$nvramVal" | grep -qE "^[0-9]$"
+    then echo "0" ; else echo "$nvramVal" ; fi
+    return 0
+}
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Begin Commandline Argument Gatekeeper and Configuration Utility Functionality
@@ -3162,7 +3176,7 @@ DisplayPage6 () {
   vpn=0
   while [ $vpn -ne 5 ]; do
     vpn=$(($vpn+1))
-    VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    VPNState="$(_VPN_GetClientState_ ${vpn})"
     if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn
@@ -3188,7 +3202,7 @@ DisplayPage6 () {
         vpn2=$vpn
         while [ $vpn2 -ne 5 ]; do
           vpn2=$(($vpn2+1))
-          VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+          VPN2State="$(_VPN_GetClientState_ ${vpn2})"
           if [ $VPN2State -eq 2 ]; then
             TUN2="tun1"$vpn2
             NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
@@ -3349,7 +3363,7 @@ while true; do
   vpn=0
   while [ $vpn -ne 5 ]; do
     vpn=$(($vpn+1))
-    VPNState=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn}_state)
+    VPNState="$(_VPN_GetClientState_ ${vpn})"
     if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn
@@ -3376,7 +3390,7 @@ while true; do
         vpn2=$vpn
         while [ $vpn2 -ne 5 ]; do
           vpn2=$(($vpn2+1))
-          VPN2State=$($timeoutcmd$timeoutsec nvram get vpn_client${vpn2}_state)
+          VPN2State="$(_VPN_GetClientState_ ${vpn2})"
           if [ $VPN2State -eq 2 ]; then
             TUN2="tun1"$vpn2
             NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
