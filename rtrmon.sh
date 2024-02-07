@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.58 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2023
+# RTRMON v1.6.2 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.58"
+Version="1.6.2"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -771,17 +771,13 @@ vupdate () {
         echo ""
         echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "${CCyan}Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
         echo ""
-        echo -e "${CYellow}Please exit, restart and configure new options using: 'rtrmon.sh -config'.${CClear}"
-        echo -e "${CYellow}NOTE: New features may have been added that require your input to take${CClear}"
-        echo -e "${CYellow}advantage of its full functionality.${CClear}"
-        echo ""
         read -rsp $'Press any key to continue...\n' -n1 key
-        return
+        exec sh /jffs/scripts/rtrmon.sh -monitor
       else
         echo ""
         echo ""
@@ -795,17 +791,13 @@ vupdate () {
         echo ""
         echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod a+rx "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "${CCyan}Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
         echo ""
-        echo -e "${CYellow}Please exit, restart and configure new options using: 'rtrmon -config'.${CClear}"
-        echo -e "${CYellow}NOTE: New features may have been added that require your input to take${CClear}"
-        echo -e "${CYellow}advantage of its full functionality.${CClear}"
-        echo ""
         read -rsp $'Press any key to continue...\n' -n1 key
-        return
+        exec sh /jffs/scripts/rtrmon.sh -monitor
       else
         echo ""
         echo ""
@@ -2193,7 +2185,8 @@ DisplayPage5 () {
     echo ""
 
     printf "${InvCyan} ${CClear} ${CCyan}SSL Handshake Test... ${CYellow}[Checking]     ${CClear}"
-      SSL_STATE="$(nc -w1 8.8.8.8 443 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
+      #SSL_STATE="$(nc -w3 8.8.8.8 443 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
+      SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
         printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
@@ -2948,6 +2941,7 @@ _VPN_GetClientState_()
     echo "rtrmon.sh -uninstall"
     echo "rtrmon.sh -screen"
     echo "rtrmon.sh -monitor"
+    echo "rtrmon.sh -screen/-monitor X"
     echo ""
     echo " -h | -help (this output)"
     echo " -log (display the current log contents)"
@@ -2957,6 +2951,7 @@ _VPN_GetClientState_()
     echo " -uninstall (uninstall utility)"
     echo " -screen (normal router monitoring using the screen utility)"
     echo " -monitor (normal router monitoring operations)"
+    echo " -screen/-monitor X (X = display screen 1-6 on execution)"
     echo ""
     echo -e "${CClear}"
     exit 0
@@ -3013,7 +3008,11 @@ _VPN_GetClientState_()
         echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
         echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
         echo ""
-        screen -dmS "rtrmon" $APPPATH -monitor
+        if [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+          screen -dmS "rtrmon" $APPPATH -monitor $2
+        else
+          screen -dmS "rtrmon" $APPPATH -monitor
+        fi
         sleep 2
         echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
         echo -e "${CClear}"
@@ -3063,6 +3062,10 @@ _VPN_GetClientState_()
           if [ ! -d "/root/.config/ookla" ]; then
             mkdir -p "/root/.config/ookla"
             cp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
+          fi
+
+          if [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+            NextPage="$2"
           fi
 
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
