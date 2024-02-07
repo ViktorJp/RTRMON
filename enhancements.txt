@@ -3,7 +3,6 @@ Future Enhancements (Possible/Planned)
 
 To-Do:
 ------
-* Go direct to pages 1-5 (Stephen Harrington)
 * Startup on a certain page (Stephen Harrington)
 * Reboot router if it fails regular diagnostics check/scheduler
 * Possible integration with ModMon NVRAM checker (JGrana)
@@ -13,6 +12,7 @@ In Progress:
 
 Completed:
 ----------
+* Go direct to pages 1-5 (Stephen Harrington)
 * Implement the exec command to apply changes immediately per @thelonelycoder
 * Speedtest VPN connection in addition to WAN
 * Snapshot of top bandwidth usage on br0 and eth* and vpn*
