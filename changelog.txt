@@ -1,3 +1,13 @@
+v1.5.10   - (February 7, 2024)
+          - PATCH: Changed the versioning logic to align with the general accepted way of versioning, using the notation:
+            major.minor.patch ... finally, right? After seeing @thelonelycoder changing his ways, I figured it was probably
+            time for me as well. All my scripts moving forward will go this route. Change log wording is now changed to
+            conform to the major/minor/patch standards. So previously, FIXED now conforms to PATCH, ADDED conforms to MINOR,
+            and MAJOR stays the same!
+          - PATCH: Updated the NC statement that runs the SSL Handshake test under the Diagnostics menu. For some reason,
+            something changed on possibly Google's end, yielding a failure each time. Now utilizing the same modified SSL
+            Handshake statement carried over from VPNMON-R3 which is coming back successful.
+
 v1.58     - (December 7, 2023)
           - FIXED: Issue where RTRMON would be returning invalid operand errors due to null vpnclient state entries in NVRAM.
             Used @Martinski's excellent function to catch for these now.
