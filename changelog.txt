@@ -6,11 +6,12 @@ v1.6.2   - (February 7, 2024)
             and MAJOR stays the same!
           - PATCH: Updated the NC statement that runs the SSL Handshake test under the Diagnostics menu. For some reason,
             something changed on possibly Google's end, yielding a failure each time. Now utilizing the same modified SSL
-            Handshake statement carried over from VPNMON-R3 which is coming back successful.
+            Handshake statement carried over from VPNMON-R3 which is coming back successful. Thanks to @Makaveli for the
+            heads-up!
           - MINOR: Added new functionality that allows you to start on a specific page. A very old request from @Stephen
-            Harrington! Thank you! :) You can make use of this functionilty by specifying a page number (1-6) after you execute
-            RTRMON using the -monitor or -screen function switch. (Example: rtrmon -monitor 2) This would execute RTRMON, and
-            will start on the 2nd page (network bandwidth/usage stats). Enjoy!
+            Harrington! Thank you! :) You can make use of this functionality by specifying a page number (1-6) after you
+            execute RTRMON using the -monitor or -screen function switch. (Example: rtrmon -monitor 2) This would execute
+            RTRMON, and will start on the 2nd page (network bandwidth/usage stats). Enjoy!
 
 v1.58     - (December 7, 2023)
           - FIXED: Issue where RTRMON would be returning invalid operand errors due to null vpnclient state entries in NVRAM.
