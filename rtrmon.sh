@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.2 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.6.3 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -35,7 +35,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.2"
+Version="1.6.3"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -2006,6 +2006,8 @@ DisplayPage3 () {
     converttemps $oldw5temp
     progressbar $currenttemp $currentrange " 5G-1 Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
+    echo ""
+    echo ""
     echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
   fi
   if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
@@ -2049,6 +2051,8 @@ DisplayPage3 () {
       converttemps $oldw6temp
       progressbar $currenttemp $currentrange " 6.0G Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
+      echo ""
+      echo ""
       echo -e "${InvCyan} ${CClear}${CCyan} 6.0GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
     fi
   fi
@@ -3008,7 +3012,9 @@ _VPN_GetClientState_()
         echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
         echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
         echo ""
-        if [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+        if [ -z $2 ]; then
+        	screen -dmS "rtrmon" $APPPATH -monitor
+        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
           screen -dmS "rtrmon" $APPPATH -monitor $2
         else
           screen -dmS "rtrmon" $APPPATH -monitor
