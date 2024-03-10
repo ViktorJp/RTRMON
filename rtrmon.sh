@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.3 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.6.4 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -15,27 +15,9 @@
 # Please use the 'rtrmon.sh -setup' to configure the necessary parameters that match your environment the best!
 #
 # -------------------------------------------------------------------------------------------------------------------------
-# Shellcheck exclusions
-# -------------------------------------------------------------------------------------------------------------------------
-# shellcheck disable=SC2034
-# shellcheck disable=SC3037
-# shellcheck disable=SC2162
-# shellcheck disable=SC3045
-# shellcheck disable=SC2183
-# shellcheck disable=SC2086
-# shellcheck disable=SC3014
-# shellcheck disable=SC2059
-# shellcheck disable=SC2002
-# shellcheck disable=SC2004
-# shellcheck disable=SC3028
-# shellcheck disable=SC2140
-# shellcheck disable=SC3046
-# shellcheck disable=SC1090
-#
-# -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.3"
+Version="1.6.4"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1800,11 +1782,9 @@ DisplayPage1 () {
   logo
     if [ "$UpdateNotify" != "0" ]; then
       echo -e "${CRed}  $UpdateNotify${CClear}"
-      echo -e "${CGreen} ___${CClear}"
-    else
-      echo -e "${CGreen} ___${CClear}"
     fi
-  echo -e "${CGreen}/${CRed}CPU${CClear}${CGreen}\______________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} CPU                                                               ${CClear}"
   echo ""
   echo -e "${InvCyan} ${CClear} ${CCyan}Uptime     ${CGreen}[         ${CCyan}$uptime${CGreen}          ]${CClear}"
   echo -e "${InvCyan} ${CClear} ${CCyan}CPU Load   ${CGreen}[   1m: ${CCyan}$cpuload1m  ${CGreen}5m: ${CCyan}$cpuload5m  ${CGreen}15m: ${CCyan}$cpuload15m${CGreen}   ]"
@@ -1827,8 +1807,8 @@ DisplayPage1 () {
   converttemps $oldF_cputemp
   progressbar $currenttemp $currentrange " CPU Temp  " $TempUnits "Standard" $currenttemp $currentrange
   echo ""
-  echo -e "${CGreen} ______"
-  echo -e "${CGreen}/${CRed}Memory${CClear}${CGreen}\___________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Memory                                                            ${CClear}"
   echo ""
   preparebar 35 "|"
   progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
@@ -1848,8 +1828,8 @@ DisplayPage1 () {
   preparebar 35 "|"
   progressbar $oldnvramused $oldtotalnvram " NVRAM Used" "B" "Standard"
   echo ""
-  echo -e "${CGreen} ____"
-  echo -e "${CGreen}/${CRed}Disk${CClear}${CGreen}\_____________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Disk                                                              ${CClear}"
   echo ""
   preparebar 35 "|"
   progressbar $oldjffsused $oldjffstotal " JFFS Used " "MB" "Standard"
@@ -1865,11 +1845,9 @@ DisplayPage2 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "${CRed}  $UpdateNotify${CClear}"
-    echo -e "${CGreen} ___${CClear}"
-  else
-    echo -e "${CGreen} ___${CClear}"
   fi
-  echo -e "${CGreen}/${CRed}WAN${CClear}${CGreen}\______________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} WAN                                                               ${CClear}"
   echo ""
   #oldwan0ip="1.2.3.4"
   #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr"
@@ -1890,8 +1868,8 @@ DisplayPage2 () {
   preparebar 35 "|"
   progressbar $oldwantxmbrate $MaxSpeedInetUL " Avg WAN TX" "Mbps" "Standard" $oldwantxmbratedisplay $MaxSpeedInetUL
   echo ""
-  echo -e "${CGreen} ___"
-  echo -e "${CGreen}/${CRed}LAN${CClear}${CGreen}\______________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} LAN                                                               ${CClear}"
   echo ""
   echo -en "${InvCyan} ${CClear}${CCyan} BR0 LAN IP ${CGreen}[ ${CCyan}"
   printf '%03d.%03d.%03d.%03d'  ${oldlanip//./ }
@@ -1906,8 +1884,8 @@ DisplayPage2 () {
 
   if [ "$vpnon" == "True" ]; then
     echo ""
-    echo -e "${CGreen} ____"
-    echo -e "${CGreen}/${CRed}VPN$vpn${CClear}${CGreen}\_____________________________________________________________${CClear}"
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn                                                              ${CClear}"
     echo ""
     if [ "$oldvpncity" == "Private Network" ]; then
       echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
@@ -1931,8 +1909,8 @@ DisplayPage2 () {
 
   if [ "$vpn2on" == "True" ]; then
     echo ""
-    echo -e "${CGreen} ____"
-    echo -e "${CGreen}/${CRed}VPN$vpn2${CClear}${CGreen}\_____________________________________________________________${CClear}"
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn2                                                              ${CClear}"
     echo ""
     if [ "$oldvpn2city" == "Private Network" ]; then
       echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
@@ -1963,11 +1941,9 @@ DisplayPage3 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "${CRed}  $UpdateNotify${CClear}"
-    echo -e "${CGreen} ____${CClear}"
-  else
-    echo -e "${CGreen} ____${CClear}"
   fi
-  echo -e "${CGreen}/${CRed}WiFi${CClear}${CGreen}\_____________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} WiFi                                                              ${CClear}"
   echo ""
   if [ "$MaxSpeed24Ghz" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
@@ -2065,11 +2041,9 @@ DisplayPage4 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "${CRed}  $UpdateNotify${CClear}"
-    echo -e "${CGreen} _________${CClear}"
-  else
-    echo -e "${CGreen} _________${CClear}"
   fi
-  echo -e "${CGreen}/${CRed}Speedtest${CClear}${CGreen}\________________________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Speedtest                                                         ${CClear}"
   echo ""
   DisplaySpdtst
 }
@@ -2106,11 +2080,9 @@ DisplayPage5 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "${CRed}  $UpdateNotify${CClear}"
-    echo -e "${CGreen} ___________________${CClear}"
-  else
-    echo -e "${CGreen} ___________________${CClear}"
   fi
-  echo -e "${CGreen}/${CRed}Network Diagnostics${CClear}${CGreen}\______________________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Network Diagnostics                                               ${CClear}"
   echo ""
   echo -e "${InvGreen} ${CClear} ${CGreen}Run ${CRed}(D)${CGreen}iagnostics${CClear} ${CCyan}-- Last Run: $Lastruntime"
   echo ""
@@ -2189,7 +2161,6 @@ DisplayPage5 () {
     echo ""
 
     printf "${InvCyan} ${CClear} ${CCyan}SSL Handshake Test... ${CYellow}[Checking]     ${CClear}"
-      #SSL_STATE="$(nc -w3 8.8.8.8 443 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
@@ -2201,8 +2172,8 @@ DisplayPage5 () {
       fi
     echo ""
     if [ "$PSView" == "TCP" ]; then
-      echo -e "${CGreen} _______________________    _______________________${CClear}"
-      echo -e "${CGreen}/${CRed}Open ${CGreen}(T)${CRed}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CDkGray}Open ${CGreen}(U)${CDkGray}DP Port Scanner${CGreen}\_______________${CClear}"
+    	echo ""
+      echo -e "${InvDkGray}${CWhite} Open ${CGreen}(T)${CWhite}CP Port Scanner  |  Open ${CRed}(U)${CWhite}DP Port Scanner               ${CClear}"
       echo ""
       echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
       WANnmap=$(nmap $oldwan0ip | grep "open")
@@ -2212,8 +2183,8 @@ DisplayPage5 () {
       LANnmap=$(nmap $oldlanip | grep "open")
       if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open"; fi
     elif [ "$PSView" == "UDP" ]; then
-      echo -e "${CGreen} _______________________    _______________________${CClear}"
-      echo -e "${CGreen}/${CDkGray}Open ${CGreen}(T)${CDkGray}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CRed}Open ${CGreen}(U)${CRed}DP Port Scanner${CGreen}\_______________${CClear}"
+    	echo ""
+      echo -e "${InvDkGray}${CWhite} Open ${CRed}(T)${CWhite}CP Port Scanner  |  Open ${CGreen}(U)${CWhite}DP Port Scanner               ${CClear}"
       echo ""
       echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
       WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
@@ -2286,8 +2257,8 @@ else
   fi
   echo ""
   if [ "$PSView" == "TCP" ]; then
-    echo -e "${CGreen} _______________________    _______________________${CClear}"
-    echo -e "${CGreen}/${CRed}Open ${CGreen}(T)${CRed}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CDkGray}Open ${CGreen}(U)${CDkGray}DP Port Scanner${CGreen}\_______________${CClear}"
+  	echo ""
+    echo -e "${InvDkGray}${CWhite} Open ${CGreen}(T)${CWhite}CP Port Scanner  |  Open ${CRed}(U)${CWhite}DP Port Scanner               ${CClear}"
     echo ""
     echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
     if [ ! -f $NMAPWANRESPATH ]; then
@@ -2305,8 +2276,8 @@ else
       if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open"; fi
     fi
   elif [ "$PSView" == "UDP" ]; then
-    echo -e "${CGreen} _______________________    _______________________${CClear}"
-    echo -e "${CGreen}/${CDkGray}Open ${CGreen}(T)${CDkGray}CP Port Scanner${CClear}${CGreen}\__${CGreen}/${CRed}Open ${CGreen}(U)${CRed}DP Port Scanner${CGreen}\_______________${CClear}"
+  	echo ""
+    echo -e "${InvDkGray}${CWhite} Open ${CRed}(T)${CWhite}CP Port Scanner  |  Open ${CGreen}(U)${CWhite}DP Port Scanner               ${CClear}"
     echo ""
     echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
     if [ ! -f $NMAPUWANRESPATH ]; then
@@ -2335,11 +2306,9 @@ DisplayPage6 () {
   logo
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "${CRed}  $UpdateNotify${CClear}"
-    echo -e "${CGreen} _____________________________${CClear}"
-  else
-    echo -e "${CGreen} _____________________________${CClear}"
   fi
-  echo -e "${CGreen}/${CRed}Network Connections/Bandwidth${CClear}${CGreen}\____________________________________${CClear}"
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Network Connections/Bandwidth                                     ${CClear}"
   echo ""
 
   if [ "$QueueNetworkConn" == "1" ]; then
@@ -2369,12 +2338,12 @@ DisplayPage6 () {
 
   if [ "$NCView" == "WAN" ]; then
     if [ "$vpnon" == "True" ]; then
-      echo -e "${CGreen} _____     _____     _____${CClear}"
-      echo -e "${CGreen}/(W)${CRed}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\___/(V)${CDkGray}PN${CGreen}\________________________________________${CClear}"
+    	echo ""
+    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CWhite}AN  |  ${CGreen}(L)${CRed}AN  ${CWhite}|  ${CGreen}(V)${CRed}PN                                         ${CClear}"
       echo ""
     else
-      echo -e "${CGreen} _____     _____${CClear}"
-      echo -e "${CGreen}/(W)${CRed}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\__________________________________________________${CClear}"
+      echo ""
+    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CWhite}AN  |  ${CGreen}(L)${CRed}AN                                                   ${CClear}"
       echo ""
     fi
 
@@ -2533,12 +2502,12 @@ DisplayPage6 () {
 
   if [ "$NCView" == "LAN" ]; then
     if [ "$vpnon" == "True" ]; then
-      echo -e "${CGreen} _____     _____     _____${CClear}"
-      echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CRed}AN${CGreen}\___/(V)${CDkGray}PN${CGreen}\________________________________________${CClear}"
+    	echo ""
+    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN  |  ${CGreen}(V)${CRed}PN                                         ${CClear}"
       echo ""
     else
-      echo -e "${CGreen} _____     _____ ${CClear}"
-      echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CRed}AN${CGreen}\__________________________________________________${CClear}"
+      echo ""
+    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN                                                   ${CClear}"
       echo ""
     fi
 
@@ -2696,8 +2665,8 @@ DisplayPage6 () {
   fi
 
   if [ "$NCView" == "VPN" ]; then
-    echo -e "${CGreen} _____     _____     _____${CClear}"
-    echo -e "${CGreen}/(W)${CDkGray}AN${CClear}${CGreen}\___/(L)${CDkGray}AN${CGreen}\___/(V)${CRed}PN${CGreen}\________________________________________${CClear}"
+  	echo ""
+    echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CRed}AN  ${CWhite}|  ${CGreen}(V)${CWhite}PN                                         ${CClear}"
     echo ""
 
     vpnsegments1=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
