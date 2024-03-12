@@ -658,7 +658,6 @@ vconfig () {
                 echo 'ProgPref='$ProgPref
                 echo 'WANOverride="'"$WANOverride"'"'
               } > $CFGPATH
-              echo ""
               echo -e "${CCyan}Applying config changes to RTRMON..."
               echo -e "$(date) - RTRMON - Successfully wrote a new config file" >> $LOGFILE
               sleep 3
@@ -1848,8 +1847,8 @@ DisplayPage2 () {
   echo ""
   echo -e "${InvDkGray}${CWhite} WAN                                                               ${CClear}"
   echo ""
-  #oldwan0ip="1.2.3.4"
-  #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr"
+  #oldwan0ip="1.2.3.4" #demo
+  #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
   echo -en "${InvCyan} ${CClear} ${CCyan}WAN 0/1 IP ${CGreen}[ ${CCyan}"
   printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
   echo -en " / "
@@ -1892,6 +1891,7 @@ DisplayPage2 () {
       echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
       if [ ! -z "$oldvpncity" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PRV VPN NM ${CGreen}[ ${CCyan}$oldvpncity${CClear}"; fi
     else
+      #oldvpnip="23.31.44.55" #demo
       echo -en "${InvCyan} ${CClear}${CCyan} PUB VPN IP ${CGreen}[ ${CCyan}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
       echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
@@ -2258,6 +2258,7 @@ else
   	echo ""
     echo -e "${InvDkGray}${CWhite} Open ${CGreen}(T)${CWhite}CP Port Scanner  |  Open ${CRed}(U)${CWhite}DP Port Scanner               ${CClear}"
     echo ""
+    #oldwan0ip="23.32.44.106" #demo
     echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
     if [ ! -f $NMAPWANRESPATH ]; then
       echo "None"
