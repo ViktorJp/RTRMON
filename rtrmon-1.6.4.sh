@@ -752,7 +752,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "${CCyan}Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
@@ -772,7 +772,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon-$DLVersion.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "${CCyan}Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
