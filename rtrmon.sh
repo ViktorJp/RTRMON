@@ -314,7 +314,7 @@ updatecheck () {
 vlogs() {
 
 export TERM=linux
-nano $LOGFILE
+nano +999999 --linenumbers $LOGFILE
 
 }
 
@@ -804,10 +804,9 @@ vsetup () {
     clear
     logoNM
     echo ""
-    echo -e "${CYellow}Setup Utility${CClear}" # Provide main setup menu
-    echo ""
+    echo -e "${InvDkGray}${CWhite}                  Setup + Operations Menu                       ${CClear}" 
     echo -e "${CGreen}----------------------------------------------------------------"
-    echo -e "${CGreen}Operations"
+    echo -e "${CGreen}Setup + Configuration"
     echo -e "${CGreen}----------------------------------------------------------------"
     echo -e "${InvDkGray}${CWhite} sc ${CClear}${CCyan}: Setup and Configure RTRMON"
     echo -e "${InvDkGray}${CWhite} fr ${CClear}${CCyan}: Force Re-install Entware Dependencies"
@@ -817,7 +816,7 @@ vsetup () {
     echo -e "${InvDkGray}${CWhite}  e ${CClear}${CCyan}: Exit"
     echo -e "${CGreen}----------------------------------------------------------------"
     if [ "$FromUI" == "0" ]; then
-      echo -e "${CGreen}Launch"
+      echo -e "${CGreen}Operations"
       echo -e "${CGreen}----------------------------------------------------------------"
       echo -e "${InvDkGray}${CWhite} m1 ${CClear}${CCyan}: Launch RTRMON into Normal Monitoring Mode"
       echo -e "${InvDkGray}${CWhite} m2 ${CClear}${CCyan}: Launch RTRMON into Normal Monitoring Mode w/ Screen"
@@ -1962,7 +1961,6 @@ DisplayPage3 () {
     progressbar $currenttemp $currentrange " 2.4G Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
     echo -e "${InvCyan} ${CClear}${CCyan} 2.4GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
-    echo ""
   fi
   if [ "$MaxSpeed5Ghz" != "0" ]; then
     echo ""
@@ -3347,7 +3345,7 @@ while true; do
       TUN="tun1"$vpn
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
       printf "${CGreen}\r[Refreshing Stats...]"
-      NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpnip=$NVRAMVPNIP
@@ -3373,7 +3371,7 @@ while true; do
             TUN2="tun1"$vpn2
             NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
             printf "${CGreen}\r[Refreshing Stats...]"
-            NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+            NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
             if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
               oldvpn2ip=$NVRAMVPN2IP
