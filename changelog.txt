@@ -1,4 +1,11 @@
-v1.6.2   - (February 7, 2024)
+v1.6.4    - (March 12, 2024)
+          - PATCH: Fixed some minor spacing issues on the WiFi page that was covering some info if the 5GHz range is turned
+            off. Also some minor fixes to the screen utility logic that was causing some visual unknown operand errors when
+            starting RTRMON without a secondary commandline argument.
+          - PATCH: Fixed some of the minor look & feel to bring it more in line with the latest "standards" I've implemented 
+            across some of my other scripts.
+
+v1.6.2    - (February 7, 2024)
           - PATCH: Changed the versioning logic to align with the general accepted way of versioning, using the notation:
             major.minor.patch ... finally, right? After seeing @thelonelycoder changing his ways, I figured it was probably
             time for me as well. All my scripts moving forward will go this route. Change log wording is now changed to
