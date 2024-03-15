@@ -4,6 +4,7 @@ Future Enhancements (Possible/Planned)
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
+* Instead of just showing up-to-2 VPN connections, show all of them
 * Possible integration with ModMon NVRAM checker (JGrana)
 
 Completed:
