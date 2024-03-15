@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.4 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.6.5 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,8 +17,8 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.4"
-Beta=0
+Version="1.6.5"
+Beta=1
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
@@ -1305,6 +1305,9 @@ calculatestats () {
     swaptotal="$(($swaptotal / 1024))"
     swapused="$(($swapused / 1024))"
     if [ $swaptotal == "0" ]; then swaptotal=100; fi
+    
+  # Disk - SDA devices
+    df | grep /dev/sd > /jffs/addons/rtrmon.d/sdaresult.txt 2>/dev/null
 
   # Network - WAN/LAN/DNS IP Addresses
     wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
@@ -1834,6 +1837,35 @@ DisplayPage1 () {
   echo ""
   preparebar 35 "|"
   progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
+  
+  #Disk - SDA devices
+  if [ -f /jffs/addons/rtrmon.d/sdaresult.txt ]; then
+    sdcnt=$(cat /jffs/addons/rtrmon.d/sdaresult.txt | wc -l) >/dev/null 2>&1 
+    if [ $sdcnt -lt 1 ]; then 
+      sdcnt=0
+    elif [ -z $sdcnt ]; then 
+      sdcnt=0
+    fi
+  else
+    sdcnt=0
+  fi
+  
+  CNT=0
+  while [ $CNT -lt $sdcnt ]; do # Loop through number of /dev/sd*'s
+    CNT=$((CNT+1))
+    dfresults=$(sed -n "${CNT}p" /jffs/addons/rtrmon.d/sdaresult.txt)
+    sdname="$(echo $dfresults | awk '{print $1}')"
+    sdtotal="$(echo $dfresults | awk '{print $2}')"
+    sdused="$(echo $dfresults | awk '{print $3}')"
+    sdtotal="$(($sdtotal / 1048576))"
+    sdused="$(($sdused / 1048576))"
+    if [ $sdtotal == "0" ]; then sdtotal=100; fi
+    sdnameformat=$(printf "%-10s" $sdname)
+
+    echo ""
+    preparebar 35 "|"
+    progressbar $sdused $sdtotal " $sdnameformat" "GB" "Standard"
+  done
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
