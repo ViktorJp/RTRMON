@@ -1307,7 +1307,7 @@ calculatestats () {
     if [ $swaptotal == "0" ]; then swaptotal=100; fi
     
   # Disk - SDA devices
-    df | grep /dev/sd > /jffs/addons/rtrmon.d/sdaresult.txt 2>/dev/null
+    df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
 
   # Network - WAN/LAN/DNS IP Addresses
     wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
@@ -1839,8 +1839,8 @@ DisplayPage1 () {
   progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
   
   #Disk - SDA devices
-  if [ -f /jffs/addons/rtrmon.d/sdaresult.txt ]; then
-    sdcnt=$(cat /jffs/addons/rtrmon.d/sdaresult.txt | wc -l) >/dev/null 2>&1 
+  if [ -f /jffs/addons/rtrmon.d/sdresult.txt ]; then
+    sdcnt=$(cat /jffs/addons/rtrmon.d/sdresult.txt | wc -l) >/dev/null 2>&1 
     if [ $sdcnt -lt 1 ]; then 
       sdcnt=0
     elif [ -z $sdcnt ]; then 
@@ -1853,13 +1853,14 @@ DisplayPage1 () {
   CNT=0
   while [ $CNT -lt $sdcnt ]; do # Loop through number of /dev/sd*'s
     CNT=$((CNT+1))
-    dfresults=$(sed -n "${CNT}p" /jffs/addons/rtrmon.d/sdaresult.txt)
+    dfresults=$(sed -n "${CNT}p" /jffs/addons/rtrmon.d/sdresult.txt)
+    if [ -z "$dfresults" ]; then break; fi
     sdname="$(echo $dfresults | awk '{print $1}')"
     sdtotal="$(echo $dfresults | awk '{print $2}')"
     sdused="$(echo $dfresults | awk '{print $3}')"
     sdtotal="$(($sdtotal / 1048576))"
     sdused="$(($sdused / 1048576))"
-    if [ $sdtotal == "0" ]; then sdtotal=100; fi
+    if [ $sdtotal == "0" ]; then sdtotal=1; fi
     sdnameformat=$(printf "%-10s" $sdname)
 
     echo ""
