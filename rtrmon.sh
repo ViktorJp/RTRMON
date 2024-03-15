@@ -1306,7 +1306,7 @@ calculatestats () {
     swapused="$(($swapused / 1024))"
     if [ $swaptotal == "0" ]; then swaptotal=100; fi
     
-  # Disk - SDA devices
+  # Disk - SD devices
     df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
 
   # Network - WAN/LAN/DNS IP Addresses
@@ -1838,7 +1838,7 @@ DisplayPage1 () {
   preparebar 35 "|"
   progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
   
-  #Disk - SDA devices
+  #Disk - SD devices
   if [ -f /jffs/addons/rtrmon.d/sdresult.txt ]; then
     sdcnt=$(cat /jffs/addons/rtrmon.d/sdresult.txt | wc -l) >/dev/null 2>&1 
     if [ $sdcnt -lt 1 ]; then 
@@ -1861,6 +1861,7 @@ DisplayPage1 () {
     sdtotal="$(($sdtotal / 1048576))"
     sdused="$(($sdused / 1048576))"
     if [ $sdtotal == "0" ]; then sdtotal=1; fi
+    if [ $sdused == "0" ]; then sdused=1; fi
     sdnameformat=$(printf "%-10s" $sdname)
 
     echo ""
