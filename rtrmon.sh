@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.5b2 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.6.7 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,8 +17,8 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.5b2"
-Beta=1
+Version="1.6.7"
+Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
@@ -267,18 +267,18 @@ converttemps () {
 
   if [ "$TempUnits" == "F" ]; then
     currenttemp=$(awk -v v1=$1 'BEGIN{printf "%0.2f\n", (v1*9)/5+32}' | cut -d . -f 1)
-    currentrange=266
+    currentrange=212
   elif [ "$TempUnits" == "K" ]; then
     currenttemp=$(awk -v v1=$1 'BEGIN{printf "%0.2f\n", v1+273}' | cut -d . -f 1)
-    currentrange=403
+    currentrange=373
   elif [ "$TempUnits" == "C" ]; then
     currenttemp=$1
-    currentrange=130
+    currentrange=100
   else
     # Default to C if someone entered something other than C, F or K
     TempUnits="C"
     currenttemp=$1
-    currentrange=130
+    currentrange=100
   fi
 
 }
