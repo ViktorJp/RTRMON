@@ -1,3 +1,12 @@
+v1.6.7    - (March 16, 2024)
+          - PATCH: Based on some great feedback from @adzie and @ExtremeFiretop, I've added stats for your attached USB
+            storage. All /dev/sd* devices will now show up under the "Disk" section on page 1, showing % used and GB used.
+          - PATCH: Thanks to the keen eye of @Tech9, the "mem used" counter being displayed on page 1 was displaying the
+            color scheme wrong... (ie. low memory was marked green, but in this case, should be red). Fixed and reversed!
+          - PATCH: Also thanks to @Tech9 for his feedback on this, the MAX range for all CPU temps has been dropped from
+            130C down to 100C, 212F and 373K, as noted that the router will start shutting down CPUs when it hits 100C to
+            protect itself.
+
 v1.6.4    - (March 12, 2024)
           - PATCH: Fixed some minor spacing issues on the WiFi page that was covering some info if the 5GHz range is turned
             off. Also some minor fixes to the screen utility logic that was causing some visual unknown operand errors when
