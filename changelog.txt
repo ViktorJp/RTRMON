@@ -1,3 +1,11 @@
+v1.6.8    - (TBA)
+          - PATCH: After some back and forth on how to best handle the CPU temp range and colors, I'm going to settle on
+            agreeing that the upper max range for the graph will be 100C. It's at this temperature that your router starts
+            shutting down CPU cores to prevent damage, though it could probably get to 120C before it actually starts
+            physically causing damage. I think if you're getting close to 100C, you should be getting concerned. So the
+            bar chart will show green up to 80C, yellow from 80C-90C, and red from 90C-100C+. Thanks much to @Tech9,
+            @L&LD and @visortgw for their valuable feedback on this!
+
 v1.6.7    - (March 16, 2024)
           - PATCH: Based on some great feedback from @adzie and @ExtremeFiretop, I've added stats for your attached USB
             storage. All /dev/sd* devices will now show up under the "Disk" section on page 1, showing % used and GB used.
