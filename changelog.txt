@@ -1,4 +1,4 @@
-v1.6.8    - (TBA)
+v1.6.8    - (March 17, 2024)
           - PATCH: After some back and forth on how to best handle the CPU temp range and colors, I'm going to settle on
             agreeing that the upper max range for the graph will be 100C. It's at this temperature that your router starts
             shutting down CPU cores to prevent damage, though it could probably get to 120C before it actually starts
