@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.8 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.6.9 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,7 +17,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.8"
+Version="1.6.9"
 Beta=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1866,8 +1866,10 @@ DisplayPage1 () {
     sdname="$(echo $dfresults | awk '{print $1}')"
     sdtotal="$(echo $dfresults | awk '{print $2}')"
     sdused="$(echo $dfresults | awk '{print $3}')"
-    sdtotal="$(($sdtotal / 1048576))"
-    sdused="$(($sdused / 1048576))"
+    sdtotal=$(echo "$sdtotal/1048576" | bc -l | cut -d . -f 1)
+    sdused=$(echo "$sdused/1048576" | bc -l | cut -d . -f 1)
+    #sdtotal="$(($sdtotal / 1048576))"
+    #sdused="$(($sdused / 1048576))"
     if [ $sdtotal == "0" ]; then sdtotal=1; fi
     if [ $sdused == "0" ]; then sdused=1; fi
     sdnameformat=$(printf "%-10s" $sdname)
