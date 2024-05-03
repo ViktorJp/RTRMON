@@ -1866,8 +1866,11 @@ DisplayPage1 () {
     sdname="$(echo $dfresults | awk '{print $1}')"
     sdtotal="$(echo $dfresults | awk '{print $2}')"
     sdused="$(echo $dfresults | awk '{print $3}')"
-    sdtotal=$(echo "$sdtotal/1048576" | bc -l | cut -d . -f 1)
-    sdused=$(echo "$sdused/1048576" | bc -l | cut -d . -f 1)
+    
+    sdtotal=$(echo "$sdtotal 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
+    sdused=$(echo "$sdused 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
+    #sdtotal=$(echo "$sdtotal/1048576" | bc -l | cut -d . -f 1)
+    #sdused=$(echo "$sdused/1048576" | bc -l | cut -d . -f 1)
     #sdtotal="$(($sdtotal / 1048576))"
     #sdused="$(($sdused / 1048576))"
     if [ $sdtotal == "0" ]; then sdtotal=1; fi
