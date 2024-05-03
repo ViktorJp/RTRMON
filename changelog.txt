@@ -1,8 +1,8 @@
-v1.6.9    - (TBA)
+v1.6.9    - (May 3, 2024)
           - PATCH: After @bubba123 reported some display issues with his SDA devices, it was determined that the large
             size of his drive was creating some sort of math/integer problem, and was causing the division problem to
             equal zero, eventhough it should have amounted to 5544GB. I changed the way that RTRMON calculates these
-            large numbers using the bc tool, and implemented a fix.  Thanks for the heads-up @bubba123!
+            large drive space numbers using the awk tool, and implemented a fix.  Thanks for the heads-up @bubba123!
 
 v1.6.8    - (March 17, 2024)
           - PATCH: After some back and forth on how to best handle the CPU temp range and colors, I'm going to settle on
