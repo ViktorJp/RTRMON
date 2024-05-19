@@ -1,3 +1,16 @@
+v1.7.x    - (TBA)
+          - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
+            screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
+            better use of screen space.
+          - PATCH: In previous versions, only 2 VPN slots would be presented with relevant info. In today's version, 
+            up to 5 different VPN slots are displayed depending on which ones are in use.
+          - PATCH: Previously, when WiFi interfaces turn on or shut off, they would not be represented in RTRMON as
+            doing such, and would require a restart of RTRMON to see the current WiFi state. Now, the WiFi interfaces
+            reflect reality in realtime.
+          - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
+          - PATCH: Brought compatibility to the 3 new devices recently announced by @RMerlin: the RT-BE96U, GT-BE98
+            and GT-BE98_PRO.
+
 v1.6.9    - (May 3, 2024)
           - PATCH: After @bubba123 reported some display issues with his SDA devices, it was determined that the large
             size of his drive was creating some sort of math/integer problem, and was causing the division problem to
