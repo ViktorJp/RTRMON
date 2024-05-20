@@ -1,7 +1,8 @@
 v1.7.x    - (TBA)
           - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
             screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
-            better use of screen space.
+            better use of screen space. This also includes an operations menu which you can show/hide in order to
+            capitalize on even more screen space in much of the same way VPNMON-R3 functions.
           - PATCH: In previous versions, only 2 VPN slots would be presented with relevant info. In today's version, 
             up to 5 different VPN slots are displayed depending on which ones are in use.
           - PATCH: In previous version, you could only run a speedtest against your first VPN connection. In this
