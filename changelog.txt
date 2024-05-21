@@ -5,11 +5,13 @@ v1.7.x    - (TBA)
             capitalize on even more screen space in much of the same way VPNMON-R3 functions.
           - PATCH: In previous versions, only 2 VPN slots would be presented with relevant info. In today's version, 
             up to 5 different VPN slots are displayed depending on which ones are in use.
-          - PATCH: In previous version, you could only run a speedtest against your first VPN connection. In this
+          - PATCH: In previous versions, you could only run a speedtest against your first VPN connection. In this
             release, you can indicate whether to run a speedtest against any of your up to 5 VPN slots.
           - PATCH: Previously, when WiFi interfaces turn on or shut off, they would not be represented in RTRMON as
             doing such, and would require a restart of RTRMON to see the current WiFi state. Now, the WiFi interfaces
             reflect reality in realtime.
+          - PATCH: Prevously, the iftop network stats would only gather WAN, LAN and the first available VPN slot.
+            Page 6 (network/bandwidth stats) now queries and displays all VPN connection info.
           - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
           - PATCH: Brought compatibility to the 3 new devices recently announced by @RMerlin: the RT-BE96U, GT-BE98
             and GT-BE98_PRO.
