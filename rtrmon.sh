@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v1.6.9 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v1.7.8b1 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,8 +17,8 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="1.6.9"
-Beta=0
+Version="1.7.8b1"
+Beta=1
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
@@ -31,6 +31,8 @@ NMAPWANRESPATH="/jffs/addons/rtrmon.d/nwanres.txt"    # Path to the nmap WAN ope
 NMAPLANRESPATH="/jffs/addons/rtrmon.d/nlanres.txt"    # Path to the nmap LAN open TCP port results
 NMAPUWANRESPATH="/jffs/addons/rtrmon.d/nuwanres.txt"  # Path to the nmap WAN open UDP port results
 NMAPULANRESPATH="/jffs/addons/rtrmon.d/nulanres.txt"  # Path to the nmap LAN open UDP port results
+CHANGES=0
+LOGSIZE=2000
 Interval=10
 MaxSpeedInet=1000
 MaxSpeedInetUL=50
@@ -41,24 +43,40 @@ MaxSpeed6Ghz=920
 TempUnits="C"
 Speedtst=0
 WANOverride="Auto"
+WAN0AltModes=0
 PSView="TCP"
 NCView="WAN"
 spdtestsvrID=0
-ProgPref=0
 autorotate=0
 autorotateindicator="OFF"
 QueueSpdtst=0
-QueueVPNSpdtst=0
-vpn=0
-vpn2=0
+QueueVPNSlot1=0
+QueueVPNSlot2=0
+QueueVPNSlot3=0
+QueueVPNSlot4=0
+QueueVPNSlot5=0
+vpn1slot=0
+vpn2slot=0
+vpn3slot=0
+vpn4slot=0
+vpn5slot=0
 VPNState=0
 VPN2State=0
 vpncity="Unknown"
 vpn2city="Unknown"
+vpn3city="Unknown"
+vpn4city="Unknown"
+vpn5city="Unknown"
 vpnip="0.0.0.0"
 vpn2ip="0.0.0.0"
-vpnon="False"
+vpn3ip="0.0.0.0"
+vpn4ip="0.0.0.0"
+vpn5ip="0.0.0.0"
+vpn1on="False"
 vpn2on="False"
+vpn3on="False"
+vpn4on="False"
+vpn5on="False"
 FromUI=0
 NextPage=1
 memused1=0
@@ -114,29 +132,120 @@ CClear="\e[0m"
 # Functions
 # -------------------------------------------------------------------------------------------------------------------------
 
-# Logo is a function that displays the RTRMON script name in a cool ASCII font
-logo () {
-  echo -e "${CYellow}      ____  __________  __  _______  _   __"
-  echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version - ${CCyan}$RouterModel${CYellow}"
-  echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /  ${CRed}(S)${CGreen}etup${CYellow}"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /   ${CRed}(N)${CGreen}ext/${CRed}(P)${CGreen}rev Pg ($NextPage/6)${CYellow}"
-  echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/    ${CRed}(R)${CGreen}otate Pgs:${CCyan}$autorotateindicator ${CRed}(E)${CGreen}xit${CClear}"
+#showheader shows the version bar formatted for build and date/time with TZ spacing
+
+showheader () {
+	
+  #clear
+  if [ "$hideoptions" == "0" ]; then
+    timerreset=0
+    displayopsmenu
+  else
+    timerreset=0
+  fi
+  
+  tzone=$(date +%Z)
+  tzonechars=$(echo ${#tzone})
+
+  if [ $tzonechars = 1 ]; then tzspaces="        ";
+  elif [ $tzonechars = 2 ]; then tzspaces="       ";
+  elif [ $tzonechars = 3 ]; then tzspaces="      ";
+  elif [ $tzonechars = 4 ]; then tzspaces="     ";
+  elif [ $tzonechars = 5 ]; then tzspaces="    "; fi
+
+  #Display RTRMON client header
+  echo -en "${InvGreen} ${InvDkGray}${CWhite} RTRMON - v"
+  printf "%-8s" $Version
+  echo -e "                  ${CGreen}(S)${CWhite}how/${CGreen}(H)${CWhite}ide Operations Menu ${InvDkGray}        $tzspaces$(date) ${CClear}"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# displayopsmenu displays the operations menu
 
-# LogoNM is a function that displays the RTRMON script name in a cool ASCII font without menu options
+displayopsmenu () {
+    
+    echo -e "${InvGreen} ${InvDkGray}${CWhite} Operations Menu                                                                                              ${CClear}"
+    if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
+      echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN / VPN Slot ${CGreen}(1)(2)(3)(4)(5)${CClear}         ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
+    else
+      echo -e "${InvGreen} ${CClear} Speedtest against ${CGreen}(I)${CClear} WAN interface${CClear}                  ${InvGreen} ${CClear} Main ${CGreen}(S)${CClear}etup Menu / Configuration Menu${CClear}"
+    fi
+    echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
+    echo -e "${InvGreen} ${CClear} Refresh ${CGreen}(C)${CClear}urrent Network Statistics                 ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/6)${CClear}"
+    echo -e "${InvGreen} ${CClear} View ${CGreen}(W)${CClear}AN / ${CGreen}(L)${CClear}AN / ${CGreen}(V)${CClear}PN Stats                     ${InvGreen} ${CClear} Auto ${CGreen}(R)${CClear}otate Pages Option: ${CGreen}$autorotateindicator${CClear}"
+    echo -e "${InvGreen} ${CClear} ${CDkGray}(A)MTM Email Notifications: $amtmdisp${CClear}                         ${InvGreen} ${CClear} Router Model/FW: ${CGreen}$RouterModel | $FWBUILD${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo ""
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+# LogoNM displays the RTRMON script name in a cool ASCII font that fades in
+
 logoNM () {
-  echo -e "${CYellow}      ____  __________  __  _______  _   __"
-  echo -e "     / __ \/_  __/ __ \/  |/  / __ \/ | / /  ${CGreen}v$Version${CYellow}"
-  echo -e "    / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
-  echo -e "   / _, _/ / / / _, _/ /  / / /_/ / /|  /"
-  echo -e "  /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/${CClear}"
+	
+	clear
+  echo ""
+  echo ""
+  echo ""
+  echo -e "${CDkGray}                        ____  __________  __  _______  _   __"
+  echo -e "                       / __ \/_  __/ __ \/  |/  / __ \/ | / /"
+  echo -e "                      / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
+  echo -e "                     / _, _/ / / / _, _/ /  / / /_/ / /|  /"
+  echo -e "                    /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/ v$Version"
+  echo ""
+  echo ""
+  printf "\r                            ${CGreen}    [ INITIALIZING ]     ${CClear}"
+  sleep 1
+  clear
+  echo ""
+  echo ""
+  echo ""
+  echo -e "${CYellow}                        ____  __________  __  _______  _   __"
+  echo -e "                       / __ \/_  __/ __ \/  |/  / __ \/ | / /"
+  echo -e "                      / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
+  echo -e "                     / _, _/ / / / _, _/ /  / / /_/ / /|  /"
+  echo -e "                    /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/ v$Version"
+  echo ""
+  echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# logoNMexit displays the RTRMON script name in a cool ASCII font that fades out
 
+logoNMexit () {
+  clear
+  echo ""
+  echo ""
+  echo ""
+  echo -e "${CYellow}                        ____  __________  __  _______  _   __"
+  echo -e "                       / __ \/_  __/ __ \/  |/  / __ \/ | / /"
+  echo -e "                      / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
+  echo -e "                     / _, _/ / / / _, _/ /  / / /_/ / /|  /"
+  echo -e "                    /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/ v$Version"
+  echo ""
+  echo ""
+  printf "\r                            ${CGreen}    [ SHUTTING DOWN ]     ${CClear}"
+  sleep 1
+  clear
+  echo ""
+  echo ""
+  echo ""
+  echo -e "${CDkGray}                        ____  __________  __  _______  _   __"
+  echo -e "                       / __ \/_  __/ __ \/  |/  / __ \/ | / /"
+  echo -e "                      / /_/ / / / / /_/ / /|_/ / / / /  |/ /"
+  echo -e "                     / _, _/ / / / _, _/ /  / / /_/ / /|  /"
+  echo -e "                    /_/ |_| /_/ /_/ |_/_/  /_/\____/_/ |_/ v$Version"
+  echo ""
+  echo ""
+  printf "\r                            ${CGreen}    [ SHUTTING DOWN ]     ${CClear}"
+  sleep 1
+  printf "\r                            ${CDkGray}      [ GOODBYE... ]     ${CClear}\n\n"
+  sleep 1
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
 # promptyn takes input for Y/N questions
+
 promptyn () {   # No defaults, just y or n
   while true; do
     read -p "[y/n]? " -n 1 -r yn
@@ -149,8 +258,8 @@ promptyn () {   # No defaults, just y or n
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# Spinner provides a small spinning indicator on the screen to show script activity
 
-# Spinner is a script that provides a small indicator on the screen to show script activity
 spinner() {
 
   i=0
@@ -167,8 +276,8 @@ spinner() {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# Preparebar and Progressbar is a script that provides a nice progressbar to show script activity and bar charts
 
-# Preparebar and Progressbar is a script that provides a nice progressbar to show script activity
 preparebar() {
   # $1 - bar length
   # $2 - bar char
@@ -207,31 +316,34 @@ progressbar() {
 
     if [ "$5" == "Standard" ]; then
       if [ $progr -le 60 ]; then
-        printf "${InvGreen}${CWhite}$insertspc${CClear}${CGreen}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3} ${CDkGray}[${CGreen}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       elif [ $progr -gt 60 ] && [ $progr -le 85 ]; then
-        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} ${CDkGray}[${CYellow}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       else
-        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} ${CDkGray}[${CRed}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       fi
     elif [ "$5" == "Reverse" ]; then
       if [ $progr -le 15 ]; then
-        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} ${CDkGray}[${CRed}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       elif [ $progr -gt 15 ] && [ $progr -le 40 ]; then
-        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} ${CDkGray}[${CYellow}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       else
-        printf "${InvGreen}${CWhite}$insertspc${CClear}${CGreen}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3}${CGreen} ${CDkGray}[${CGreen}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       fi
     elif [ "$5" == "CPU" ]; then
       if [ $progr -le 80 ]; then
-        printf "${InvGreen}${CWhite}$insertspc${CClear}${CGreen}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3}${CGreen} ${CDkGray}[${CGreen}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       elif [ $progr -gt 80 ] && [ $progr -le 90 ]; then
-        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvYellow}${CBlack}$insertspc${CClear}${CYellow}${3} ${CDkGray}[${CYellow}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       else
-        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} [%.${barch}s%.${barsp}s]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
+        printf "${InvRed}${CWhite}$insertspc${CClear}${CRed}${3} ${CDkGray}[${CRed}%.${barch}s%.${barsp}s${CDkGray}]${CClear} ${CWhite}${InvDkGray}$AltNum ${4} / ${progr}%%\r${CClear}" "$barchars" "$barspaces"
       fi
     fi
   fi
 }
+
+# -------------------------------------------------------------------------------------------------------------------------
+# progressbaroverride shows a more minimalistic progress bar that indicates seconds/%
 
 progressbaroverride() {
   # $1 - number (-1 for clearing the bar)
@@ -260,16 +372,17 @@ progressbaroverride() {
     if [ ! -z $6 ]; then AltNum=$6; else AltNum=$1; fi
 
     if [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 0 ]; then
-      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear} ${CGreen}[Selection? ${InvGreen} ${CClear}${CGreen}]\r${CClear}" "$barchars" "$barspaces"
+    	printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear} [${CGreen}e${CClear}=Exit] [Selection? ${InvGreen} ${CClear}${CGreen}]\r${CClear}" "$barchars" "$barspaces"
     elif [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 1 ]; then
-      printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear}\r${CClear}" "$barchars" "$barspaces"
+    	#printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3} ${CDkGray}            [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
+      printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
     fi
   fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# converttemps converts temp readouts from C to F or K
 
-# converttemps is a function that converts temp readouts from C to F or K
 converttemps () {
 # $1 is the incoming C Temp
 
@@ -292,8 +405,8 @@ converttemps () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# updatecheck downloads the latest update version file from github, and compares it with what's currently installed
 
-# updatecheck is a function that downloads the latest update version file, and compares it with what's currently installed
 updatecheck () {
 
   # Download the latest version file from the source repository
@@ -308,7 +421,9 @@ updatecheck () {
       if [ "$Beta" == "1" ]; then   # Check if Dev/Beta Mode is enabled and disable notification message
         UpdateNotify=0
       elif [ "$DLVersion" != "$Version" ]; then
-        UpdateNotify="Update available: v$Version -> v$DLVersion"
+      	DLVersionPF=$(printf "%-8s" $DLVersion)
+        VersionPF=$(printf "%-8s" $Version)
+        UpdateNotify="${InvYellow} ${InvDkGray}${CWhite} Update available: v$VersionPF -> v$DLVersionPF                                                                     ${CClear}"
         echo -e "$(date) - RTRMON - A new update (v$DLVersion) is available to download" >> $LOGFILE
       else
         UpdateNotify=0
@@ -317,134 +432,217 @@ updatecheck () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# vlogs calls the nano text editor to view the RTRMON log file
 
-# vlogs is a function that calls the nano text editor to view the RTRMON log file
 vlogs() {
 
 export TERM=linux
 nano +999999 --linenumbers $LOGFILE
+timerreset=1
 
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# trimlogs will cut down log size (in rows) based on custom value
 
-# vconfig is a function that guides you through the various configuration options for RTRMON
+trimlogs()
+{
+
+  if [ $LOGSIZE -gt 0 ]; then
+
+      currlogsize=$(wc -l $LOGFILE | awk '{ print $1 }' ) # Determine the number of rows in the log
+
+      if [ $currlogsize -gt $LOGSIZE ] # If it's bigger than the max allowed, tail/trim it!
+        then
+          echo "$(tail -$LOGSIZE $LOGFILE)" > $LOGFILE
+          echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: Trimmed the log file down to $logsize lines" >> $logfile
+      fi
+
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+# vconfig guides you through the various configuration options for RTRMON
+
 vconfig () {
 
   if [ -f $CFGPATH ]; then #Making sure file exists before proceeding
     source $CFGPATH
 
+    CHANGES=0 #track notification to save your changes
+
     while true; do
-      clear
-      logoNM
-      echo ""
-      echo -e "${CGreen}----------------------------------------------------------------"
-      echo -e "${CGreen}Configuration Utility Options"
-      echo -e "${CGreen}----------------------------------------------------------------"
-      echo -e "${InvDkGray}${CWhite}  1 ${CClear}${CCyan}: Timer Interval (seconds)      :"${CGreen}$Interval
-      echo -e "${InvDkGray}${CWhite}  2 ${CClear}${CCyan}: Max Internet D/L Speed (Mbps) :"${CGreen}$MaxSpeedInet
-      echo -e "${InvDkGray}${CWhite}  3 ${CClear}${CCyan}: Max Internet U/L Speed (Mbps) :"${CGreen}$MaxSpeedInetUL
-      echo -e "${InvDkGray}${CWhite}  4 ${CClear}${CCyan}: Max LAN Speed (Mbps)          :"${CGreen}$MaxSpeedLAN
-      echo -e "${InvDkGray}${CWhite}  5 ${CClear}${CCyan}: Max 2.4GHz Speed (Mbps)       :"${CGreen}$MaxSpeed24Ghz
-      echo -e "${InvDkGray}${CWhite}  6 ${CClear}${CCyan}: Max 5GHz Speed (Mbps)         :"${CGreen}$MaxSpeed5Ghz
+    clear
+      echo -e "${InvGreen} ${InvDkGray}${CWhite} RTRMON Configuration Options                                                          ${CClear}"
+      echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear} Please choose from the various options below, which allow you to modify certain${CClear}"
+      echo -e "${InvGreen} ${CClear} customizable parameters that affect the operation of this script.${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+      echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 1)${CClear} : Timer Interval (seconds)                     : ${CGreen}$Interval"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 2)${CClear} : Max Internet Download Speed (Mbps)           : ${CGreen}$MaxSpeedInet"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 3)${CClear} : Max Internet Upload Speed (Mbps)             : ${CGreen}$MaxSpeedInetUL"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 4)${CClear} : Max LAN Speed (Mbps)                         : ${CGreen}$MaxSpeedLAN"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 5)${CClear} : Max 2.4GHz Speed (Mbps)                      : ${CGreen}$MaxSpeed24Ghz"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 6)${CClear} : Max 5GHz Speed (Mbps)                        : ${CGreen}$MaxSpeed5Ghz"
+
       if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
-        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CCyan}: Max 6GHz Speed (Mbps)         :"${CGreen}$MaxSpeed6Ghz
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 7)${CClear} : Max 6GHz Speed (Mbps)                        : ${CGreen}$MaxSpeed6Ghz"
       else
-        echo -e "${InvDkGray}${CWhite}  7 ${CClear}${CDkGray}: Max 6GHz Speed (Mbps)         :${CDkGray}N/A"
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 7)${CClear} : ${CDkGray}Max 6GHz Speed (Mbps)                        : N/A"
       fi
-      echo -e "${InvDkGray}${CWhite}  8 ${CClear}${CCyan}: Temperature Units (C/F/K)     :"${CGreen}$TempUnits
-      echo -en "${InvDkGray}${CWhite}  9 ${CClear}${CCyan}: Enable Ookla Speedtest? (Y/N) :"${CGreen}
+
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 8)${CClear} : Temperature Units (C/F/K)                    : ${CGreen}$TempUnits"
+
+      echo -en "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 9)${CClear} : Enable Ookla Speedtest? (Y/N)                : ${CGreen}"
       if [ "$Speedtst" == "0" ]; then
         printf "No"; printf "%s\n";
       else printf "Yes"; printf "%s\n"; fi
-      if [ "$spdtestsvrID" == "0" ] && [ "$Speedtst" == "1" ]; then
-        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CDkGray}: Custom Speedtest Server ID?   :${CDkGray}Use Closest"
-      elif [ "$spdtestsvrID" != "0" ] && [ "$Speedtst" == "1" ]; then
-        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CCyan}: Custom Speedtest Server ID?   :"${CGreen}$spdtestsvrID
-      else
-        echo -e "${InvDkGray}${CWhite} 10 ${CClear}${CDkGray}: Custom Speedtest Server ID?   :${CDkGray}N/A"
-      fi
-      echo -e "${InvDkGray}${CWhite} 11 ${CClear}${CCyan}: WAN0 Interface Override?      :"${CGreen}$WANOverride
-      echo -en "${InvDkGray}${CWhite} 12 ${CClear}${CCyan}: Progress Bar Preference?      :"${CGreen}
-      if [ "$ProgPref" == "0" ]; then
-        printf "Standard"; printf "%s\n";
-      else printf "Minimalist"; printf "%s\n"; fi
-      echo -e "${InvDkGray}${CWhite}  | ${CClear}"
-      echo -e "${InvDkGray}${CWhite}  s ${CClear}${CCyan}: Save & Exit"
-      echo -e "${InvDkGray}${CWhite}  e ${CClear}${CCyan}: Exit & Discard Changes"
-      echo -e "${CGreen}----------------------------------------------------------------"
-      echo ""
-      printf "Selection: "
-      read -r ConfigSelection
 
+      if [ "$spdtestsvrID" == "0" ] && [ "$Speedtst" == "1" ]; then
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(10)${CClear} : Custom Speedtest Server ID?                  : ${CGreen}Use Closest"
+      elif [ "$spdtestsvrID" != "0" ] && [ "$Speedtst" == "1" ]; then
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(10)${CClear} : Custom Speedtest Server ID?                  : ${CGreen}$spdtestsvrID"
+      else
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(10)${CClear} : Custom Speedtest Server ID?                  : ${CDkGray}N/A"
+      fi
+
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(11)${CClear} : WAN0 Interface Override?                     : ${CGreen}$WANOverride"
+      
+      if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(12)${CClear} : Mark Router As iMesh Node/Repeater/Bridge?   : ${CGreen}$WAN0AltModesdisp"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(13)${CClear} : Custom Event Log Size?                       : ${CGreen}$LOGSIZE"
+      
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}  | ${CClear}"
+      
+      if [ $CHANGES -eq 0 ]; then
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( s)${CClear} : Save Config & Exit"
+      else
+        echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( s)${CClear} : Save Config & Exit                ${CWhite}${InvRed}<-- Save your changes! ${CClear}"
+      fi
+
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( e)${CClear} : Exit & Discard Changes"
+      echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+      echo ""
+      read -p "Please select? (1-13, s=Save, e=Exit): " ConfigSelection
+      CHANGES=1
       # Execute chosen selections
           case "$ConfigSelection" in
 
             1) # -----------------------------------------------------------------------------------------
-              echo ""
-              echo -e "${CCyan}1. How many seconds would you like to use to refresh your stats?"
-              echo -e "${CYellow}(Default = 10)${CClear}"
-              read -p 'Interval (seconds): ' Interval1
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Refresh Interval                                                                      ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate after how many seconds you would like RTRMON to refresh your stats?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 10 seconds)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$Interval${CClear} seconds"
+			        echo ""
+			        read -p "Please enter value in seconds (ex: 10): " Interval1
               Interval2=$(echo $Interval1 | tr -d -c 0-9)
               if [ -z "$Interval1" ]; then Interval=10; else Interval=$Interval2; fi
             ;;
 
             2) # -----------------------------------------------------------------------------------------
+			        clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum Internet Download Bandwidth                                                   ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate what your maximum internet download bandwidth/speed is in Mbps?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 50 Mbps)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$MaxSpeedInet${CClear} Mbps"
               echo ""
-              echo -e "${CCyan}2. What is your maximum internet D/L bandwidth/speed in Mbps?"
-              echo -e "${CYellow}(Default = 1000)${CClear}"
-              read -p 'Max Internet D/L Speed (Mbps): ' MaxSpeedInet1
+              read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeedInet1
               MaxSpeedInet2=$(echo $MaxSpeedInet1 | tr -d -c 0-9)
               if [ -z "$MaxSpeedInet1" ]; then MaxSpeedInet=50; else MaxSpeedInet=$MaxSpeedInet2; fi
             ;;
 
             3) # -----------------------------------------------------------------------------------------
+			        clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum Internet Upload Bandwidth                                                     ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate what your maximum internet upload bandwidth/speed is in Mbps?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 50 Mbps)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$MaxSpeedInetUL${CClear} Mbps"
               echo ""
-              echo -e "${CCyan}3. What is your maximum internet U/L bandwidth/speed in Mbps?"
-              echo -e "${CYellow}(Default = 50)${CClear}"
-              read -p 'Max Internet U/L Speed (Mbps): ' MaxSpeedInetUL1
+              read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeedInetUL1
               MaxSpeedInetUL2=$(echo $MaxSpeedInetUL1 | tr -d -c 0-9)
               if [ -z "$MaxSpeedInetUL1" ]; then MaxSpeedInetUL=50; else MaxSpeedInetUL=$MaxSpeedInetUL2; fi
             ;;
 
             4) # -----------------------------------------------------------------------------------------
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum Local Area Network (LAN) Bandwidth                                            ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate what your maximum LAN bandwidth/speed is in Mbps?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 1000 Mbps)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$MaxSpeedLAN${CClear} Mbps"
               echo ""
-              echo -e "${CCyan}4. What is your maximum LAN switch bandwidth/speed in Mbps?"
-              echo -e "${CYellow}(Default = 1000)${CClear}"
-              read -p 'Max LAN Speed (Mbps): ' MaxSpeedLAN1
+              read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeedLAN1
               MaxSpeedLAN2=$(echo $MaxSpeedLAN1 | tr -d -c 0-9)
               if [ -z "$MaxSpeedLAN1" ]; then MaxSpeedLAN=1000; else MaxSpeedLAN=$MaxSpeedLAN2; fi
             ;;
 
             5) # -----------------------------------------------------------------------------------------
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum 2.4GHz Bandwidth Speed                                                        ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate what your maximum realistic 2.4GHz speed is in Mbps?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 450 Mbps)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$MaxSpeed24Ghz${CClear} Mbps"
               echo ""
-              echo -e "${CCyan}5. What is your maximum realistic 2.4GHz speed in Mbps?"
-              echo -e "${CYellow}(Default = 450)${CClear}"
-              read -p 'Max 2.4Ghz Speed (Mbps): ' MaxSpeed24Ghz1
+              read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeed24Ghz1
               MaxSpeed24Ghz2=$(echo $MaxSpeed24Ghz1 | tr -d -c 0-9)
               if [ -z "$MaxSpeed24Ghz1" ]; then MaxSpeed24Ghz=450; else MaxSpeed24Ghz=$MaxSpeed24Ghz2; fi
             ;;
 
             6) # -----------------------------------------------------------------------------------------
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum 5GHz Bandwidth Speed                                                          ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate what your maximum realistic 5GHz speed is in Mbps?${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 780 Mbps)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$MaxSpeed5Ghz${CClear} Mbps"
               echo ""
-              echo -e "${CCyan}6. What is your maximum realistic 5GHz speed in Mbps?"
-              echo -e "${CYellow}(Default = 780)${CClear}"
-              read -p 'Max 5Ghz Speed (Mbps): ' MaxSpeed5Ghz1
+              read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeed5Ghz1
               MaxSpeed5Ghz2=$(echo $MaxSpeed5Ghz1 | tr -d -c 0-9)
               if [ -z "$MaxSpeed5Ghz1" ]; then MaxSpeed5Ghz=780; else MaxSpeed5Ghz=$MaxSpeed5Ghz2; fi
             ;;
 
             7) # -----------------------------------------------------------------------------------------
-              echo ""
+              clear
               if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
-                echo -e "${CCyan}7. What is your maximum realistic 6GHz speed in Mbps?"
-                echo -e "${CYellow}(Default = 920)${CClear}"
-                read -p 'Max 6Ghz Speed (Mbps): ' MaxSpeed6Ghz1
+				        echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum 6GHz Bandwidth Speed                                                          ${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} Please indicate what your maximum realistic 6GHz speed is in Mbps?${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} (Default = 920 Mbps)${CClear}"
+				        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+				        echo ""
+				        echo -e "${CClear}Current: ${CGreen}$MaxSpeed6Ghz${CClear} Mbps"
+	              echo ""
+                read -p 'Please enter value in Mbps (ex: 1000): ' MaxSpeed6Ghz1
                 MaxSpeed6Ghz2=$(echo $MaxSpeed6Ghz1 | tr -d -c 0-9)
                 if [ -z "$MaxSpeed6Ghz1" ]; then MaxSpeed6Ghz=920; else MaxSpeed6Ghz=$MaxSpeed6Ghz2; fi
               else
-                echo -e "${CRed}This item is currently only available for router"
-                echo -e "${CRed}models: GT-AXE11000 and GT-AXE16000.  Exiting..."
+                echo -e "${CRed}This item is currently only available for router models: GT-AXE11000 and GT-AXE16000."
                 echo ""
                 sleep 3
               fi
@@ -452,10 +650,17 @@ vconfig () {
 
             8) # -----------------------------------------------------------------------------------------
               while true; do
-                echo ""
-                echo -e "${CCyan}8. Which Temperature Units would you prefer? (C)elcius,"
-                echo -e "${CCyan}(Fahrenheit) or (K)elvin?"
-                echo -e "${CYellow}(Default = C)${CClear}"
+	              clear
+				        echo -e "${InvGreen} ${InvDkGray}${CWhite} Temperature Unit Preferences                                                          ${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} Please indicate what Temperature Units you would prefer to use?${CClear}"
+				        echo -e "${InvGreen} ${CClear} (C)elcius, (F)ahrenheit or (K)elvin"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} (Default = C)${CClear}"
+				        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+				        echo ""
+				        echo -e "${CClear}Current: ${CGreen}$TempUnits${CClear}"
+	              echo ""
                 read -p 'Temp Units (C/F/K): ' TempUnits1
                 case "$TempUnits1" in
                 [Cc])
@@ -484,27 +689,35 @@ vconfig () {
             9) # -----------------------------------------------------------------------------------------
               echo ""
               if [ -f $OOKLAPATH ]; then
-                echo -e "${CCyan}9. Would you like to disable and uninstall the Ookla"
-                echo -e "${CCyan}Speedtest binaries from RTRMON? (y/n)${CClear}"
-                if promptyn "(y/n): "; then
+              	clear
+				        echo -e "${InvGreen} ${InvDkGray}${CWhite} Remove Ookla Speedtest Binaries                                                       ${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} Would you like to disable and uninstall the Ookla Speedtest binaries from RTRMON?${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+				        echo ""
+				        echo -e "${CClear}Current: ${CGreen}Ookla Speedtest Installed${CClear}"
+	              echo ""
+                echo -e "Remove Speedtest binaries from RTRMON?${CClear}"
+                if promptyn "[y/n]: "; then
                   echo ""
                   echo ""
-                  echo -e "${CGreen}Removing Ookla Speedtest binaries...${CClear}"
+                  echo -e "${CClear}Removing Ookla Speedtest binaries..."
                   rm "/jffs/addons/rtrmon.d/speedtest"
                   rm "/jffs/addons/rtrmon.d/speedtest.5"
                   rm "/jffs/addons/rtrmon.d/speedtest.md"
                   sleep 1
                   if [ ! -f $OOKLAPATH ]; then
                     echo ""
-                    echo -e "${CGreen}Completed removing Ookla Speedtest binaries...${CClear}"
+                    echo -e "${CClear}Completed removing Ookla Speedtest binaries..."
                     Speedtst=0
                     spdtestsvrID=0
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                   else
                     echo ""
-                    echo -e "${CRed}ERROR: Ookla Speedtest binaries were not removed...${CClear}"
-                    echo -e "${CRed}Please manually resolve issue under /jffs/addons/rtrmon.d...${CClear}"
+                    echo -e "${CRed}ERROR: Ookla Speedtest binaries were unable to be removed...${CClear}"
+                    echo -e "Please manually resolve issue under /jffs/addons/rtrmon.d folder"
                     Speedtst=1
                     echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
@@ -512,30 +725,35 @@ vconfig () {
                 else
                   echo ""
                   echo ""
-                  echo -e "${CGreen}Canceling removing Ookla Speedtest binaries...${CClear}"
+                  echo -e "${CClear}Canceling removing Ookla Speedtest binaries..."
                   sleep 2
                 fi
 
               else
-                echo -e "${CCyan}9. Would you like to install and enable the Ookla"
-                echo -e "${CCyan}Speedtest binaries for use with RTRMON? (y/n)${CClear}"
-                echo -e ""
-                echo -e "${CCyan}You may only use this Speedtest software and information"
-                echo -e "${CCyan}generated from it for personal, non-commercial use,"
-                echo -e "${CCyan}through a command line interface on a personal computer."
-                echo -e "${CCyan}Your use of this software is subject to the End User"
-                echo -e "${CCyan}License Agreement, Terms of Use and Privacy Policy at"
-                echo -e "${CCyan}these URLs:"
-                echo ""
-                echo -e "${CCyan}  https://www.speedtest.net/about/eula"
-                echo -e "${CCyan}  https://www.speedtest.net/about/terms"
-                echo -e "${CCyan}  https://www.speedtest.net/about/privacy"
-                echo ""
-                echo -e "${CCyan}By typing 'y' below, you agree to these terms.${CClear}"
-                if promptyn "(y/n): "; then
+                clear
+				        echo -e "${InvGreen} ${InvDkGray}${CWhite} Install Ookla Speedtest Binaries                                                      ${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} Would you like to install and enable the Ookla Speedtest binaries for use with${CClear}"
+				        echo -e "${InvGreen} ${CClear} RTRMON? Please read the following before accepting agreement:${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear} You may only use this Speedtest software and information generated from it for${CClear}"
+				        echo -e "${InvGreen} ${CClear} personal, non-commercial use, through a command line interface on a personal${CClear}"
+				        echo -e "${InvGreen} ${CClear} computer. Your use of this software is subject to the End User License${CClear}"
+				        echo -e "${InvGreen} ${CClear} Agreement, Terms of Use and Privacy Policy at these URLs:${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear}   https://www.speedtest.net/about/eula${CClear}"
+				        echo -e "${InvGreen} ${CClear}   https://www.speedtest.net/about/terms${CClear}"
+				        echo -e "${InvGreen} ${CClear}   https://www.speedtest.net/about/privacy${CClear}"
+				        echo -e "${InvGreen} ${CClear}"
+				        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+				        echo ""
+				        echo -e "${CClear}Current: ${CGreen}Ookla Speedtest Not Installed${CClear}"
+	              echo ""
+                echo -e "By typing 'y' below, you agree to these terms.${CClear}"
+                if promptyn "[y/n]: "; then
                   echo ""
                   echo ""
-                  echo -e "${CGreen}Installing Ookla Speedtest binaries...${CClear}"
+                  echo -e "Installing Ookla Speedtest binaries..."
                   echo ""
                   if [ "$(uname -m)" = "aarch64" ]; then
                     curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
@@ -549,7 +767,7 @@ vconfig () {
                     rm /jffs/addons/rtrmon.d/spdtstel.tgz
                   fi
                   if [ -f /jffs/addons/rtrmon.d/speedtest ]; then
-                    echo -e "${CGreen}Ookla Speedtest binaries installed successfully...${CClear}"
+                    echo -e "${CClear}Ookla Speedtest binaries installed successfully..."
                     Speedtst=1
                     echo ""
                     read -rsp $'Press any key to initialize Speedtest and accept license...\n' -n1 key
@@ -567,7 +785,7 @@ vconfig () {
                 else
                   echo ""
                   echo ""
-                  echo -e "${CGreen}Canceling install of Ookla Speedtest binaries...${CClear}"
+                  echo -e "${CClear}Canceling install of Ookla Speedtest binaries..."
                   Speedtst=0
                   spdtestsvrID=0
                   sleep 2
@@ -576,29 +794,39 @@ vconfig () {
             ;;
 
             10) # -----------------------------------------------------------------------------------------
-
               if [ "$Speedtst" == "0" ]; then return; fi
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Custom Speedtest Server ID                                                            ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate if you would like to use a custom Speedtest Server ID? These IDs${CClear}"
+			        echo -e "${InvGreen} ${CClear} can be found by running a Speedtest on your browser and noting the ID of the server${CClear}"
+			        echo -e "${InvGreen} ${CClear} in its URL when hovering your mouse over it. Enter an ID number, or use 0 to choose${CClear}"
+			        echo -e "${InvGreen} ${CClear} the closest server to you.${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 0)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$spdtestsvrID${CClear}"
               echo ""
-              echo -e "${CCyan}10. Would you like to use a custom Speedtest Server ID?"
-              echo -e "${CCyan}These IDs can be found by running a Speedtest on your browser"
-              echo -e "${CCyan}and noting the ID of the server in its URL when hovering your"
-              echo -e "${CCyan}mouse over it. Enter an ID number, or use 0 to choose the"
-              echo -e "${CCyan}closest server to you."
-              echo -e "${CYellow}(Default = 0)${CClear}"
-              read -p 'Server ID: ' spdtestsvrID1
+              read -p 'Speedtest Server ID: ' spdtestsvrID1
               spdtestsvrID2=$(echo $spdtestsvrID1 | tr -d -c 0-9)
               if [ -z "$spdtestsvrID1" ]; then spdtestsvrID=0; else spdtestsvrID=$spdtestsvrID2; fi
-
             ;;
 
             11) # -----------------------------------------------------------------------------------------
-              echo ""
-              echo -e "${CCyan}11. Would you like to override the default interface assigned${CClear}"
-              echo -e "${CCyan}to your local WAN0? Typically, 'eth0' is assigned to WAN0, but${CClear}"
-              echo -e "${CCyan}based on how you've rigged your router, it might be something${CClear}"
-              echo -e "${CCyan}else. By default, RTRMON will automatically try to determine${CClear}"
-              echo -e "${CCyan}the correct interface, however this will give you the option${CClear}"
-              echo -e "${CCyan}to override it should you be using something else.${CClear}"
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Override WAN0 Interface                                                               ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate if you would like to override the default interface assigned to${CClear}"
+			        echo -e "${InvGreen} ${CClear} your local WAN0? Typically, 'eth0' is assigned to WAN0, but based on how you've${CClear}"
+			        echo -e "${InvGreen} ${CClear} rigged your router, it might be something else. By default, RTRMON will${CClear}"
+			        echo -e "${InvGreen} ${CClear} automatically try to determine the correct interface, however this will give${CClear}"
+			        echo -e "${InvGreen} ${CClear} you the option to override it should you be using something else.${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = 0)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$WANOverride${CClear}"
               echo ""
               echo -e "${CGreen}Valid interface choices:"
 
@@ -606,7 +834,7 @@ vconfig () {
 
               LINES=$(cat $IFLIST | wc -l) #Check to see how many lines are in this file
 
-              echo -e "${CGreen}0) Auto"
+              echo -e "${CClear}0) Auto"
 
               i=0 # Populate all other numbered choices
               while [ $i -ne $LINES ]
@@ -617,15 +845,15 @@ vconfig () {
                 done
 
               echo -e "${CClear}"
-              echo -e "${CYellow}(Default = 0 (Auto), or choose one of the above)${CClear}"
+              echo -e "(Default = 0 (Auto), or choose one of the above)${CClear}"
 
               while true
                 do
                   read -p 'Choose Interface #: ' ChooseInterface
 
                   case ${ChooseInterface#[-+]} in # Make sure we're only picking an item from the list
-                    *[!0-9]* | '') echo ""; echo -e "${CRed}ERROR: Please make a valid selection${CClear}"; echo "" ;;
-                    * ) if [ $ChooseInterface -lt 0 ] || [ $ChooseInterface -gt $LINES ]; then echo ""; echo -e "${CRed}Please make a valid selection${CClear}"; echo ""; else break; fi ;;
+                    *[!0-9]* | '') echo ""; echo -e "\n${CRed}ERROR: Please make a valid selection${CClear}"; echo "" ;;
+                    * ) if [ $ChooseInterface -lt 0 ] || [ $ChooseInterface -gt $LINES ]; then echo ""; echo -e "\n${CRed}Please make a valid selection${CClear}"; echo ""; else break; fi ;;
                   esac
 
                 done
@@ -642,15 +870,55 @@ vconfig () {
             ;;
 
             12) # -----------------------------------------------------------------------------------------
+              clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Mark Router As iMesh Node/Repeater/Bridge                                             ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate if you would like to mark that this router is being used as an${CClear}"
+			        echo -e "${InvGreen} ${CClear} iMesh Node, Repeater or Bridge operating mode. In cases like this, the WAN0${CClear}"
+			        echo -e "${InvGreen} ${CClear} interface will be non-functional, and will be omitted from being captured by${CClear}"
+			        echo -e "${InvGreen} ${CClear} RTRMON's stats.${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} (Default = No)${CClear}"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
+			        echo -e "${CClear}Current: ${CGreen}$WAN0AltModesdisp${CClear}"
               echo ""
-              echo -e "${CCyan}12. What is your preference for the Interval Progress Bar?"
-              echo -e "${CCyan}(0 = Standard) or (1 = Minimalist)?"
-              echo -e "${CYellow}(Default = 0)${CClear}"
-              read -p 'Progress Bar Pref: ' ProgPref1
-              ProgPref2=$(echo $ProgPref1 | tr -d -c 0-1)
-              if [ -z "$ProgPref1" ]; then ProgPref=0; else ProgPref=$ProgPref2; fi
+              echo -e "Is this router an iMesh Node/Repeater/Bridge?${CClear}"
+              if promptyn "[y/n]: "; then
+                WAN0AltModes=1
+              else
+                WAN0AltModes=0
+              fi
             ;;
 
+            13)
+			        clear
+			        echo -e "${InvGreen} ${InvDkGray}${CWhite} Custom Event Log Size                                                                 ${CClear}"
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Please indicate below how large you would like your Event Log to grow. I'm a poet${CClear}"
+			        echo -e "${InvGreen} ${CClear} and didn't even know it. By default, with 2000 rows, you will have many months of${CClear}"
+			        echo -e "${InvGreen} ${CClear} Event Log data."
+			        echo -e "${InvGreen} ${CClear}"
+			        echo -e "${InvGreen} ${CClear} Use 0 to Disable, max number of rows is 9999. (Default = 2000)"
+			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+			        echo ""
+			        echo -e "${CClear}Current: ${CGreen}$LOGSIZE${CClear}"
+			        echo ""
+			        read -p "Please enter Log Size (in rows)? (0-9999, e=Exit): " NEWLOGSIZE
+
+			          if [ "$NEWLOGSIZE" == "e" ]; then
+			          	echo ""
+			            echo -e "\n[Exiting]"; sleep 2
+			          elif [ $NEWLOGSIZE -ge 0 ] && [ $NEWLOGSIZE -le 9999 ]; then
+			            LOGSIZE=$NEWLOGSIZE
+			            echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: New custom Event Log Size entered (in rows): $LOGSIZE" >> $logfile
+			          else
+			            LOGSIZE=2000
+			            echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: New custom Event Log Size entered (in rows): $LOGSIZE" >> $logfile
+			          fi
+			      ;;
+			      
             [Ss]) # -----------------------------------------------------------------------------------------
               echo ""
               { echo 'Interval='$Interval
@@ -663,10 +931,11 @@ vconfig () {
                 echo 'TempUnits="'"$TempUnits"'"'
                 echo 'Speedtst='$Speedtst
                 echo 'spdtestsvrID='$spdtestsvrID
-                echo 'ProgPref='$ProgPref
                 echo 'WANOverride="'"$WANOverride"'"'
+                echo 'WAN0AltModes='$WAN0AltModes
+                echo 'LOGSIZE='$LOGSIZE
               } > $CFGPATH
-              echo -e "${CCyan}Applying config changes to RTRMON..."
+              echo -e "\n${CClear}Applying config changes to RTRMON..."
               echo -e "$(date) - RTRMON - Successfully wrote a new config file" >> $LOGFILE
               sleep 3
               return
@@ -691,8 +960,9 @@ vconfig () {
         echo 'TempUnits="C"'
         echo 'Speedtst=0'
         echo 'spdtestsvrID=0'
-        echo 'ProgPref=0'
         echo 'WANOverride="Auto"'
+        echo 'WAN0AltModes=0'
+        echo 'LOGSIZE=2000'
       } > $CFGPATH
 
       #Re-run rtrmon -config to restart setup process
@@ -707,32 +977,32 @@ vconfig () {
 # vuninstall is a function that uninstalls and removes all traces of RTRMON from your router...
 vuninstall () {
   clear
-  logoNM
+  echo -e "${InvGreen} ${InvDkGray}${CWhite} Uninstall Utility                                                                     ${CClear}"
+  echo -e "${InvGreen} ${CClear}"
+  echo -e "${InvGreen} ${CClear} You are about to uninstall RTRMON!  This action is irreversible."
+  echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
   echo ""
-  echo -e "${CYellow}Uninstall Utility${CClear}"
-  echo ""
-  echo -e "${CCyan}You are about to uninstall RTRMON!  This action is irreversible."
-  echo -e "${CCyan}Do you wish to proceed?${CClear}"
-  if promptyn "(y/n): "; then
+  echo -e "Do you wish to proceed?${CClear}"
+  if promptyn "[y/n]: "; then
     echo ""
-    echo -e "\n${CCyan}Are you sure? Please type 'Y' to validate you want to proceed.${CClear}"
-      if promptyn "(y/n): "; then
+    echo -e "\nAre you sure? Please type 'Y' to validate you want to proceed.${CClear}"
+      if promptyn "[y/n]: "; then
         clear
         rm -r /jffs/addons/rtrmon.d
         rm /jffs/scripts/rtrmon.sh
         echo ""
-        echo -e "\n${CGreen}RTRMON has been uninstalled...${CClear}"
+        echo -e "\nRTRMON has been uninstalled...${CClear}"
         echo ""
         exit 0
       else
         echo ""
-        echo -e "\n${CGreen}Exiting Uninstall Utility...${CClear}"
+        echo -e "\nExiting Uninstall Utility...${CClear}"
         sleep 1
         return
       fi
   else
     echo ""
-    echo -e "\n${CGreen}Exiting Uninstall Utility...${CClear}"
+    echo -e "\nExiting Uninstall Utility...${CClear}"
     sleep 1
     return
   fi
@@ -745,24 +1015,25 @@ vuninstall () {
 vupdate () {
   updatecheck # Check for the latest version from source repository
   clear
-  logoNM
+  echo -e "${InvGreen} ${InvDkGray}${CWhite} Update Utility                                                                        ${CClear}"
+  echo -e "${InvGreen} ${CClear}"
+  echo -e "${InvGreen} ${CClear} This utility allows you to check, download and install updates"
+  echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
   echo ""
-  echo -e "${CYellow}Update Utility${CClear}"
-  echo ""
-  echo -e "${CCyan}Current Version: ${CYellow}$Version${CClear}"
-  echo -e "${CCyan}Updated Version: ${CYellow}$DLVersion${CClear}"
+  echo -e "Current Version: ${CGreen}$Version${CClear}"
+  echo -e "Updated Version: ${CGreen}$DLVersion${CClear}"
   echo ""
   if [ "$Version" == "$DLVersion" ]
     then
-      echo -e "${CCyan}You are on the latest version! Would you like to download anyways?${CClear}"
-      echo -e "${CCyan}This will overwrite your local copy with the current build.${CClear}"
-      if promptyn "(y/n): "; then
+      echo -e "You are on the latest version! Would you like to download anyways?${CClear}"
+      echo -e "This will overwrite your local copy with the current build.${CClear}"
+      if promptyn "[y/n]: "; then
         echo ""
         echo ""
-        echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
+        echo -e "Downloading RTRMON ${CGreen}v$DLVersion${CClear}"
         curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
-        echo -e "${CCyan}Download successful!${CClear}"
+        echo -e "Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
         echo ""
         read -rsp $'Press any key to continue...\n' -n1 key
@@ -770,19 +1041,19 @@ vupdate () {
       else
         echo ""
         echo ""
-        echo -e "${CGreen}Exiting Update Utility...${CClear}"
+        echo -e "Exiting Update Utility...${CClear}"
         sleep 1
         return
       fi
     else
-      echo -e "${CCyan}Score! There is a new version out there! Would you like to update?${CClear}"
-      if promptyn " (y/n): "; then
+      echo -e "Score! There is a new version out there! Would you like to update?${CClear}"
+      if promptyn "[y/n]: "; then
         echo ""
         echo ""
-        echo -e "${CCyan}Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
+        echo -e "Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
         curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
-        echo -e "${CCyan}Download successful!${CClear}"
+        echo -e "Download successful!${CClear}"
         echo -e "$(date) - RTRMON - Successfully downloaded RTRMON v$DLVersion" >> $LOGFILE
         echo ""
         read -rsp $'Press any key to continue...\n' -n1 key
@@ -790,7 +1061,7 @@ vupdate () {
       else
         echo ""
         echo ""
-        echo -e "${CGreen}Exiting Update Utility...${CClear}"
+        echo -e "Exiting Update Utility...${CClear}"
         sleep 1
         return
       fi
@@ -809,113 +1080,113 @@ vsetup () {
 
   while true; do
     clear
-    logoNM
-    echo ""
-    echo -e "${InvDkGray}${CWhite}                  Setup + Operations Menu                       ${CClear}" 
-    echo -e "${CGreen}----------------------------------------------------------------"
-    echo -e "${CGreen}Setup + Configuration"
-    echo -e "${CGreen}----------------------------------------------------------------"
-    echo -e "${InvDkGray}${CWhite} sc ${CClear}${CCyan}: Setup and Configure RTRMON"
-    echo -e "${InvDkGray}${CWhite} fr ${CClear}${CCyan}: Force Re-install Entware Dependencies"
-    echo -e "${InvDkGray}${CWhite} up ${CClear}${CCyan}: Check for latest updates"
-    echo -e "${InvDkGray}${CWhite} vl ${CClear}${CCyan}: View logs"
-    echo -e "${InvDkGray}${CWhite} un ${CClear}${CCyan}: Uninstall"
-    echo -e "${InvDkGray}${CWhite}  e ${CClear}${CCyan}: Exit"
-    echo -e "${CGreen}----------------------------------------------------------------"
+    echo -e "${InvGreen} ${InvDkGray}${CWhite} RTRMON Main Setup and Configuration Menu                                              ${CClear}"
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear} Please choose from the various options below, which allow you to perform high level${CClear}"
+    echo -e "${InvGreen} ${CClear} actions in the management of the RTRMON script.${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(1)${CClear} : Setup and Configure RTRMON"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(2)${CClear} : Force Re-install Entware Dependencies"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(3)${CClear} : Check for latest updates"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(4)${CClear} : View logs"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(5)${CClear} : Uninstall"
     if [ "$FromUI" == "0" ]; then
-      echo -e "${CGreen}Operations"
-      echo -e "${CGreen}----------------------------------------------------------------"
-      echo -e "${InvDkGray}${CWhite} m1 ${CClear}${CCyan}: Launch RTRMON into Normal Monitoring Mode"
-      echo -e "${InvDkGray}${CWhite} m2 ${CClear}${CCyan}: Launch RTRMON into Normal Monitoring Mode w/ Screen"
-      echo -e "${CGreen}----------------------------------------------------------------"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite} | ${CClear}"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(6)${CClear} : Launch RTRMON into Normal Monitoring Mode"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(7)${CClear} : Launch RTRMON into Normal Monitoring Mode w/ SCREEN"
     fi
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite} | ${CClear}"
+    echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(e)${CClear} : Exit"
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
     echo ""
-    printf "Selection: "
-    read -r InstallSelection
+    read -p "Please select? (1-5, e=Exit): " InstallSelection
 
     # Execute chosen selections
         case "$InstallSelection" in
 
-          sc) # Check for existence of entware, and if so proceed and install the timeout package, then run RTRMON -config
+          1) # Check for existence of entware, and if so proceed and install the timeout package, then run RTRMON -config
             clear
             if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]; then
               vconfig
             else
-              logoNM
+              echo -e "${InvGreen} ${InvDkGray}${CWhite} Install Dependencies                                                                  ${CClear}"
+              echo -e "${InvGreen} ${CClear}"
+              echo -e "${InvGreen} ${CClear} Missing dependencies required by RTRMON will be installed during this process."
+              echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
               echo ""
-              echo -e "${CYellow}Installing RTRMON Dependencies...${CClear}"
+              echo -e "RTRMON will require the installation of CoreUtils-Timeout, Screen and Nmap utilities."
+              echo -e "These utilities require you to have Entware already installed using the AMTM tool. If"
+              echo -e "Entware is present, the Timeout, Screen and Nmap utilities will be downloaded and"
+              echo -e "installed during this setup process, and utilized by RTRMON."
               echo ""
-              echo -e "${CCyan}RTRMON will require the installation of CoreUtils-Timeout, Screen${CClear}"
-              echo -e "${CCyan}and Nmap utilities. These utilities require you to have Entware${CClear}"
-              echo -e "${CCyan}already installed using the AMTM tool. If Entware is present, the ${CClear}"
-              echo -e "${CCyan}Timeout, Screen and Nmap utilities will be downloaded and installed${CClear}"
-              echo -e "${CCyan}during this setup process, and utilized by RTRMON.${CClear}"
+              echo -e "${CGreen}CoreUtils-Timeout${CClear} is a utility that provides more stability for certain routers (like"
+              echo -e "the RT-AC86U) which has a tendency to randomly hang scripts running on this router model."
               echo ""
-              echo -e "${CGreen}CoreUtils-Timeout${CCyan} is a utility that provides more stability for${CClear}"
-              echo -e "${CCyan}certain routers (like the RT-AC86U) which has a tendency to randomly${CClear}"
-              echo -e "${CCyan}hang scripts running on this router model.${CClear}"
+              echo -e "${CGreen}Screen${CClear} is a utility that allows you to run SSH scripts in a standalone"
+              echo -e "environment directly on the router itself, instead of running your commands or a script"
+              echo -e "from a network-attached SSH client. This can provide greater stability due to it running"
+              echo -e "from the router itself."
               echo ""
-              echo -e "${CGreen}Screen${CCyan} is a utility that allows you to run SSH scripts in a standalone${CClear}"
-              echo -e "${CCyan}environment directly on the router itself, instead of running your${CClear}"
-              echo -e "${CCyan}commands or a script from a network-attached SSH client. This can${CClear}"
-              echo -e "${CCyan}provide greater stability due to it running from the router itself.${CClear}"
+              echo -e "${CGreen}Nmap${CClear} is a network discovery and security auditing tool that is used to scan your LAN,"
+              echo -e "WAN and VPN connections for open ports."
               echo ""
-              echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
-              echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
+              echo -e "${CGreen}JQuery${CClear} is a utility for querying data across the internet for the purposes of"
+              echo -e "interacting with the various VPN providers to get a list of APIs available VPN hosts in"
+              echo -e "the selected country."
               echo ""
-              echo -e "${CGreen}JQuery${CCyan} is a utility for querying data across the internet through the${CClear}"
-              echo -e "${CCyan}the means of APIs for the purposes of interacting with the various VPN${CClear}"
-              echo -e "${CCyan}providers to get a list of available VPN hosts in the selected country.${CClear}"
-              echo ""
-              echo -e "${CGreen}iftop${CCyan} is a utility for querying connection and bandwidth data.${CClear}"
+              echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
               echo ""
               [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-              echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
+              echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
               echo ""
-              echo -e "${CCyan}Ready to install?${CClear}"
-              if promptyn "(y/n): "
+              echo -e "Ready to install?"
+              if promptyn "[y/n]: "
                 then
                   if [ -d "/opt" ]; then # Does entware exist? If yes proceed, if no error out.
                     echo ""
-                    echo -e "\n${CGreen}Updating Entware Packages...${CClear}"
+                    echo -e "\n${CClear}Updating Entware Packages..."
                     echo ""
                     opkg update
                     echo ""
-                    echo -e "${CGreen}Installing Entware CoreUtils-Timeout Package...${CClear}"
+                    echo -e "Installing Entware ${CGreen}CoreUtils-Timeout${CClear} Package..."
                     echo ""
                     opkg install coreutils-timeout
                     echo ""
-                    echo -e "${CGreen}Installing Entware Screen Package...${CClear}"
+                    echo -e "Installing Entware ${CGreen}Screen Package${CClear}..."
                     echo ""
                     opkg install screen
                     echo ""
-                    echo -e "${CGreen}Installing Entware Nmap Package...${CClear}"
+                    echo -e "Installing Entware ${CGreen}Nmap${CClear} Package..."
                     echo ""
                     opkg install nmap
                     echo ""
-                    echo -e "${CGreen} Installing Entware JQuery Package...${CClear}"
+                    echo -e "Installing Entware ${CGreen}JQuery${CClear} Package..."
                     echo ""
                     opkg install jq
                     echo ""
-                    echo -e "${CGreen} Installing Entware iftop Package...${CClear}"
+                    echo -e "Installing Entware ${CGreen}iftop${CClear} Package..."
                     echo ""
                     opkg install iftop
                     echo ""
+                    echo -e "Install completed..."
+                    echo ""
                     read -rsp $'Press any key to continue...\n' -n1 key
                     echo ""
-                    echo -e "${CGreen}Executing RTRMON Configuration Utility...${CClear}"
+                    echo -e "Executing RTRMON Configuration Utility..."
                     sleep 2
                     vconfig
                   else
                     clear
-                    echo -e "${CGreen}ERROR: Entware was not found on this router...${CClear}"
-                    echo -e "${CGreen}Please install Entware using the AMTM utility before proceeding...${CClear}"
+                    echo -e "${CRed}ERROR: Entware was not found on this router...${CClear}"
+                    echo -e "Please install Entware using the AMTM utility before proceeding..."
                     echo ""
                     sleep 3
                   fi
                 else
                   echo ""
-                  echo -e "\n${CGreen}Executing RTRMON Configuration Utility...${CClear}"
+                  echo -e "\nExecuting RTRMON Configuration Utility..."
                   sleep 2
                   vconfig
               fi
@@ -923,106 +1194,106 @@ vsetup () {
           ;;
 
 
-          fr) # Force re-install the CoreUtils timeout/screen package
+          2) # Force re-install the CoreUtils timeout/screen package
             clear
-            logoNM
+            echo -e "${InvGreen} ${InvDkGray}${CWhite} Re-install Dependencies                                                               ${CClear}"
+            echo -e "${InvGreen} ${CClear}"
+            echo -e "${InvGreen} ${CClear} Missing dependencies required by RTRMON will be re-installed during this process."
+            echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
             echo ""
-            echo -e "${CYellow}Force Re-installing RTRMON Dependencies...${CClear}"
+            echo -e "VPNMON-R3 has some dependencies in order to function correctly, namely, CoreUtils-Timeout"
+            echo -e "RTRMON will require the installation of CoreUtils-Timeout, Screen, Nmap, JQ and iftop"
+            echo -e "utilities. These utilities require you to have Entware already installed using AMTM. If"
+            echo -e "Entware is present, the Timeout, Screen, Nmap, JQ and iftop utilities will be downloaded"
+            echo -e "and re-installed during this setup process, and utilized by RTRMON."
             echo ""
-            echo -e "${CCyan}RTRMON will require the installation of CoreUtils-Timeout, Screen${CClear}"
-            echo -e "${CCyan}and Nmap utilities. These utilities require you to have Entware${CClear}"
-            echo -e "${CCyan}already installed using the AMTM tool. If Entware is present, the ${CClear}"
-            echo -e "${CCyan}Timeout, Screen and Nmap utilities will be downloaded and re-installed${CClear}"
-            echo -e "${CCyan}during this setup process, and utilized by RTRMON.${CClear}"
+            echo -e "${CGreen}CoreUtils-Timeout${CClear} is a utility that provides more stability for certain routers (like"
+            echo -e "the RT-AC86U) which has a tendency to randomly hang scripts running on this router model."
             echo ""
-            echo -e "${CGreen}CoreUtils-Timeout${CCyan} is a utility that provides more stability for${CClear}"
-            echo -e "${CCyan}certain routers (like the RT-AC86U) which has a tendency to randomly${CClear}"
-            echo -e "${CCyan}hang scripts running on this router model.${CClear}"
+            echo -e "${CGreen}Screen${CClear} is a utility that allows you to run SSH scripts in a standalone"
+            echo -e "environment directly on the router itself, instead of running your commands or a script"
+            echo -e "from a network-attached SSH client. This can provide greater stability due to it running"
+            echo -e "from the router itself."
             echo ""
-            echo -e "${CGreen}Screen${CCyan} is a utility that allows you to run SSH scripts in a standalone${CClear}"
-            echo -e "${CCyan}environment directly on the router itself, instead of running your${CClear}"
-            echo -e "${CCyan}commands or a script from a network-attached SSH client. This can${CClear}"
-            echo -e "${CCyan}provide greater stability due to it running from the router itself.${CClear}"
+            echo -e "${CGreen}Nmap${CClear} is a network discovery and security auditing tool that is used to scan your LAN,"
+            echo -e "WAN and VPN connections for open ports."
             echo ""
-            echo -e "${CGreen}Nmap${CCyan} is a network discovery and security auditing tool that is used${CClear}"
-            echo -e "${CCyan}to scan your LAN and WAN connections for open ports. ${CClear}"
+            echo -e "${CGreen}JQuery${CClear} is a utility for querying data across the internet for the purposes of"
+            echo -e "interacting with the various VPN providers to get a list of APIs available VPN hosts in"
+            echo -e "the selected country."
             echo ""
-            echo -e "${CGreen}JQuery${CCyan} is a utility for querying data across the internet through the${CClear}"
-            echo -e "${CCyan}the means of APIs for the purposes of interacting with the various VPN${CClear}"
-            echo -e "${CCyan}providers to get a list of available VPN hosts in the selected country.${CClear}"
-            echo ""
-            echo -e "${CGreen}iftop${CCyan} is a utility for querying connection and bandwidth data.${CClear}"
+            echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
             echo ""
             [ -z "$(nvram get odmpid)" ] && RouterModel="$(nvram get productid)" || RouterModel="$(nvram get odmpid)" # Thanks @thelonelycoder for this logic
-            echo -e "${CCyan}Your router model is: ${CYellow}$RouterModel"
+            echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
             echo ""
-            echo -e "${CCyan}Force Re-install?${CClear}"
-            if promptyn "(y/n): "
+            echo -e "Force Re-install?"
+            if promptyn "[y/n]: "
               then
                 if [ -d "/opt" ]; then # Does entware exist? If yes proceed, if no error out.
                   echo ""
-                  echo -e "\n${CGreen}Updating Entware Packages...${CClear}"
+                  echo -e "\n${CClear}Updating Entware Packages..."
                   echo ""
                   opkg update
                   echo ""
-                  echo -e "${CGreen}Force Re-installing Entware CoreUtils-Timeout Package...${CClear}"
+                  echo -e "Force Re-installing Entware ${CGreen}CoreUtils-Timeout${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall coreutils-timeout
                   echo ""
-                  echo -e "${CGreen}Force Re-installing Entware Screen Package...${CClear}"
+                  echo -e "Force Re-installing Entware ${CGreen}Screen${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall screen
                   echo ""
-                  echo -e "${CGreen}Force Re-installing Entware Nmap Package...${CClear}"
+                  echo -e "Force Re-installing Entware ${CGreen}Nmap${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall nmap
                   echo ""
-                  echo -e "${CGreen} Force Re-installing Entware JQuery Package...${CClear}"
+                  echo -e "Force Re-installing Entware ${CGreen}JQuery${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall jq
                   echo ""
-                  echo -e "${CGreen} Force Re-installing Entware iftop Package...${CClear}"
+                  echo -e "Force Re-installing Entware ${CGreen}iftop${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall iftop
                   echo ""
-                  echo -e "${CGreen}Re-install completed...${CClear}"
+                  echo -e "Re-install completed..."
                   echo ""
                   read -rsp $'Press any key to continue...\n' -n1 key
                 else
                   clear
-                  echo -e "${CGreen}ERROR: Entware was not found on this router...${CClear}"
-                  echo -e "${CGreen}Please install Entware using the AMTM utility before proceeding...${CClear}"
+                  echo -e "${CRed}ERROR: Entware was not found on this router...${CClear}"
+                  echo -e "Please install Entware using the AMTM utility before proceeding..."
                   echo ""
                   sleep 3
                 fi
             fi
           ;;
 
-          up)
+          3)
             echo ""
             vupdate
           ;;
 
-          m1)
+          6)
             echo ""
             echo -e "\n${CGreen}Launching RTRMON into Monitor Mode...${CClear}"
             sleep 2
-            sh $APPPATH -monitor
+            exec sh $APPPATH -monitor
           ;;
 
-          m2)
+          7)
             echo ""
             echo -e "\n${CGreen}Launching RTRMON into Monitor Mode with Screen Utility...${CClear}"
             sleep 2
-            sh $APPPATH -screen
+            exec sh $APPPATH -screen
           ;;
 
-          vl)
+          4)
             echo ""
             vlogs
           ;;
 
-          un)
+          5)
             echo ""
             vuninstall
           ;;
@@ -1136,20 +1407,27 @@ if [ "$INITIALBOOT" == "0" ]; then
 
   if [ $key_press ]; then
       case $key_press in
-          [Ss]) FromUI=1; (vsetup); source $CFGPATH; echo -e "${CGreen}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-          [Ii]) QueueSpdtst=1; echo -e "${CGreen}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; DisplayPage4; echo -e "\n";;
-          [Jj]) QueueVPNSpdtst=1; echo -e "${CGreen}[Queuing VPN Speedtest]                                                  "; sleep 1; clear; DisplayPage4; echo -e "\n";;
+          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
+          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
+          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
+          [Hh]) timerreset=1; hideoptions=1;;
+          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
+          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
           [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+          [Oo]) vlogs;;
           [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
-          [Dd]) QueueNetworkDiag=1; echo -e "${CGreen}[Queuing Network Diagnostics]                                            "; sleep 1; clear; DisplayPage5; echo "";;
-          [Tt]) PSView="TCP"; clear; DisplayPage5; echo "";;
-          [Uu]) PSView="UDP"; clear; DisplayPage5; echo "";;
-          [Vv]) NCView="VPN"; clear; DisplayPage6; echo "";;
-          [Ww]) NCView="WAN"; clear; DisplayPage6; echo "";;
-          [Ll]) NCView="LAN"; clear; DisplayPage6; echo "";;
           [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
-          [Cc]) QueueNetworkConn=1; echo -e "${CGreen}[Queuing Network Connection Stats]                                       "; sleep 1; clear; DisplayPage6; echo "";;
-          [Ee]) echo -e "${CClear}"; exit 0;;
+          [Ss]) timerreset=1; hideoptions=0;;
+          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
+          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
+          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
+          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
+          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
       esac
   fi
 else
@@ -1186,14 +1464,18 @@ oldstats () {
   oldjffsused=$jffsused
   oldswaptotal=$swaptotal
   oldswapused=$swapused
-  oldwan0ip=$wan0ip
-  oldwan1ip=$wan1ip
+  if [ "$WAN0AltModes" == "0" ]; then
+    oldwan0ip=$wan0ip
+    oldwan1ip=$wan1ip
+  fi
   olddns1ip=$dns1ip
   olddns2ip=$dns2ip
   oldwanip6=$wanip6
   oldlanip6=$lanip6
-  oldwanrxmbrate=$wanrxmbrate
-  oldwantxmbrate=$wantxmbrate
+  if [ "$WAN0AltModes" == "0" ]; then
+    oldwanrxmbrate=$wanrxmbrate
+    oldwantxmbrate=$wantxmbrate
+  fi
   oldw24rxmbrate=$w24rxmbrate
   oldw24txmbrate=$w24txmbrate
   oldw5rxmbrate=$w5rxmbrate
@@ -1217,13 +1499,27 @@ oldstats () {
   oldvpntxmbrate=$vpntxmbrate
   oldvpn2rxmbrate=$vpn2rxmbrate
   oldvpn2txmbrate=$vpn2txmbrate
+  oldvpn3rxmbrate=$vpn3rxmbrate
+  oldvpn3txmbrate=$vpn3txmbrate
+  oldvpn4rxmbrate=$vpn4rxmbrate
+  oldvpn4txmbrate=$vpn4txmbrate
+  oldvpn5rxmbrate=$vpn5rxmbrate
+  oldvpn5txmbrate=$vpn5txmbrate
   oldvpnip=$vpnip
   oldvpncity=$vpncity
   oldvpn2ip=$vpn2ip
   oldvpn2city=$vpn2city
-
-  oldwanrxmbratedisplay=$wanrxmbratedisplay
-  oldwantxmbratedisplay=$wantxmbratedisplay
+  oldvpn3ip=$vpn3ip
+  oldvpn3city=$vpn3city
+  oldvpn4ip=$vpn4ip
+  oldvpn4city=$vpn4city
+  oldvpn5ip=$vpn5ip
+  oldvpn5city=$vpn5city
+  
+  if [ "$WAN0AltModes" == "0" ]; then
+    oldwanrxmbratedisplay=$wanrxmbratedisplay
+    oldwantxmbratedisplay=$wantxmbratedisplay
+  fi
   oldw24rxmbratedisplay=$w24rxmbratedisplay
   oldw24txmbratedisplay=$w24txmbratedisplay
   oldw5rxmbratedisplay=$w5rxmbratedisplay
@@ -1242,6 +1538,12 @@ oldstats () {
   oldvpntxmbratedisplay=$vpntxmbratedisplay
   oldvpn2rxmbratedisplay=$vpn2rxmbratedisplay
   oldvpn2txmbratedisplay=$vpn2txmbratedisplay
+  oldvpn3rxmbratedisplay=$vpn3rxmbratedisplay
+  oldvpn3txmbratedisplay=$vpn3txmbratedisplay
+  oldvpn4rxmbratedisplay=$vpn4rxmbratedisplay
+  oldvpn4txmbratedisplay=$vpn4txmbratedisplay
+  oldvpn5rxmbratedisplay=$vpn5rxmbratedisplay
+  oldvpn5txmbratedisplay=$vpn5txmbratedisplay
 
 }
 
@@ -1279,12 +1581,15 @@ calculatestats () {
     if [ ! -z $membuff1 ]; then membuff1=$(($membuff1 / $Interval)); else membuff1=0; fi
     if [ ! -z $memcach1 ]; then memcach1=$(($memcach1 / $Interval)); else memcach1=0; fi
 
-    memused2=$(($memused1 / 1024 ))
-    memfree2=$(($memfree1 / 1024 ))
-    memshrd2=$(($memshrd1 / 1024 ))
-    membuff2=$(($membuff1 / 1024 ))
-    memcach2=$(($memcach1 / 1024 ))
-    totalmemory=$((($memused1 + $memfree1) / 1024 ))
+    memused2=$(($memused1 / 1000 ))
+    memfree2=$(($memfree1 / 1000 ))
+    memshrd2=$(($memshrd1 / 1000 ))
+    membuff2=$(($membuff1 / 1000 ))
+    memcach2=$(($memcach1 / 1000 ))
+    totalmemory=$((($memused1 + $memfree1) / 1000 ))
+    
+    totalphysmem=$(/usr/bin/free | awk 'NR==2 {print $2}' 2>/dev/null)
+    totalphysmem="$(($totalphysmem / 1000))"
 
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
     eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
@@ -1303,23 +1608,25 @@ calculatestats () {
     disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
     jffstotal="$(echo $disk_use | awk '{print $1}')"
     jffsused="$(echo $disk_use | awk '{print $2}')"
-    jffstotal="$(($jffstotal / 1024))"
-    jffsused="$(($jffsused / 1024))"
+    jffstotal="$(($jffstotal / 1000))"
+    jffsused="$(($jffsused / 1000))"
 
   # Disk - Swap file
     swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
     swaptotal="$(echo $swap_use | awk '{print $1}')"
     swapused="$(echo $swap_use | awk '{print $2}')"
-    swaptotal="$(($swaptotal / 1024))"
-    swapused="$(($swapused / 1024))"
+    swaptotal="$(($swaptotal / 1000))"
+    swapused="$(($swapused / 1000))"
     if [ $swaptotal == "0" ]; then swaptotal=100; fi
     
   # Disk - SD devices
     df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
 
   # Network - WAN/LAN/DNS IP Addresses
-    wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
-    wan1ip=$($timeoutcmd$timeoutsec nvram get wan1_ipaddr)
+    if [ "$WAN0AltModes" == "0" ]; then
+      wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
+      wan1ip=$($timeoutcmd$timeoutsec nvram get wan1_ipaddr)
+    fi
     lanip=$($timeoutcmd$timeoutsec nvram get lan_ipaddr)
     dns1ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $1}')"
     dns2ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $2}')"
@@ -1327,15 +1634,13 @@ calculatestats () {
     dns4ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $2}')"
 
   # Network - VPN Client Ports and IP Addresses
-    vpn=0
-    while [ $vpn -ne 5 ]; do
-      vpn=$(($vpn+1))
-      VPNState="$(_VPN_GetClientState_ ${vpn})"
+      vpn1slot=1
+      VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
       if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
       if [ $VPNState -eq 2 ]; then
-        TUN="tun1"$vpn
-        NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
-        NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+        TUN="tun1"$vpn1slot
+        NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
+        NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpnip=$NVRAMVPNIP
@@ -1350,55 +1655,138 @@ calculatestats () {
             echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpnip ($vpncity)" >> $LOGFILE
           fi
         fi
-        vpnon="True"
-        #Check to see if there's a secondary VPN connection
-          vpn2=$vpn
-          while [ $vpn2 -ne 5 ]; do
-            vpn2=$(($vpn2+1))
-            VPN2State="$(_VPN_GetClientState_ ${vpn2})"
-            if [ $VPN2State -eq 2 ]; then
-              TUN2="tun1"$vpn2
-              NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
-              NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-              if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-                vpn2ip=$NVRAMVPN2IP
-                vpn2city="Private Network"
-              else
-                lastvpn2ip=$oldvpn2ip
-                vpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
-                if [ -z $vpn2ip ]; then vpn2ip=$NVRAMVPN2IP; fi
-                if [ "$lastvpn2ip" != "$vpn2ip" ]; then
-                  vpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
-                  vpn2city="$(eval $vpn2city)"; if echo $vpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn2city="Undetermined"; fi
-                  echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn2ip ($vpn2city)" >> $LOGFILE
-                fi
-              fi
-              vpn2on="True"
-              break
-            else
-              vpn2on="False"
-            fi
-          done
-        break
+        vpn1on="True"
       else
-        vpnon="False"
+        vpn1on="False"
+      fi
+     
+      #Check to see if there's a 2nd VPN connection
+      vpn2slot=2
+      VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+      if [ -z $VPN2State ]; then VPN2State=0; fi # to catch possible wireguard interference
+      if [ $VPN2State -eq 2 ]; then
+        TUN2="tun1"$vpn2slot
+        NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
+        NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+        if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          vpn2ip=$NVRAMVPN2IP
+          vpn2city="Private Network"
+        else
+          lastvpn2ip=$oldvpn2ip
+          vpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ -z $vpn2ip ]; then vpn2ip=$NVRAMVPN2IP; fi
+          if [ "$lastvpn2ip" != "$vpn2ip" ]; then
+            vpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
+            vpn2city="$(eval $vpn2city)"; if echo $vpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn2city="Undetermined"; fi
+            echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn2ip ($vpn2city)" >> $LOGFILE
+          fi
+        fi
+        vpn2on="True"
+      else
         vpn2on="False"
       fi
-    done
 
-    if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
-    if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
+      #Check to see if there's a 3rd VPN connection
+      vpn3slot=3
+      VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+      if [ -z $VPN3State ]; then VPN3State=0; fi # to catch possible wireguard interference
+      if [ $VPN3State -eq 2 ]; then
+        TUN3="tun1"$vpn3slot
+        NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
+        NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+        if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          vpn3ip=$NVRAMVPN3IP
+          vpn3city="Private Network"
+        else
+          lastvpn3ip=$oldvpn3ip
+          vpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ -z $vpn3ip ]; then vpn2ip=$NVRAMVPN3IP; fi
+          if [ "$lastvpn3ip" != "$vpn3ip" ]; then
+            vpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn3ip | jq --raw-output .city"
+            vpn3city="$(eval $vpn3city)"; if echo $vpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn3city="Undetermined"; fi
+            echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn3ip ($vpn3city)" >> $LOGFILE
+          fi
+        fi
+        vpn3on="True"
+      else
+        vpn3on="False"
+      fi
+
+      #Check to see if there's a 4th VPN connection
+      vpn4slot=4
+      VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+      if [ -z $VPN4State ]; then VPN4State=0; fi # to catch possible wireguard interference
+      if [ $VPN4State -eq 2 ]; then
+        TUN4="tun1"$vpn4slot
+        NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
+        NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+        if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          vpn4ip=$NVRAMVPN4IP
+          vpn4city="Private Network"
+        else
+          lastvpn4ip=$oldvpn4ip
+          vpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ -z $vpn4ip ]; then vpn2ip=$NVRAMVPN4IP; fi
+          if [ "$lastvpn4ip" != "$vpn4ip" ]; then
+            vpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn4ip | jq --raw-output .city"
+            vpn4city="$(eval $vpn4city)"; if echo $vpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn4city="Undetermined"; fi
+            echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn4ip ($vpn4city)" >> $LOGFILE
+          fi
+        fi
+        vpn4on="True"
+      else
+        vpn4on="False"
+      fi
+      
+      #Check to see if there's a 5th VPN connection
+      vpn5slot=5
+      VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+      if [ -z $VPN5State ]; then VPN5State=0; fi # to catch possible wireguard interference
+      if [ $VPN5State -eq 2 ]; then
+        TUN5="tun1"$vpn5slot
+        NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
+        NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+        if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          vpn5ip=$NVRAMVPN5IP
+          vpn5city="Private Network"
+        else
+          lastvpn5ip=$oldvpn5ip
+          vpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ -z $vpn5ip ]; then vpn2ip=$NVRAMVPN5IP; fi
+          if [ "$lastvpn5ip" != "$vpn5ip" ]; then
+            vpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn5ip | jq --raw-output .city"
+            vpn5city="$(eval $vpn5city)"; if echo $vpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn5city="Undetermined"; fi
+            echo -e "$(date) - RTRMON - API call made to determine geolocation of $vpn5ip ($vpn5city)" >> $LOGFILE
+          fi
+        fi
+        vpn5on="True"
+      else
+        vpn5on="False"
+      fi
+    
+    if [ "$WAN0AltModes" == "0" ]; then  
+      if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
+      if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
+    fi
     if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
     if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
     if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
     if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
-    if [ "$vpnon" == "False" ]; then vpnip="0.0.0.0"; fi
+    if [ "$vpn1on" == "False" ]; then vpnip="0.0.0.0"; fi
     if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
+    if [ "$vpn3on" == "False" ]; then vpn3ip="0.0.0.0"; fi
+    if [ "$vpn4on" == "False" ]; then vpn4ip="0.0.0.0"; fi
+    if [ "$vpn5on" == "False" ]; then vpn5ip="0.0.0.0"; fi
 
     # Many thanks to @SomewhereOverTheRainbow for his help and suggestions on getting IP6 info!
-    wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
+    if [ "$WAN0AltModes" == "0" ]; then
+      wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
+    fi
     lanip6="$(ip -o -6 addr list br0 scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
 
   # Network - Wifi - Temp
@@ -1481,14 +1869,16 @@ calculatestats () {
     newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
 
   # Network - WAN - Traffic
-    if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
-    newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
-    newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+    if [ "$WAN0AltModes" == "0" ]; then
+      if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+      newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
+      newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+    fi
 
   # Network - VPN - Traffic
     # Grab total bytes VPN Traffic Measurement
-    if [ "$vpnon" == "True" ]; then
-      newvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+    if [ "$vpn1on" == "True" ]; then
+      newvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
       newvpnrxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f1)"
       newvpntxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f2)"
       if [ -z $newvpnrxbytes ]; then newvpnrxbytes=0; fi
@@ -1499,11 +1889,10 @@ calculatestats () {
       elif [ $newvpntxbytes -le 0 ]; then
         newvpntxbytes=0
       fi
-
     fi
 
     if [ "$vpn2on" == "True" ]; then
-      newvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+      newvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
       newvpn2rxbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f1)"
       newvpn2txbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f2)"
       if [ -z $newvpn2rxbytes ]; then newvpn2rxbytes=0; fi
@@ -1514,12 +1903,55 @@ calculatestats () {
       elif [ $newvpn2txbytes -le 0 ]; then
         newvpn2txbytes=0
       fi
+    fi
 
+    if [ "$vpn3on" == "True" ]; then
+      newvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+      newvpn3rxbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f1)"
+      newvpn3txbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn3rxbytes ]; then newvpn3rxbytes=0; fi
+      if [ -z $newvpn3txbytes ]; then newvpn3txbytes=0; fi
+
+      if [ $newvpn3rxbytes -le 0 ]; then
+        newvpn3rxbytes=0
+      elif [ $newvpn3txbytes -le 0 ]; then
+        newvpn3txbytes=0
+      fi
+    fi
+    
+    if [ "$vpn4on" == "True" ]; then
+      newvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+      newvpn4rxbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f1)"
+      newvpn4txbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn4rxbytes ]; then newvpn4rxbytes=0; fi
+      if [ -z $newvpn4txbytes ]; then newvpn4txbytes=0; fi
+
+      if [ $newvpn4rxbytes -le 0 ]; then
+        newvpn4rxbytes=0
+      elif [ $newvpn4txbytes -le 0 ]; then
+        newvpn4txbytes=0
+      fi
+    fi
+    
+    if [ "$vpn5on" == "True" ]; then
+      newvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+      newvpn5rxbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f1)"
+      newvpn5txbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn5rxbytes ]; then newvpn5rxbytes=0; fi
+      if [ -z $newvpn5txbytes ]; then newvpn5txbytes=0; fi
+
+      if [ $newvpn5rxbytes -le 0 ]; then
+        newvpn5rxbytes=0
+      elif [ $newvpn5txbytes -le 0 ]; then
+        newvpn5txbytes=0
+      fi
     fi
 
   # Network - Traffic - Calculations to find the difference between old and new total bytes send/received and divided to give Megabits
-    diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-    diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    if [ "$WAN0AltModes" == "0" ]; then
+      diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
     diff24rxbytes=$(awk -v new=$new24rxbytes -v old=$old24rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     diff24txbytes=$(awk -v new=$new24txbytes -v old=$old24txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     diff5rxbytes=$(awk -v new=$new5rxbytes -v old=$old5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
@@ -1534,7 +1966,7 @@ calculatestats () {
       diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
-    if [ "$vpnon" == "True" ]; then
+    if [ "$vpn1on" == "True" ]; then
       diffvpnrxbytes=$(awk -v new=$newvpnrxbytes -v old=$oldvpnrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diffvpntxbytes=$(awk -v new=$newvpntxbytes -v old=$oldvpntxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
@@ -1542,10 +1974,25 @@ calculatestats () {
       diffvpn2rxbytes=$(awk -v new=$newvpn2rxbytes -v old=$oldvpn2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diffvpn2txbytes=$(awk -v new=$newvpn2txbytes -v old=$oldvpn2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
+    if [ "$vpn3on" == "True" ]; then
+      diffvpn3rxbytes=$(awk -v new=$newvpn3rxbytes -v old=$oldvpn3rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffvpn3txbytes=$(awk -v new=$newvpn3txbytes -v old=$oldvpn3txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn4on" == "True" ]; then
+      diffvpn4rxbytes=$(awk -v new=$newvpn4rxbytes -v old=$oldvpn4rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffvpn4txbytes=$(awk -v new=$newvpn4txbytes -v old=$oldvpn4txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn5on" == "True" ]; then
+      diffvpn5rxbytes=$(awk -v new=$newvpn5rxbytes -v old=$oldvpn5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+      diffvpn5txbytes=$(awk -v new=$newvpn5txbytes -v old=$oldvpn5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    
 
   # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
-    wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-    wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    if [ "$WAN0AltModes" == "0" ]; then
+      wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
     w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
     w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
@@ -1560,7 +2007,7 @@ calculatestats () {
       w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    if [ "$vpnon" == "True" ]; then
+    if [ "$vpn1on" == "True" ]; then
       vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
@@ -1568,8 +2015,22 @@ calculatestats () {
       vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-    wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    if [ "$vpn3on" == "True" ]; then
+      vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
+    if [ "$vpn4on" == "True" ]; then
+      vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
+    if [ "$vpn5on" == "True" ]; then
+      vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+      vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    fi
+    if [ "$WAN0AltModes" == "0" ]; then
+      wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
     w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
     w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
@@ -1584,26 +2045,544 @@ calculatestats () {
       w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
-    if [ "$vpnon" == "True" ]; then
-      vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}')
-      vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}')
+    if [ "$vpn1on" == "True" ]; then
+      vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
     if [ "$vpn2on" == "True" ]; then
-      vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}')
-      vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}')
+      vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
-
+    if [ "$vpn3on" == "True" ]; then
+      vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
+    if [ "$vpn4on" == "True" ]; then
+      vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
+    if [ "$vpn5on" == "True" ]; then
+      vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+      vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
+    
   # Uptime calc
     uptime=$(awk '{printf("%03dd %02dh %02dm %02ds\n",($1/60/60/24),($1/60/60%24),($1/60%60),($1%60))}' /proc/uptime)
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
 
+# This function displays the stats UI for page 1
+DisplayPage1 () {
+	clear
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "$UpdateNotify${CClear}"
+  fi
+  showheader
+  echo ""
+  echo -e "${InvDkGray}${CWhite} CPU                                                                                                           ${CClear}"
+  echo ""
+  echo -e "${InvGreen} ${CClear} ${CWhite}Uptime     ${CDkGray}[                               ${CWhite}$uptime${CDkGray}                                ]${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}CPU Load   ${CDkGray}[                         ${CGreen}1m: ${CWhite}$cpuload1m  ${CGreen}5m: ${CWhite}$cpuload5m  ${CGreen}15m: ${CWhite}$cpuload15m${CDkGray}                         ]${CClear}"
+  preparebar 79 "|"
+  progressbar $oldcpuusr1 100 " CPU User  " "%%" "Standard" $olddisplaycpuusr1
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldcpusys1 100 " CPU System" "%%" "Standard" $olddisplaycpusys1
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldcpunice1 100 " CPU Nice  " "%%" "Standard" $olddisplaycpunice1
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldcpuidle1 100 " CPU Idle  " "%%" "Reverse" $olddisplaycpuidle1
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldcpuirq1 100 " CPU IRQ   " "%%" "Standard" $olddisplaycpuirq1
+  echo ""
+  preparebar 79 "|"
+  converttemps $oldF_cputemp
+  progressbar $currenttemp $currentrange " CPU Temp  " $TempUnits "CPU" $currenttemp $currentrange
+  echo ""
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Memory                                                                                                        ${CClear}"
+  echo ""
+  echo -en "${InvGreen} ${CClear} ${CWhite}Mem Total  ${CDkGray}[                                    ${CWhite}"
+  printf "%-7s" "$totalphysmem MB"
+  echo -e "${CDkGray}                                    ]${CClear}" 
+  preparebar 79 "|"
+  progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldmemfree2 $oldtotalmemory " Mem Free  " "MB" "Reverse"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldmemshrd2 $oldtotalmemory " Mem Shared" "MB" "Standard"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldmembuff2 $oldtotalmemory " Mem Buffer" "MB" "Standard"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldmemcach2 $oldtotalmemory " Mem Cache " "MB" "Standard"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldnvramused $oldtotalnvram " NVRAM Used" "B" "Standard"
+  echo ""
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Disk                                                                                                          ${CClear}"
+  echo ""
+  echo -en "${InvGreen} ${CClear} ${CWhite}Swap Size  ${CDkGray}[                                    ${CWhite}"
+  printf "%-8s" "$swaptotal MB"
+  echo -e "${CDkGray}                                   ]${CClear}" 
+  preparebar 79 "|"
+  progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
+  echo ""
+  preparebar 79 "|"
+  progressbar $oldjffsused $oldjffstotal " JFFS Used " "MB" "Standard"
+  
+  #Disk - SD devices
+  if [ -f /jffs/addons/rtrmon.d/sdresult.txt ]; then
+    sdcnt=$(cat /jffs/addons/rtrmon.d/sdresult.txt | wc -l) >/dev/null 2>&1 
+    if [ $sdcnt -lt 1 ]; then 
+      sdcnt=0
+    elif [ -z $sdcnt ]; then 
+      sdcnt=0
+    fi
+  else
+    sdcnt=0
+  fi
+  
+  CNT=0
+  while [ $CNT -lt $sdcnt ]; do # Loop through number of /dev/sd*'s
+    CNT=$((CNT+1))
+    dfresults=$(sed -n "${CNT}p" /jffs/addons/rtrmon.d/sdresult.txt)
+    if [ -z "$dfresults" ]; then break; fi
+    sdname="$(echo $dfresults | awk '{print $1}')"
+    sdtotal="$(echo $dfresults | awk '{print $2}')"
+    sdused="$(echo $dfresults | awk '{print $3}')"
+    
+    sdtotal=$(echo "$sdtotal 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
+    sdused=$(echo "$sdused 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
+    if [ $sdtotal == "0" ]; then sdtotal=1; fi
+    if [ $sdused == "0" ]; then sdused=1; fi
+    sdnameformat=$(printf "%-10s" $sdname)
+
+    echo ""
+    preparebar 79 "|"
+    progressbar $sdused $sdtotal " $sdnameformat" "GB" "Standard"
+  done
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+
+# This function displays the stats UI for page 2
+DisplayPage2 () {
+	clear
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "$UpdateNotify${CClear}"
+  fi
+  showheader
+  if [ "$WAN0AltModes" == "0" ]; then
+	  echo ""
+	  echo -e "${InvDkGray}${CWhite} WAN                                                                                                           ${CClear}"
+	  echo ""
+	  #oldwan0ip="1.2.3.4" #demo
+	  #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
+	  echo -en "${InvGreen} ${CClear} ${CWhite}WAN 0/1 IP ${CDkGray}[ ${CWhite}"
+	  printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
+	  echo -en " / "
+	  printf '%03d.%03d.%03d.%03d'  ${oldwan1ip//./ }
+	  echo -en "${CDkGray} ] ${CWhite}  DNS ${CDkGray}[ ${CWhite}"
+	  if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
+	  echo -en " / "
+	  if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
+	  echo -e "${CDkGray} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
+	  if [ ! -z $oldwanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}WAN 0/1 I6 ${CDkGray}[ ${CWhite}$oldwanip6${CClear}"; fi
+	  
+	  preparebar 79 "|"
+	  progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
+	  echo ""
+	  preparebar 79 "|"
+	  progressbar $oldwantxmbrate $MaxSpeedInetUL " Avg WAN TX" "Mbps" "Standard" $oldwantxmbratedisplay $MaxSpeedInetUL
+	  echo ""
+  fi
+  echo ""
+  echo -e "${InvDkGray}${CWhite} LAN                                                                                                           ${CClear}"
+  echo ""
+  echo -en "${InvGreen} ${CClear}${CWhite} BR0 LAN IP ${CDkGray}[ ${CWhite}"
+  printf '%03d.%03d.%03d.%03d'  ${oldlanip//./ }
+  echo -e "${CDkGray}                                                               ] ${InvDkGray}${CWhite}IFace: br0${CClear}"
+  if [ ! -z $oldlanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}BR0 LAN I6 ${CDkGray}[ ${CWhite}$oldlanip6${CClear}"; fi
+  	
+  preparebar 79 "|"
+  progressbar $oldlanrxmbrate $MaxSpeedLAN " Avg LAN RX" "Mbps" "Standard" $oldlanrxmbratedisplay $MaxSpeedLAN
+  echo ""
+  preparebar 79 "|"
+  if [ ${oldlantxmbrate%.*} -lt 0 ]; then oldlantxmbrate=0; oldlantxmbratedisplay=0; fi
+  progressbar $oldlantxmbrate $MaxSpeedLAN " Avg LAN TX" "Mbps" "Standard" $oldlantxmbratedisplay $MaxSpeedLAN
+
+  if [ "$vpn1on" == "True" ]; then
+    echo ""
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn1slot                                                                                                          ${CClear}"
+    echo ""
+    if [ "$oldvpncity" == "Private Network" ]; then
+      echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpncity"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
+    else
+      echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpncity"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
+    fi
+    if [ ${oldvpntxmbrate%.*} -lt 0 ]; then oldvpntxmbrate=0; oldvpntxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpntxmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpntxmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpnrxmbrate%.*} -lt 0 ]; then oldvpnrxmbrate=0; oldvpnrxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpnrxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpnrxmbratedisplay $MaxSpeedInetUL
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    echo ""
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn2slot                                                                                                          ${CClear}"
+    echo ""
+    if [ "$oldvpn2city" == "Private Network" ]; then
+      echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn2city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
+    else
+      echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn2city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
+    fi
+    if [ ${oldvpn2txmbrate%.*} -lt 0 ]; then oldvpn2txmbrate=0; oldvpn2txmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn2txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn2txmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpn2rxmbrate%.*} -lt 0 ]; then oldvpn2rxmbrate=0; oldvpn2rxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn2rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn2rxmbratedisplay $MaxSpeedInetUL
+  fi
+
+  if [ "$vpn3on" == "True" ]; then
+    echo ""
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn3slot                                                                                                          ${CClear}"
+    echo ""
+    if [ "$oldvpn3city" == "Private Network" ]; then
+      echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn3ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn3city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
+    else
+      echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn3ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn3city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
+    fi
+    if [ ${oldvpn3txmbrate%.*} -lt 0 ]; then oldvpn3txmbrate=0; oldvpn3txmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn3txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn3txmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpn3rxmbrate%.*} -lt 0 ]; then oldvpn3rxmbrate=0; oldvpn3rxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn3rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn3rxmbratedisplay $MaxSpeedInetUL
+  fi
+
+  if [ "$vpn4on" == "True" ]; then
+    echo ""
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn4slot                                                                                                          ${CClear}"
+    echo ""
+    if [ "$oldvpn4city" == "Private Network" ]; then
+      echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn4ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn4city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
+    else
+      echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn4ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn4city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
+    fi
+    if [ ${oldvpn4txmbrate%.*} -lt 0 ]; then oldvpn4txmbrate=0; oldvpn4txmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn4txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn4txmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpn4rxmbrate%.*} -lt 0 ]; then oldvpn4rxmbrate=0; oldvpn4rxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn4rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn4rxmbratedisplay $MaxSpeedInetUL
+  fi
+
+  if [ "$vpn5on" == "True" ]; then
+    echo ""
+    echo ""
+    echo -e "${InvDkGray}${CWhite} VPN$vpn5slot                                                                                                          ${CClear}"
+    echo ""
+    if [ "$oldvpn5city" == "Private Network" ]; then
+      echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn5ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn5city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
+    else
+      echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn5ip//./ }
+      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      
+      printf "%-33s" "$oldvpn5city"
+
+      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
+    fi
+    if [ ${oldvpn5txmbrate%.*} -lt 0 ]; then oldvpn5txmbrate=0; oldvpn5txmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn5txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn5txmbratedisplay $MaxSpeedInet
+    echo ""
+    if [ ${oldvpn5rxmbrate%.*} -lt 0 ]; then oldvpn5rxmbrate=0; oldvpn5rxmbratedisplay=0; fi
+    preparebar 79 "|"
+    progressbar $oldvpn5rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn5rxmbratedisplay $MaxSpeedInetUL
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+
+# This function displays the stats UI for page 3
+DisplayPage3 () {
+	clear
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "$UpdateNotify${CClear}"
+  fi
+  showheader
+  # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
+  if [ "$FourBandCustomAXE16000" == "True" ]; then
+    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+      MaxSpeed5GhzNow=0
+    else
+      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+      MaxSpeed52GhzNow=0
+    else
+      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
+      MaxSpeed24GhzNow=0
+    else
+      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+      MaxSpeed6GhzNow=0
+    else
+      MaxSpeed6GhzNow=$MaxSpeed6Ghz
+    fi
+  elif [ "$ThreeBand2456" == "True" ]; then
+    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+      MaxSpeed24GhzNow=0
+    else
+      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+      MaxSpeed5GhzNow=0
+    else
+      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+      MaxSpeed6GhzNow=0
+    else
+      MaxSpeed6GhzNow=$MaxSpeed6Ghz
+    fi
+  elif [ "$ThreeBand2455" == "True" ]; then
+    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+      MaxSpeed24GhzNow=0
+    else
+      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+      MaxSpeed5GhzNow=0
+    else
+      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+      MaxSpeed52GhzNow=0
+    else
+      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+    fi
+  else
+    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+      MaxSpeed24GhzNow=0
+    else
+      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+    fi
+    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+      MaxSpeed5GhzNow=0
+    else
+      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+    fi
+  fi
+  
+  echo ""
+  echo -e "${InvDkGray}${CWhite} WiFi                                                                                                         ${CClear}"
+  echo ""
+  if [ "$MaxSpeed24GhzNow" != "0" ]; then
+    if [ "$w24updown" == "UP" ]; then
+      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+    else
+      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+    fi
+    preparebar 79 "|"
+    progressbar $oldw24rxmbrate $MaxSpeed24GhzNow " Avg 24G RX" "Mbps" "Standard" $oldw24rxmbratedisplay $MaxSpeed24GhzNow
+    echo ""
+    preparebar 79 "|"
+    progressbar $oldw24txmbrate $MaxSpeed24GhzNow " Avg 24G TX" "Mbps" "Standard" $oldw24txmbratedisplay $MaxSpeed24GhzNow
+    echo ""
+    preparebar 79 "|"
+    converttemps $oldw24temp
+    progressbar $currenttemp $currentrange " 2.4G Temp " $TempUnits "Standard" $currenttemp $currentrange
+  else
+    echo -e "${InvRed} ${CClear}${CWhite} 2.4GHz     ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
+  fi
+  if [ "$MaxSpeed5GhzNow" != "0" ]; then
+    echo ""
+    echo ""
+    if [ "$w5updown" == "UP" ]; then
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (1) ${CDkGray}[ ${CWhite}Enabled - $w5udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+    else
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (1) ${CDkGray}[ ${CWhite}Enabled - $w5udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+    fi
+    preparebar 79 "|"
+    progressbar $oldw5rxmbrate $MaxSpeed5GhzNow " Avg 5G1 RX" "Mbps" "Standard" $oldw5rxmbratedisplay $MaxSpeed5GhzNow
+    echo ""
+    preparebar 79 "|"
+    progressbar $oldw5txmbrate $MaxSpeed5GhzNow " Avg 5G1 TX" "Mbps" "Standard" $oldw5txmbratedisplay $MaxSpeed5GhzNow
+    echo ""
+    preparebar 79 "|"
+    converttemps $oldw5temp
+    progressbar $currenttemp $currentrange " 5G-1 Temp " $TempUnits "Standard" $currenttemp $currentrange
+  else
+    echo ""
+    echo ""
+    echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (1) ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
+  fi
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$MaxSpeed52GhzNow" != "0" ]; then
+      echo ""
+      echo ""
+      if [ "$w52updown" == "UP" ]; then
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - UP                                                  ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+      else
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - DOWN                                                ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+      fi
+      preparebar 79 "|"
+      progressbar $oldw52rxmbrate $MaxSpeed5GhzNow " Avg 5G2 RX" "Mbps" "Standard" $oldw52rxmbratedisplay $MaxSpeed5GhzNow
+      echo ""
+      preparebar 79 "|"
+      progressbar $oldw52txmbrate $MaxSpeed5GhzNow " Avg 5G2 TX" "Mbps" "Standard" $oldw52txmbratedisplay $MaxSpeed5GhzNow
+      echo ""
+      preparebar 79 "|"
+      converttemps $oldw52temp
+      progressbar $currenttemp $currentrange " 5G-2 Temp " $TempUnits "Standard" $currenttemp $currentrange
+    else
+      echo ""
+      echo ""
+      echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
+    fi
+  fi
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
+    if [ "$MaxSpeed6GhzNow" != "0" ]; then
+      echo ""
+      echo ""
+      if [ "$w6updown" == "UP" ]; then
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+      else
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+      fi
+      preparebar 79 "|"
+      progressbar $oldw6rxmbrate $MaxSpeed6GhzNow " Avg 60G RX" "Mbps" "Standard" $oldw6rxmbratedisplay $MaxSpeed6GhzNow
+      echo ""
+      preparebar 79 "|"
+      progressbar $oldw6txmbrate $MaxSpeed6GhzNow " Avg 60G TX" "Mbps" "Standard" $oldw6txmbratedisplay $MaxSpeed6GhzNow
+      echo ""
+      preparebar 79 "|"
+      converttemps $oldw6temp
+      progressbar $currenttemp $currentrange " 6.0G Temp " $TempUnits "Standard" $currenttemp $currentrange
+    else
+      echo ""
+      echo ""
+      echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
+    fi
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+
+# This function displays the stats UI for page 4
+DisplayPage4 () {
+	clear
+  if [ "$UpdateNotify" != "0" ]; then
+    echo -e "$UpdateNotify${CClear}"
+  fi  
+  showheader
+  echo ""
+  echo -e "${InvDkGray}${CWhite} Speedtest                                                                                                     ${CClear}"
+  
+  if [ "$QueueVPNSlot1" == "1" ]; then
+    DisplaySpdtst 1
+  elif [ "$QueueVPNSlot2" == "1" ]; then
+    DisplaySpdtst 2
+  elif [ "$QueueVPNSlot3" == "1" ]; then
+    DisplaySpdtst 3
+  elif [ "$QueueVPNSlot4" == "1" ]; then
+    DisplaySpdtst 4
+  elif [ "$QueueVPNSlot5" == "1" ]; then
+    DisplaySpdtst 5
+  else
+    DisplaySpdtst
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+
 # This function displays speedtest results and runs new speedtest
+# $1 = VPN Slot
+
 DisplaySpdtst () {
 
   if [ "$Speedtst" == "0" ] || [ ! -f $OOKLAPATH ]; then
-    echo -e "${CRed}[Ookla Speedtest is not installed/configured]${CClear}"
+  	echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvRed} ${CClear} ${CRed}[Ookla Speedtest is not installed/configured]${CClear}"
+    sleep 3
     return
   fi
 
@@ -1620,9 +2599,12 @@ DisplaySpdtst () {
     SpdUpload=0
   fi
 
+  echo -e "${InvGreen} ${CClear}"
+
   if [ "$QueueSpdtst" == "1" ]; then
   #run speedtest and save Results
-    printf "${CGreen}\r[Initializing Speedtest]"
+    printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WAN Speedtest]"
+    #printf "${CGreen}\r[Initializing WAN Speedtest]"
     if [ $spdtestsvrID == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
     else
@@ -1678,14 +2660,16 @@ DisplaySpdtst () {
     QueueSpdtst=0
   fi
 
-  if [ "$QueueVPNSpdtst" == "1" ]; then
+  if [ ! -z $1 ]; then
     #run VPN speedtest and save Results
-    if [ "$vpnon" == "True" ]; then
-      printf "${CGreen}\r[Initializing Speedtest]"
+    selectedslot="vpn${1}on"
+    eval selectedslot="\$${selectedslot}"
+    if [ "$selectedslot" == "True" ]; then
+      printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing VPN$1 Speedtest]"
       if [ $spdtestsvrID == "0" ]; then
-        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$vpn --accept-license --accept-gdpr 2>&1)"
+        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$1 --accept-license --accept-gdpr 2>&1)"
       else
-        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$vpn --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
+        speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$1 --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
       fi
       SpdDate=$(date)
       SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
@@ -1710,7 +2694,7 @@ DisplaySpdtst () {
 
       SpdDownloadLog=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
       SpdUploadLog=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
-      SpdInterface="tun1$vpn"
+      SpdInterface="tun1$1"
 
       echo -e "$(date) - RTRMON - New Speedtest Results -- Down:$SpdDownloadLog Mbps | Up:$SpdUploadLog Mbps | Latency:$SpdLatency ms | Jitter:$SpdJitter ms | PacketLoss:$SpdPacketLoss %" >> $LOGFILE
 
@@ -1733,14 +2717,21 @@ DisplaySpdtst () {
         echo 'SpdULLatencyLo='$SpdULLatencyLo
         echo 'SpdULLatencyHi='$SpdULLatencyHi
       } > $SPDRESPATH
-      printf "${CGreen}\r"
-      QueueVPNSpdtst=0
-
+      printf "\r${CClear}"
+      QueueVPNSlot1=0
+      QueueVPNSlot2=0
+      QueueVPNSlot3=0
+      QueueVPNSlot4=0
+      QueueVPNSlot5=0
     else
-      printf "${CRed}\r[No valid VPN tunnel detected to run Speedtest on]${CClear}"
+      printf "\r${InvRed} ${CClear}${CRed} [No valid VPN tunnel detected to run Speedtest on]${CClear}"
       sleep 3
-      printf "${CRed}\r${CClear}"
-      QueueVPNSpdtst=0
+      printf "\r${CClear}                                                                             "
+      QueueVPNSlot1=0
+      QueueVPNSlot2=0
+      QueueVPNSlot3=0
+      QueueVPNSlot4=0
+      QueueVPNSlot5=0
     fi
   fi
 
@@ -1753,344 +2744,34 @@ DisplaySpdtst () {
 
   #SpdServer="Your Local Test Server name/location"
 
-  if [ "$vpnon" == "True" ]; then
-    echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate WAN Speedtest / ${CRed}(J)${CGreen}Initiate VPN Speedtest${CClear}"
+  if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest / Initiate VPN Speedtest on VPN Slot ${CGreen}(1)(2)(3)(4)(5)${CClear}"
   else
-    echo -e "${InvGreen} ${CClear} ${CRed}(I)${CGreen}nitiate WAN Speedtest${CClear}                                            "
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
   fi
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Date         ${CGreen}[ ${CCyan}$SpdDate${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Server       ${CGreen}[ ${CCyan}$SpdServer${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Interface    ${CGreen}[ ${CCyan}$SpdInterface${CClear}"
+  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Idle Latency ${CGreen}[ ${CCyan}$SpdLatency (ms) ${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdLatencyLo (ms) ${CGreen}| High: ${CCyan}$SpdLatencyHi (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Idle Jitter  ${CGreen}[ ${CCyan}$SpdJitter (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}PacketLoss   ${CGreen}[ ${CCyan}$SpdPacketLoss (%)${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Test Date    ${CDkGray}[ ${CGreen}$SpdDate${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Server       ${CDkGray}[ ${CGreen}$SpdServer${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Interface    ${CDkGray}[ ${CGreen}$SpdInterface${CClear}"
   echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Download     ${CGreen}[ ${CCyan}$SpdDownload (Mbps)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency: ${CCyan}$SpdDLLatency (ms)${CGreen} | Jitter: ${CCyan}$SpdDLLatencyJt (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdDLLatencyLo (ms) ${CGreen}| Hi: ${CCyan}$SpdDLLatencyHi (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}Upload       ${CGreen}[ ${CCyan}$SpdUpload (Mbps)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency: ${CCyan}$SpdULLatency (ms)${CGreen} | Jitter: ${CCyan}$SpdULLatencyJt (ms)${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CGreen}             [ Latency Lo: ${CCyan}$SpdULLatencyLo (ms) ${CGreen}| Hi: ${CCyan}$SpdULLatencyHi (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Idle Latency ${CDkGray}[ ${CGreen}$SpdLatency (ms)${CWhite} | Latency Low: ${CGreen}$SpdLatencyLo (ms) ${CWhite}| High: ${CGreen}$SpdLatencyHi (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Idle Jitter  ${CDkGray}[ ${CGreen}$SpdJitter (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}PacketLoss   ${CDkGray}[ ${CGreen}$SpdPacketLoss (%)${CClear}"
   echo ""
-  preparebar 35 "|"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Download     ${CDkGray}[ ${CGreen}$SpdDownload (Mbps)${CWhite} | Jitter: ${CGreen}$SpdDLLatencyJt (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CDkGray}             [ ${CWhite}Latency: ${CGreen}$SpdDLLatency (ms)${CWhite} | Latency Low: ${CGreen}$SpdDLLatencyLo (ms) ${CWhite}| High: ${CGreen}$SpdDLLatencyHi (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CCyan}Upload       ${CDkGray}[ ${CGreen}$SpdUpload (Mbps)${CWhite} | Jitter: ${CGreen}$SpdULLatencyJt (ms)${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CDkGray}             [ ${CWhite}Latency: ${CGreen}$SpdULLatency (ms)${CWhite} | Latency Low: ${CGreen}$SpdULLatencyLo (ms) ${CWhite}| High: ${CGreen}$SpdULLatencyHi (ms)${CClear}"
+  echo ""
+  preparebar 79 "|"
   progressbar $SpdDownload $MaxSpeedInet " DL vs WAN " "Mbps" "Reverse" $SpdDownload $MaxSpeedInet
   echo ""
-  preparebar 35 "|"
+  preparebar 79 "|"
   progressbar $SpdUpload $MaxSpeedInetUL " UL vs WAN " "Mbps" "Reverse" $SpdUpload $MaxSpeedInetUL
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
-
-# This function displays the stats UI for page 1
-DisplayPage1 () {
-  logo
-    if [ "$UpdateNotify" != "0" ]; then
-      echo -e "${CRed}  $UpdateNotify${CClear}"
-    fi
-  echo ""
-  echo -e "${InvDkGray}${CWhite} CPU                                                               ${CClear}"
-  echo ""
-  echo -e "${InvCyan} ${CClear} ${CCyan}Uptime     ${CGreen}[         ${CCyan}$uptime${CGreen}          ]${CClear}"
-  echo -e "${InvCyan} ${CClear} ${CCyan}CPU Load   ${CGreen}[   1m: ${CCyan}$cpuload1m  ${CGreen}5m: ${CCyan}$cpuload5m  ${CGreen}15m: ${CCyan}$cpuload15m${CGreen}   ]"
-  preparebar 35 "|"
-  progressbar $oldcpuusr1 100 " CPU User  " "%%" "Standard" $olddisplaycpuusr1
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldcpusys1 100 " CPU System" "%%" "Standard" $olddisplaycpusys1
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldcpunice1 100 " CPU Nice  " "%%" "Standard" $olddisplaycpunice1
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldcpuidle1 100 " CPU Idle  " "%%" "Reverse" $olddisplaycpuidle1
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldcpuirq1 100 " CPU IRQ   " "%%" "Standard" $olddisplaycpuirq1
-  echo ""
-  preparebar 35 "|"
-  converttemps $oldF_cputemp
-  progressbar $currenttemp $currentrange " CPU Temp  " $TempUnits "CPU" $currenttemp $currentrange
-  echo ""
-  echo ""
-  echo -e "${InvDkGray}${CWhite} Memory                                                            ${CClear}"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldmemfree2 $oldtotalmemory " Mem Free  " "MB" "Reverse"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldmemshrd2 $oldtotalmemory " Mem Shared" "MB" "Standard"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldmembuff2 $oldtotalmemory " Mem Buffer" "MB" "Standard"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldmemcach2 $oldtotalmemory " Mem Cache " "MB" "Standard"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldnvramused $oldtotalnvram " NVRAM Used" "B" "Standard"
-  echo ""
-  echo ""
-  echo -e "${InvDkGray}${CWhite} Disk                                                              ${CClear}"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldjffsused $oldjffstotal " JFFS Used " "MB" "Standard"
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
-  
-  #Disk - SD devices
-  if [ -f /jffs/addons/rtrmon.d/sdresult.txt ]; then
-    sdcnt=$(cat /jffs/addons/rtrmon.d/sdresult.txt | wc -l) >/dev/null 2>&1 
-    if [ $sdcnt -lt 1 ]; then 
-      sdcnt=0
-    elif [ -z $sdcnt ]; then 
-      sdcnt=0
-    fi
-  else
-    sdcnt=0
-  fi
-  
-  CNT=0
-  while [ $CNT -lt $sdcnt ]; do # Loop through number of /dev/sd*'s
-    CNT=$((CNT+1))
-    dfresults=$(sed -n "${CNT}p" /jffs/addons/rtrmon.d/sdresult.txt)
-    if [ -z "$dfresults" ]; then break; fi
-    sdname="$(echo $dfresults | awk '{print $1}')"
-    sdtotal="$(echo $dfresults | awk '{print $2}')"
-    sdused="$(echo $dfresults | awk '{print $3}')"
-    
-    sdtotal=$(echo "$sdtotal 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
-    sdused=$(echo "$sdused 1048576" | awk '{print $1/$2}' | cut -d . -f 1)
-    #sdtotal=$(echo "$sdtotal/1048576" | bc -l | cut -d . -f 1)
-    #sdused=$(echo "$sdused/1048576" | bc -l | cut -d . -f 1)
-    #sdtotal="$(($sdtotal / 1048576))"
-    #sdused="$(($sdused / 1048576))"
-    if [ $sdtotal == "0" ]; then sdtotal=1; fi
-    if [ $sdused == "0" ]; then sdused=1; fi
-    sdnameformat=$(printf "%-10s" $sdname)
-
-    echo ""
-    preparebar 35 "|"
-    progressbar $sdused $sdtotal " $sdnameformat" "GB" "Standard"
-  done
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
-
-# This function displays the stats UI for page 2
-DisplayPage2 () {
-  logo
-  if [ "$UpdateNotify" != "0" ]; then
-    echo -e "${CRed}  $UpdateNotify${CClear}"
-  fi
-  echo ""
-  echo -e "${InvDkGray}${CWhite} WAN                                                               ${CClear}"
-  echo ""
-  #oldwan0ip="1.2.3.4" #demo
-  #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
-  echo -en "${InvCyan} ${CClear} ${CCyan}WAN 0/1 IP ${CGreen}[ ${CCyan}"
-  printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
-  echo -en " / "
-  printf '%03d.%03d.%03d.%03d'  ${oldwan1ip//./ }
-  echo -e "${CGreen} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
-  if [ ! -z $oldwanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}WAN 0/1 I6 ${CGreen}[ ${CCyan}$oldwanip6${CClear}"; fi
-  echo -en "${InvCyan} ${CClear} ${CCyan}WAN DNS IP ${CGreen}[ ${CCyan}"
-  if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
-  echo -en " / "
-  if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
-  echo -e "${CGreen} ]${CClear}"
-  preparebar 35 "|"
-  progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
-  echo ""
-  preparebar 35 "|"
-  progressbar $oldwantxmbrate $MaxSpeedInetUL " Avg WAN TX" "Mbps" "Standard" $oldwantxmbratedisplay $MaxSpeedInetUL
-  echo ""
-  echo ""
-  echo -e "${InvDkGray}${CWhite} LAN                                                               ${CClear}"
-  echo ""
-  echo -en "${InvCyan} ${CClear}${CCyan} BR0 LAN IP ${CGreen}[ ${CCyan}"
-  printf '%03d.%03d.%03d.%03d'  ${oldlanip//./ }
-  echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}IFace: br0${CClear}"
-  if [ ! -z $oldlanip6 ]; then echo -e "${InvCyan} ${CClear} ${CCyan}BR0 LAN I6 ${CGreen}[ ${CCyan}$oldlanip6${CClear}"; fi
-  preparebar 35 "|"
-  progressbar $oldlanrxmbrate $MaxSpeedLAN " Avg LAN RX" "Mbps" "Standard" $oldlanrxmbratedisplay $MaxSpeedLAN
-  echo ""
-  preparebar 35 "|"
-  if [ ${oldlantxmbrate%.*} -lt 0 ]; then oldlantxmbrate=0; oldlantxmbratedisplay=0; fi
-  progressbar $oldlantxmbrate $MaxSpeedLAN " Avg LAN TX" "Mbps" "Standard" $oldlantxmbratedisplay $MaxSpeedLAN
-
-  if [ "$vpnon" == "True" ]; then
-    echo ""
-    echo ""
-    echo -e "${InvDkGray}${CWhite} VPN$vpn                                                              ${CClear}"
-    echo ""
-    if [ "$oldvpncity" == "Private Network" ]; then
-      echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
-      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
-      if [ ! -z "$oldvpncity" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PRV VPN NM ${CGreen}[ ${CCyan}$oldvpncity${CClear}"; fi
-    else
-      #oldvpnip="23.31.44.55" #demo
-      echo -en "${InvCyan} ${CClear}${CCyan} PUB VPN IP ${CGreen}[ ${CCyan}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
-      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn${CClear}"
-      if [ ! -z "$oldvpncity" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PUB VPN CT ${CGreen}[ ${CCyan}$oldvpncity${CClear}"; fi
-    fi
-    if [ ${oldvpntxmbrate%.*} -lt 0 ]; then oldvpntxmbrate=0; oldvpntxmbratedisplay=0; fi
-    preparebar 35 "|"
-    progressbar $oldvpntxmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpntxmbratedisplay $MaxSpeedInet
-    echo ""
-    if [ ${oldvpnrxmbrate%.*} -lt 0 ]; then oldvpnrxmbrate=0; oldvpnrxmbratedisplay=0; fi
-    preparebar 35 "|"
-    progressbar $oldvpnrxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpnrxmbratedisplay $MaxSpeedInetUL
-  fi
-
-  if [ "$vpn2on" == "True" ]; then
-    echo ""
-    echo ""
-    echo -e "${InvDkGray}${CWhite} VPN$vpn2                                                              ${CClear}"
-    echo ""
-    if [ "$oldvpn2city" == "Private Network" ]; then
-      echo -en "${InvCyan} ${CClear}${CCyan} PRV VPN IP ${CGreen}[ ${CCyan}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
-      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn2${CClear}"
-      if [ ! -z "$oldvpn2city" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PRV VPN NM ${CGreen}[ ${CCyan}$oldvpn2city${CClear}"; fi
-    else
-      echo -en "${InvCyan} ${CClear}${CCyan} PUB VPN IP ${CGreen}[ ${CCyan}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
-      echo -e "${CGreen}                   ] ${InvDkGray}${CWhite}TUN: tun1$vpn2${CClear}"
-      if [ ! -z "$oldvpn2city" ]; then echo -e "${InvCyan} ${CClear} ${CCyan}PUB VPN CT ${CGreen}[ ${CCyan}$oldvpn2city${CClear}"; fi
-    fi
-    if [ ${oldvpn2txmbrate%.*} -lt 0 ]; then oldvpn2txmbrate=0; oldvpn2txmbratedisplay=0; fi
-    preparebar 35 "|"
-    progressbar $oldvpn2txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn2txmbratedisplay $MaxSpeedInet
-    echo ""
-    if [ ${oldvpn2rxmbrate%.*} -lt 0 ]; then oldvpn2rxmbrate=0; oldvpn2rxmbratedisplay=0; fi
-    preparebar 35 "|"
-    progressbar $oldvpn2rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn2rxmbratedisplay $MaxSpeedInetUL
-  fi
-
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
-
-# This function displays the stats UI for page 3
-DisplayPage3 () {
-  logo
-  if [ "$UpdateNotify" != "0" ]; then
-    echo -e "${CRed}  $UpdateNotify${CClear}"
-  fi
-  echo ""
-  echo -e "${InvDkGray}${CWhite} WiFi                                                              ${CClear}"
-  echo ""
-  if [ "$MaxSpeed24Ghz" != "0" ]; then
-    if [ "$w24updown" == "UP" ]; then
-      echo -e "${InvCyan} ${CClear} ${CCyan}2.4GHz     ${CGreen}[ ${CCyan}Enabled - $w24udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
-    else
-      echo -e "${InvCyan} ${CClear} ${CCyan}2.4GHz     ${CGreen}[ ${CCyan}Enabled - $w24udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
-    fi
-    preparebar 35 "|"
-    progressbar $oldw24rxmbrate $MaxSpeed24Ghz " Avg 24G RX" "Mbps" "Standard" $oldw24rxmbratedisplay $MaxSpeed24Ghz
-    echo ""
-    preparebar 35 "|"
-    progressbar $oldw24txmbrate $MaxSpeed24Ghz " Avg 24G TX" "Mbps" "Standard" $oldw24txmbratedisplay $MaxSpeed24Ghz
-    echo ""
-    preparebar 35 "|"
-    converttemps $oldw24temp
-    progressbar $currenttemp $currentrange " 2.4G Temp " $TempUnits "Standard" $currenttemp $currentrange
-  else
-    echo -e "${InvCyan} ${CClear}${CCyan} 2.4GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
-  fi
-  if [ "$MaxSpeed5Ghz" != "0" ]; then
-    echo ""
-    echo ""
-    if [ "$w5updown" == "UP" ]; then
-      echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (1) ${CGreen}[ ${CCyan}Enabled - $w5udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
-    else
-      echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (1) ${CGreen}[ ${CCyan}Enabled - $w5udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
-    fi
-    preparebar 35 "|"
-    progressbar $oldw5rxmbrate $MaxSpeed5Ghz " Avg 5G1 RX" "Mbps" "Standard" $oldw5rxmbratedisplay $MaxSpeed5Ghz
-    echo ""
-    preparebar 35 "|"
-    progressbar $oldw5txmbrate $MaxSpeed5Ghz " Avg 5G1 TX" "Mbps" "Standard" $oldw5txmbratedisplay $MaxSpeed5Ghz
-    echo ""
-    preparebar 35 "|"
-    converttemps $oldw5temp
-    progressbar $currenttemp $currentrange " 5G-1 Temp " $TempUnits "Standard" $currenttemp $currentrange
-  else
-    echo ""
-    echo ""
-    echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (1) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
-  fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    if [ "$MaxSpeed52Ghz" != "0" ]; then
-      echo ""
-      echo ""
-      if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (2) ${CGreen}[ ${CCyan}Enabled - $w52udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
-      else
-        echo -e "${InvCyan} ${CClear} ${CCyan}5.0GHz (2) ${CGreen}[ ${CCyan}Enabled - $w52udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
-      fi
-      preparebar 35 "|"
-      progressbar $oldw52rxmbrate $MaxSpeed5Ghz " Avg 5G2 RX" "Mbps" "Standard" $oldw52rxmbratedisplay $MaxSpeed5Ghz
-      echo ""
-      preparebar 35 "|"
-      progressbar $oldw52txmbrate $MaxSpeed5Ghz " Avg 5G2 TX" "Mbps" "Standard" $oldw52txmbratedisplay $MaxSpeed5Ghz
-      echo ""
-      preparebar 35 "|"
-      converttemps $oldw52temp
-      progressbar $currenttemp $currentrange " 5G-2 Temp " $TempUnits "Standard" $currenttemp $currentrange
-    else
-      echo -e "${InvCyan} ${CClear}${CCyan} 5.0GHz (2) ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
-    fi
-  fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ]; then
-    if [ "$MaxSpeed6Ghz" != "0" ]; then
-      echo ""
-      echo ""
-      if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvCyan} ${CClear} ${CCyan}6.0GHz     ${CGreen}[ ${CCyan}Enabled - $w6udsched - UP       ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
-      else
-        echo -e "${InvCyan} ${CClear} ${CCyan}6.0GHz     ${CGreen}[ ${CCyan}Enabled - $w6udsched - DOWN     ${CGreen}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
-      fi
-      preparebar 35 "|"
-      progressbar $oldw6rxmbrate $MaxSpeed6Ghz " Avg 60G RX" "Mbps" "Standard" $oldw6rxmbratedisplay $MaxSpeed6Ghz
-      echo ""
-      preparebar 35 "|"
-      progressbar $oldw6txmbrate $MaxSpeed6Ghz " Avg 60G TX" "Mbps" "Standard" $oldw6txmbratedisplay $MaxSpeed6Ghz
-      echo ""
-      preparebar 35 "|"
-      converttemps $oldw6temp
-      progressbar $currenttemp $currentrange " 6.0G Temp " $TempUnits "Standard" $currenttemp $currentrange
-    else
-      echo ""
-      echo ""
-      echo -e "${InvCyan} ${CClear}${CCyan} 6.0GHz     ${CGreen}[ ${CRed}Disabled                          ${CGreen}]${CClear}"
-    fi
-  fi
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
-
-# This function displays the stats UI for page 4
-DisplayPage4 () {
-  logo
-  if [ "$UpdateNotify" != "0" ]; then
-    echo -e "${CRed}  $UpdateNotify${CClear}"
-  fi
-  echo ""
-  echo -e "${InvDkGray}${CWhite} Speedtest                                                         ${CClear}"
-  echo ""
-  DisplaySpdtst
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2121,121 +2802,132 @@ DisplayPage5 () {
     SpiderFuncTest="Failed"
     SSLHandshakeTest="Failed"
   fi
-
-  logo
+  
+  clear
   if [ "$UpdateNotify" != "0" ]; then
-    echo -e "${CRed}  $UpdateNotify${CClear}"
+    echo -e "$UpdateNotify${CClear}"
   fi
+  showheader
   echo ""
-  echo -e "${InvDkGray}${CWhite} Network Diagnostics                                               ${CClear}"
-  echo ""
-  echo -e "${InvGreen} ${CClear} ${CGreen}Run ${CRed}(D)${CGreen}iagnostics${CClear} ${CCyan}-- Last Run: $Lastruntime"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Network Diagnostics                                                                                          ${CClear}"
+  echo -e "${InvGreen} ${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Run ${CGreen}(D)${CWhite}iagnostics  |  Last Run Date/Time: ${CGreen}$Lastruntime"
+  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
 
   if [ "$QueueNetworkDiag" == "1" ]; then
   #run network diags and save Results
-    printf "${InvCyan} ${CClear} ${CCyan}Local Clock Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Local Clock Test...          ${CYellow}[Checking] ${CDkGray}| date > 1970${CClear}"
       YEAR="$(/bin/date +"%Y")"
       sleep 1
       if [ "$YEAR" -gt 1970 ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Local Clock Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Local Clock Test...          ${CGreen}[Passed]   ${CDkGray}| date > 1970${CClear}"
         LocalClockTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Local Clock Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Local Clock Test...          ${CRed}[Failed]   ${CDkGray}| date > 1970${CClear}"
         LocalClockTest="Failed"
       fi
     echo ""
-    printf "${InvCyan} ${CClear} ${CCyan}Network Connectivity Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Network Connectivity Test... ${CYellow}[Checking] ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
       NW_STATE="$(ping 1.1.1.1 -c1 -W2 >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$NW_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Network Connectivity Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Network Connectivity Test... ${CGreen}[Passed]   ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
         NetworkConnTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Network Connectivity Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Network Connectivity Test... ${CRed}[Failed]   ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
         NetworkConnTest="Failed"
       fi
     echo ""
 
-    printf "${InvCyan} ${CClear} ${CCyan}Network Resolution Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Network Resolution Test...   ${CYellow}[Checking] ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
       RES_STATE="$(nslookup google.com 127.0.0.1 >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$RES_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Network Resolution Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
         NetworkResTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Network Resolution Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
         NetworkResTest="Failed"
       fi
     echo ""
 
-    printf "${InvCyan} ${CClear} ${CCyan}Dig Functionality Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Checking] ${CDkGray}| dig google.com${CClear}"
       DIG_STATE="$(dig google.com >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$DIG_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Dig Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Dig Functionality Test...    ${CGreen}[Passed]   ${CDkGray}| dig google.com${CClear}"
         DigFuncTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Dig Functionality Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Dig Functionality Test...    ${CRed}[Failed]   ${CDkGray}| dig google.com${CClear}"
         DigFuncTest="Failed"
       fi
     echo ""
 
-    printf "${InvCyan} ${CClear} ${CCyan}Curl Functionality Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Curl Functionality Test...   ${CYellow}[Checking] ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
       CURL_STATE="$(curl -Is http://www.google.com | head -n 1 >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$CURL_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Curl Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Curl Functionality Test...   ${CGreen}[Passed]   ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
         CurlFuncTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Curl Functionality Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Curl Functionality Test...   ${CRed}[Failed]   ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
         CurlFuncTest="Failed"
       fi
     echo ""
 
-    printf "${InvCyan} ${CClear} ${CCyan}Spider Functionality Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}Spider Functionality Test... ${CYellow}[Checking] ${CDkGray}| wget -q --spider http://google.com${CClear}"
       SPIDER_STATE="$(wget -q --spider http://google.com >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SPIDER_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}Spider Functionality Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}Spider Functionality Test... ${CGreen}[Passed]   ${CDkGray}| wget -q --spider http://google.com${CClear}"
         SpiderFuncTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}Spider Functionality Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}Spider Functionality Test... ${CRed}[Failed]   ${CDkGray}| wget -q --spider http://google.com${CClear}"
         SpiderFuncTest="Failed"
       fi
     echo ""
 
-    printf "${InvCyan} ${CClear} ${CCyan}SSL Handshake Test... ${CYellow}[Checking]     ${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}SSL Handshake Test...        ${CYellow}[Checking] ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
       SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
         SSLHandshakeTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CCyan}SSL Handshake Test... ${CRed}[Failed]     ${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
         SSLHandshakeTest="Failed"
       fi
     echo ""
+    echo ""
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                       ${CClear}"
+
     if [ "$PSView" == "TCP" ]; then
-    	echo ""
-      echo -e "${InvDkGray}${CWhite} Open ${CGreen}(T)${CWhite}CP Port Scanner  |  Open ${CRed}(U)${CWhite}DP Port Scanner               ${CClear}"
+    	echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
-      echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
-      WANnmap=$(nmap $oldwan0ip | grep "open")
-      if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open"; fi
-      echo ""
-      echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+      if [ "$WAN0AltModes" == "0" ]; then
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+        WANnmap=$(nmap $oldwan0ip | grep "open")
+        if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open"; fi
+        echo ""
+      fi
+      echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANnmap=$(nmap $oldlanip | grep "open")
       if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open"; fi
     elif [ "$PSView" == "UDP" ]; then
-    	echo ""
-      echo -e "${InvDkGray}${CWhite} Open ${CRed}(T)${CWhite}CP Port Scanner  |  Open ${CGreen}(U)${CWhite}DP Port Scanner               ${CClear}"
+    	echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
-      echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
-      WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
-      if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open"; fi
+      if [ "$WAN0AltModes" == "0" ]; then
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+        WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
+        if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open"; fi
       echo ""
-      echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+      fi
+      echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANUnmap=$(nmap -sU $oldlanip | grep "open")
       if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open"; fi
     fi
@@ -2250,9 +2942,12 @@ DisplayPage5 () {
     echo 'SSLHandshakeTest="'"$SSLHandshakeTest"'"'
   } > $DIAGRESPATH
 
-  nmap $oldwan0ip -oN $NMAPWANRESPATH | grep "open" >/dev/null 2>&1
+  if [ "$WAN0AltModes" == "0" ]; then
+    nmap $oldwan0ip -oN $NMAPWANRESPATH | grep "open" >/dev/null 2>&1
+    nmap $oldwan0ip -sU -oN $NMAPUWANRESPATH | grep "open" >/dev/null 2>&1
+  fi
+  
   nmap $oldlanip -oN $NMAPLANRESPATH | grep "open" >/dev/null 2>&1
-  nmap $oldwan0ip -sU -oN $NMAPUWANRESPATH | grep "open" >/dev/null 2>&1
   nmap $oldlanip -sU -oN $NMAPULANRESPATH | grep "open" >/dev/null 2>&1
 
   QueueNetworkDiag=0
@@ -2260,61 +2955,67 @@ DisplayPage5 () {
 else
 
   if [ "$LocalClockTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Local Clock Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Local Clock Test...          ${CGreen}[Passed]   ${CDkGray}| date > 1970${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Local Clock Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Local Clock Test...          ${CRed}[Failed]   ${CDkGray}| date > 1970${CClear}"
   fi
   echo ""
   if [ "$NetworkConnTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Network Connectivity Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Network Connectivity Test... ${CGreen}[Passed]   ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Network Connectivity Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Network Connectivity Test... ${CRed}[Failed]   ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
   fi
   echo ""
   if [ "$NetworkResTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Network Resolution Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Network Resolution Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
   fi
   echo ""
   if [ "$DigFuncTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Dig Functionality Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Dig Functionality Test...    ${CGreen}[Passed]   ${CDkGray}| dig google.com${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Dig Functionality Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Dig Functionality Test...    ${CRed}[Failed]   ${CDkGray}| dig google.com${CClear}"
   fi
   echo ""
   if [ "$CurlFuncTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Curl Functionality Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Curl Functionality Test...   ${CGreen}[Passed]   ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Curl Functionality Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Curl Functionality Test...   ${CRed}[Failed]   ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
   fi
   echo ""
   if [ "$SpiderFuncTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}Spider Functionality Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Spider Functionality Test... ${CGreen}[Passed]   ${CDkGray}| wget -q --spider http://google.com${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}Spider Functionality Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}Spider Functionality Test... ${CRed}[Failed]   ${CDkGray}| wget -q --spider http://google.com${CClear}"
   fi
   echo ""
   if [ "$SSLHandshakeTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CCyan}SSL Handshake Test... ${CGreen}[Passed]     ${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CCyan}SSL Handshake Test... ${CRed}[Failed]     ${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
   fi
   echo ""
+  echo ""
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                       ${CClear}"
+  
   if [ "$PSView" == "TCP" ]; then
-  	echo ""
-    echo -e "${InvDkGray}${CWhite} Open ${CGreen}(T)${CWhite}CP Port Scanner  |  Open ${CRed}(U)${CWhite}DP Port Scanner               ${CClear}"
+  	echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     #oldwan0ip="23.32.44.106" #demo
-    echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
-    if [ ! -f $NMAPWANRESPATH ]; then
-      echo "None"
-    else
-      WANnmap=$(cat $NMAPWANRESPATH | grep "open")
-      if [ -z "$WANnmap" ]; then echo "None"; else cat $NMAPWANRESPATH | grep "open"; fi
-    fi
+    if [ "$WAN0AltModes" == "0" ]; then
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+      if [ ! -f $NMAPWANRESPATH ]; then
+        echo "None"
+      else
+        WANnmap=$(cat $NMAPWANRESPATH | grep "open")
+        if [ -z "$WANnmap" ]; then echo "None"; else cat $NMAPWANRESPATH | grep "open"; fi
+      fi
     echo ""
-    echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+    fi
+    echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
     if [ ! -f $NMAPLANRESPATH ]; then
       echo "None"
     else
@@ -2322,18 +3023,21 @@ else
       if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open"; fi
     fi
   elif [ "$PSView" == "UDP" ]; then
-  	echo ""
-    echo -e "${InvDkGray}${CWhite} Open ${CRed}(T)${CWhite}CP Port Scanner  |  Open ${CGreen}(U)${CWhite}DP Port Scanner               ${CClear}"
+  	echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
-    echo -e "${InvGreen} ${CClear} ${CCyan}WAN0 IP: $oldwan0ip${CClear}"
-    if [ ! -f $NMAPUWANRESPATH ]; then
-      echo "None"
-    else
-      WANUnmap=$(cat $NMAPUWANRESPATH | grep "open")
-      if [ -z "$WANUnmap" ]; then echo "None"; else cat $NMAPUWANRESPATH | grep "open"; fi
+    if [ "$WAN0AltModes" == "0" ]; then
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+	    if [ ! -f $NMAPUWANRESPATH ]; then
+	      echo "None"
+	    else
+	      WANUnmap=$(cat $NMAPUWANRESPATH | grep "open")
+	      if [ -z "$WANUnmap" ]; then echo "None"; else cat $NMAPUWANRESPATH | grep "open"; fi
+	    fi
+	    echo ""
     fi
-    echo ""
-    echo -e "${InvGreen} ${CClear} ${CCyan}BR0 IP: $oldlanip${CClear}"
+    echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
     if [ ! -f $NMAPULANRESPATH ]; then
       echo "None"
     else
@@ -2348,50 +3052,76 @@ fi
 
 # This function displays the stats UI for page 6 which includes top bandwidth connections for WAN, LAN and VPN
 DisplayPage6 () {
-
-  logo
+  clear
   if [ "$UpdateNotify" != "0" ]; then
-    echo -e "${CRed}  $UpdateNotify${CClear}"
+    echo -e "$UpdateNotify${CClear}"
   fi
+  showheader
   echo ""
-  echo -e "${InvDkGray}${CWhite} Network Connections/Bandwidth                                     ${CClear}"
-  echo ""
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Top 10 Network Connections/Bandwidth Stats                                                                   ${CClear}"
+  echo -e "${InvGreen} ${CClear}"
 
   if [ "$QueueNetworkConn" == "1" ]; then
   #run network diags and save Results
-    printf "${CGreen}[Updating WAN( ) LAN( ) VPN( ) Statistics]"
-    iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
-    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN( ) VPN( ) Statistics]"
+    printf "${InvGreen} ${CClear} ${CWhite}[Updating WAN( ) LAN( ) VPN( ) Statistics ... Please stand by...]"
+    if [ "$WAN0AltModes" == "0" ]; then
+      iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
+    fi
+    printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN( ) VPN( ) Statistics ... Please stand by...]"
     iftop -t -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
-    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN(${CYellow}X${CGreen}) VPN( ) Statistics]"
-    iftop -t -i tun1$vpn 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpnresult.txt
-    printf "\r${CGreen}[Updating WAN(${CYellow}X${CGreen}) LAN(${CYellow}X${CGreen}) VPN(${CYellow}X${CGreen}) Statistics]"
+    printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN(${CGreen}X${CWhite}) VPN( ) Statistics ... Please stand by...]"
+    
+    if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
+	    slot=0
+	    while [ $slot -ne 5 ]
+	    do
+	      slot=$(($slot+1))
+	      selectedslot="vpn${slot}on"
+	      eval selectedslot="\$${selectedslot}"
+	      if [ "$selectedslot" == "True" ]; then
+	        iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+	      fi
+	    done
+    fi
+    
+    printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN(${CGreen}X${CWhite}) VPN(${CGreen}X${CWhite}) Statistics ... Please stand by...]"
     sleep 1
+    printf "\r                                                                                                 "
     QueueNetworkConn=0
     testrun=$(date +%s)
-  fi
 
-  if [ -z $testrun ]; then
-    lastrun="Not Current"
+    if [ -z $testrun ]; then
+      lastrun="Not Current"
+    else
+      currtime=$(date +%s)
+      mindiffs=$(( ($currtime - $testrun)/60 ))
+      lastrun="$mindiffs Minute(s) ago"
+    fi
+
+    echo -e "\r${InvGreen} ${CClear} ${CWhite}Refresh ${CGreen}(C)${CWhite}urrent Statistics  |  Stats Age: ${CGreen}$lastrun${CClear}"
   else
-    currtime=$(date +%s)
-    mindiffs=$(( ($currtime - $testrun)/60 ))
-    lastrun="$mindiffs Minute(s) ago"
+    if [ -z $testrun ]; then
+      lastrun="Not Current"
+    else
+      currtime=$(date +%s)
+      mindiffs=$(( ($currtime - $testrun)/60 ))
+      lastrun="$mindiffs Minute(s) ago"
+    fi
+    echo -e "${InvGreen} ${CClear} ${CWhite}Refresh ${CGreen}(C)${CWhite}urrent Statistics  |  Stats Age: ${CGreen}$lastrun${CClear}"
   fi
-
-  printf "\r${InvGreen} ${CClear} ${CGreen}Refresh ${CRed}(C)${CGreen}urrent Statistics${CClear}  |  ${CGreen}Stats Age: ${CCyan}$lastrun${CClear}"
-  echo ""
 
   if [ "$NCView" == "WAN" ]; then
-    if [ "$vpnon" == "True" ]; then
-    	echo ""
-    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CWhite}AN  |  ${CGreen}(L)${CRed}AN  ${CWhite}|  ${CGreen}(V)${CRed}PN                                         ${CClear}"
-      echo ""
+    if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
+    	echo -e "${InvGreen} ${CClear}"
+    	echo -e "${InvGreen} ${CClear}${CWhite} View ${InvDkGray} ${CGreen}(W)${CWhite}AN ${CClear}${CWhite} |  ${CGreen}(L)${CWhite}AN  |  ${CGreen}(V)${CWhite}PN${CClear}"
     else
-      echo ""
-    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CWhite}AN  |  ${CGreen}(L)${CRed}AN                                                   ${CClear}"
-      echo ""
+      echo -e "${InvGreen} ${CClear}"
+    	echo -e "${InvGreen} ${CClear}${CWhite} View ${InvDkGray} ${CGreen}(W)${CWhite}AN ${CClear}${CWhite} |  ${CGreen}(L)${CWhite}AN${CClear}"
     fi
+
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo ""
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} WAN                                                                                                          ${CClear}"
 
     wansegments1=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -2474,88 +3204,61 @@ DisplayPage6 () {
     in10="$(echo $wansegments10 | awk '{print $5}')"
 
     if [ "$line1" == "1" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
     else
       echo "No Data"
     fi
 
     if [ "$line2" == "2" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
     fi
 
     if [ "$line3" == "3" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
     fi
 
     if [ "$line4" == "4" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
     fi
 
     if [ "$line5" == "5" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
     fi
 
     if [ "$line6" == "6" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
     fi
 
     if [ "$line7" == "7" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
     fi
 
     if [ "$line8" == "8" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
     fi
 
     if [ "$line9" == "9" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
     fi
 
     if [ "$line10" == "10" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
+      printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
     fi
   fi
 
   if [ "$NCView" == "LAN" ]; then
-    if [ "$vpnon" == "True" ]; then
-    	echo ""
-    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN  |  ${CGreen}(V)${CRed}PN                                         ${CClear}"
-      echo ""
+    if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
+    	echo -e "${InvGreen} ${CClear}"
+    	echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  | ${InvDkGray} ${CGreen}(L)${CWhite}AN ${CClear}${CWhite} |  ${CGreen}(V)${CWhite}PN${CClear}"
     else
-      echo ""
-    	echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN                                                   ${CClear}"
-      echo ""
+      echo echo -e "${InvGreen} ${CClear}"
+    	echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  | ${InvDkGray} ${CGreen}(L)${CWhite}AN ${CClear}"
     fi
+
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo ""
+
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} LAN                                                                                                          ${CClear}"
 
     lansegments1=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -2638,234 +3341,190 @@ DisplayPage6 () {
     in10="$(echo $lansegments10 | awk '{print $5}')"
 
     if [ "$line1" == "1" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
     else
       echo "No Data"
     fi
 
     if [ "$line2" == "2" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
     fi
 
     if [ "$line3" == "3" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
     fi
 
     if [ "$line4" == "4" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
     fi
 
     if [ "$line5" == "5" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
     fi
 
     if [ "$line6" == "6" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
     fi
 
     if [ "$line7" == "7" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
     fi
 
     if [ "$line8" == "8" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
     fi
 
     if [ "$line9" == "9" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
+      printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
     fi
 
     if [ "$line10" == "10" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
+      printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
     fi
   fi
 
   if [ "$NCView" == "VPN" ]; then
-  	echo ""
-    echo -e "${InvDkGray}${CWhite} ${CGreen}(W)${CRed}AN  ${CWhite}|  ${CGreen}(L)${CRed}AN  ${CWhite}|  ${CGreen}(V)${CWhite}PN                                         ${CClear}"
+  	echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Show  ${CGreen}(W)${CWhite}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN  | ${InvDkGray} ${CGreen}(V)${CWhite}PN ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
 
-    vpnsegments1=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
+    slot=0
+    while [ $slot -ne 5 ]
+    do
+      slot=$(($slot+1))
+      selectedslot="vpn${slot}on"
+      eval selectedslot="\$${selectedslot}"
+      if [ "$selectedslot" == "True" ]; then
 
-    line1="$(echo $vpnsegments1 | awk '{print $1}')"
-    dest1="$(echo $vpnsegments1 | awk '{print $2}')"
-    out1="$(echo $vpnsegments1 | awk '{print $3}')"
-    src1="$(echo $vpnsegments1 | awk '{print $4}')"
-    in1="$(echo $vpnsegments1 | awk '{print $5}')"
+        echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} VPN$slot                                                                                                         ${CClear}"
 
-    vpnsegments2=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==9 {print $1, $2, $4} NR==10 {print $1, $3}')
+		    vpnsegments1=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
-    line2="$(echo $vpnsegments2 | awk '{print $1}')"
-    dest2="$(echo $vpnsegments2 | awk '{print $2}')"
-    out2="$(echo $vpnsegments2 | awk '{print $3}')"
-    src2="$(echo $vpnsegments2 | awk '{print $4}')"
-    in2="$(echo $vpnsegments2 | awk '{print $5}')"
+		    line1="$(echo $vpnsegments1 | awk '{print $1}')"
+		    dest1="$(echo $vpnsegments1 | awk '{print $2}')"
+		    out1="$(echo $vpnsegments1 | awk '{print $3}')"
+		    src1="$(echo $vpnsegments1 | awk '{print $4}')"
+		    in1="$(echo $vpnsegments1 | awk '{print $5}')"
 
-    vpnsegments3=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==11 {print $1, $2, $4} NR==12 {print $1, $3}')
+		    vpnsegments2=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==9 {print $1, $2, $4} NR==10 {print $1, $3}')
 
-    line3="$(echo $vpnsegments3 | awk '{print $1}')"
-    dest3="$(echo $vpnsegments3 | awk '{print $2}')"
-    out3="$(echo $vpnsegments3 | awk '{print $3}')"
-    src3="$(echo $vpnsegments3 | awk '{print $4}')"
-    in3="$(echo $vpnsegments3 | awk '{print $5}')"
+		    line2="$(echo $vpnsegments2 | awk '{print $1}')"
+		    dest2="$(echo $vpnsegments2 | awk '{print $2}')"
+		    out2="$(echo $vpnsegments2 | awk '{print $3}')"
+		    src2="$(echo $vpnsegments2 | awk '{print $4}')"
+		    in2="$(echo $vpnsegments2 | awk '{print $5}')"
 
-    vpnsegments4=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==13 {print $1, $2, $4} NR==14 {print $1, $3}')
+		    vpnsegments3=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==11 {print $1, $2, $4} NR==12 {print $1, $3}')
 
-    line4="$(echo $vpnsegments4 | awk '{print $1}')"
-    dest4="$(echo $vpnsegments4 | awk '{print $2}')"
-    out4="$(echo $vpnsegments4 | awk '{print $3}')"
-    src4="$(echo $vpnsegments4 | awk '{print $4}')"
-    in4="$(echo $vpnsegments4 | awk '{print $5}')"
+		    line3="$(echo $vpnsegments3 | awk '{print $1}')"
+		    dest3="$(echo $vpnsegments3 | awk '{print $2}')"
+		    out3="$(echo $vpnsegments3 | awk '{print $3}')"
+		    src3="$(echo $vpnsegments3 | awk '{print $4}')"
+		    in3="$(echo $vpnsegments3 | awk '{print $5}')"
 
-    vpnsegments5=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==15 {print $1, $2, $4} NR==16 {print $1, $3}')
+		    vpnsegments4=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==13 {print $1, $2, $4} NR==14 {print $1, $3}')
 
-    line5="$(echo $vpnsegments5 | awk '{print $1}')"
-    dest5="$(echo $vpnsegments5 | awk '{print $2}')"
-    out5="$(echo $vpnsegments5 | awk '{print $3}')"
-    src5="$(echo $vpnsegments5 | awk '{print $4}')"
-    in5="$(echo $vpnsegments5 | awk '{print $5}')"
+		    line4="$(echo $vpnsegments4 | awk '{print $1}')"
+		    dest4="$(echo $vpnsegments4 | awk '{print $2}')"
+		    out4="$(echo $vpnsegments4 | awk '{print $3}')"
+		    src4="$(echo $vpnsegments4 | awk '{print $4}')"
+		    in4="$(echo $vpnsegments4 | awk '{print $5}')"
 
-    vpnsegments6=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==17 {print $1, $2, $4} NR==18 {print $1, $3}')
+		    vpnsegments5=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==15 {print $1, $2, $4} NR==16 {print $1, $3}')
 
-    line6="$(echo $vpnsegments6 | awk '{print $1}')"
-    dest6="$(echo $vpnsegments6 | awk '{print $2}')"
-    out6="$(echo $vpnsegments6 | awk '{print $3}')"
-    src6="$(echo $vpnsegments6 | awk '{print $4}')"
-    in6="$(echo $vpnsegments6 | awk '{print $5}')"
+		    line5="$(echo $vpnsegments5 | awk '{print $1}')"
+		    dest5="$(echo $vpnsegments5 | awk '{print $2}')"
+		    out5="$(echo $vpnsegments5 | awk '{print $3}')"
+		    src5="$(echo $vpnsegments5 | awk '{print $4}')"
+		    in5="$(echo $vpnsegments5 | awk '{print $5}')"
 
-    vpnsegments7=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==19 {print $1, $2, $4} NR==20 {print $1, $3}')
+		    vpnsegments6=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==17 {print $1, $2, $4} NR==18 {print $1, $3}')
 
-    line7="$(echo $vpnsegments7 | awk '{print $1}')"
-    dest7="$(echo $vpnsegments7 | awk '{print $2}')"
-    out7="$(echo $vpnsegments7 | awk '{print $3}')"
-    src7="$(echo $vpnsegments7 | awk '{print $4}')"
-    in7="$(echo $vpnsegments7 | awk '{print $5}')"
+		    line6="$(echo $vpnsegments6 | awk '{print $1}')"
+		    dest6="$(echo $vpnsegments6 | awk '{print $2}')"
+		    out6="$(echo $vpnsegments6 | awk '{print $3}')"
+		    src6="$(echo $vpnsegments6 | awk '{print $4}')"
+		    in6="$(echo $vpnsegments6 | awk '{print $5}')"
 
-    vpnsegments8=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==21 {print $1, $2, $4} NR==22 {print $1, $3}')
+		    vpnsegments7=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==19 {print $1, $2, $4} NR==20 {print $1, $3}')
 
-    line8="$(echo $vpnsegments8 | awk '{print $1}')"
-    dest8="$(echo $vpnsegments8 | awk '{print $2}')"
-    out8="$(echo $vpnsegments8 | awk '{print $3}')"
-    src8="$(echo $vpnsegments8 | awk '{print $4}')"
-    in8="$(echo $vpnsegments8 | awk '{print $5}')"
+		    line7="$(echo $vpnsegments7 | awk '{print $1}')"
+		    dest7="$(echo $vpnsegments7 | awk '{print $2}')"
+		    out7="$(echo $vpnsegments7 | awk '{print $3}')"
+		    src7="$(echo $vpnsegments7 | awk '{print $4}')"
+		    in7="$(echo $vpnsegments7 | awk '{print $5}')"
 
-    vpnsegments9=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==23 {print $1, $2, $4} NR==24 {print $1, $3}')
+		    vpnsegments8=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==21 {print $1, $2, $4} NR==22 {print $1, $3}')
 
-    line9="$(echo $vpnsegments9 | awk '{print $1}')"
-    dest9="$(echo $vpnsegments9 | awk '{print $2}')"
-    out9="$(echo $vpnsegments9 | awk '{print $3}')"
-    src9="$(echo $vpnsegments9 | awk '{print $4}')"
-    in9="$(echo $vpnsegments9 | awk '{print $5}')"
+		    line8="$(echo $vpnsegments8 | awk '{print $1}')"
+		    dest8="$(echo $vpnsegments8 | awk '{print $2}')"
+		    out8="$(echo $vpnsegments8 | awk '{print $3}')"
+		    src8="$(echo $vpnsegments8 | awk '{print $4}')"
+		    in8="$(echo $vpnsegments8 | awk '{print $5}')"
 
-    vpnsegments10=$(cat /jffs/addons/rtrmon.d/vpnresult.txt 2>&1 | awk 'NR==25 {print $1, $2, $4} NR==26 {print $1, $3}')
+		    vpnsegments9=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==23 {print $1, $2, $4} NR==24 {print $1, $3}')
 
-    line10="$(echo $vpnsegments10 | awk '{print $1}')"
-    dest10="$(echo $vpnsegments10 | awk '{print $2}')"
-    out10="$(echo $vpnsegments10 | awk '{print $3}')"
-    src10="$(echo $vpnsegments10 | awk '{print $4}')"
-    in10="$(echo $vpnsegments10 | awk '{print $5}')"
+		    line9="$(echo $vpnsegments9 | awk '{print $1}')"
+		    dest9="$(echo $vpnsegments9 | awk '{print $2}')"
+		    out9="$(echo $vpnsegments9 | awk '{print $3}')"
+		    src9="$(echo $vpnsegments9 | awk '{print $4}')"
+		    in9="$(echo $vpnsegments9 | awk '{print $5}')"
 
-    if [ "$line1" == "1" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line1  $dest1" "=> In: $in1"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src1" "<= Out: $out1"
-    else
-      echo "No Data"
-    fi
+		    vpnsegments10=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==25 {print $1, $2, $4} NR==26 {print $1, $3}')
 
-    if [ "$line2" == "2" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line2  $dest2" "=> In: $in2"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src2" "<= Out: $out2"
-    fi
+		    line10="$(echo $vpnsegments10 | awk '{print $1}')"
+		    dest10="$(echo $vpnsegments10 | awk '{print $2}')"
+		    out10="$(echo $vpnsegments10 | awk '{print $3}')"
+		    src10="$(echo $vpnsegments10 | awk '{print $4}')"
+		    in10="$(echo $vpnsegments10 | awk '{print $5}')"
 
-    if [ "$line3" == "3" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line3  $dest3" "=> In: $in3"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src3" "<= Out: $out3"
-    fi
+		    if [ "$line1" == "1" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+		    else
+		      echo "No Data"
+		    fi
 
-    if [ "$line4" == "4" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line4  $dest4" "=> In: $in4"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src4" "<= Out: $out4"
-    fi
+		    if [ "$line2" == "2" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
+		    fi
 
-    if [ "$line5" == "5" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line5  $dest5" "=> In: $in5"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src5" "<= Out: $out5"
-    fi
+		    if [ "$line3" == "3" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
+		    fi
 
-    if [ "$line6" == "6" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line6  $dest6" "=> In: $in6"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src6" "<= Out: $out6"
-    fi
+		    if [ "$line4" == "4" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
+		    fi
 
-    if [ "$line7" == "7" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line7  $dest7" "=> In: $in7"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src7" "<= Out: $out7"
-    fi
+		    if [ "$line5" == "5" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
+		    fi
 
-    if [ "$line8" == "8" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line8  $dest8" "=> In: $in8"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src8" "<= Out: $out8"
-    fi
+		    if [ "$line6" == "6" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
+		    fi
 
-    if [ "$line9" == "9" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" " $line9  $dest9" "=> In: $in9"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src9" "<= Out: $out9"
-    fi
+		    if [ "$line7" == "7" ]; then
+		      echo -en "${CGreen}"
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
+		    fi
 
-    if [ "$line10" == "10" ]; then
-      echo -en "${CGreen}"
-      printf "%-52s%s\n" "$line10  $dest10" "=> In: $in10"
-      echo -en "${CCyan}"
-      printf "%-52s%s\n" "    $src10" "<= Out: $out10"
-    fi
+		    if [ "$line8" == "8" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
+		    fi
+
+		    if [ "$line9" == "9" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
+		    fi
+
+		    if [ "$line10" == "10" ]; then
+		      printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
+		    fi
+		    
+		    echo ""
+		  fi
+		done
   fi
 
 }
@@ -3089,48 +3748,73 @@ _VPN_GetClientState_()
             NextPage="$2"
           fi
 
-          # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
-            if [ "$FourBandCustomAXE16000" == "True" ]; then
-              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-                MaxSpeed5Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-                MaxSpeed52Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
-                MaxSpeed24Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-                MaxSpeed6Ghz=0
-              fi
-            elif [ "$ThreeBand2456" == "True" ]; then
-              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-                MaxSpeed24Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-                MaxSpeed5Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-                MaxSpeed6Ghz=0
-              fi
-            elif [ "$ThreeBand2455" == "True" ]; then
-              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-                MaxSpeed24Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-                MaxSpeed5Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-                MaxSpeed52Ghz=0
-              fi
-            else
-              if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-                MaxSpeed24Ghz=0
-              fi
-              if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-                MaxSpeed5Ghz=0
-              fi
-            fi
+				  # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
+				  if [ "$FourBandCustomAXE16000" == "True" ]; then
+				    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+				      MaxSpeed5GhzNow=0
+				    else
+				      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+				      MaxSpeed52GhzNow=0
+				    else
+				      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
+				      MaxSpeed24GhzNow=0
+				    else
+				      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+				      MaxSpeed6GhzNow=0
+				    else
+				      MaxSpeed6GhzNow=$MaxSpeed6Ghz
+				    fi
+				  elif [ "$ThreeBand2456" == "True" ]; then
+				    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+				      MaxSpeed24GhzNow=0
+				    else
+				      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+				      MaxSpeed5GhzNow=0
+				    else
+				      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+				      MaxSpeed6GhzNow=0
+				    else
+				      MaxSpeed6GhzNow=$MaxSpeed6Ghz
+				    fi
+				  elif [ "$ThreeBand2455" == "True" ]; then
+				    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+				      MaxSpeed24GhzNow=0
+				    else
+				      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+				      MaxSpeed5GhzNow=0
+				    else
+				      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
+				      MaxSpeed52GhzNow=0
+				    else
+				      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+				    fi
+				  else
+				    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
+				      MaxSpeed24GhzNow=0
+				    else
+				      MaxSpeed24GhzNow=$MaxSpeed24Ghz
+				    fi
+				    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
+				      MaxSpeed5GhzNow=0
+				    else
+				      MaxSpeed5GhzNow=$MaxSpeed5Ghz
+				    fi
+				  fi
+				  
       else
         echo -e "${CRed}Error: RTRMON is not configured or does not have all the required dependencies${CClear}"
         echo -e "${CRed}installed. Launching 'rtrmon -setup' to install dependencies/complete setup!${CClear}"
@@ -3152,17 +3836,19 @@ _VPN_GetClientState_()
 # Display the logo and indicator that stats are being gathered.
   clear
   logoNM
-  echo ""
-  echo -e "${CGreen}[Initiating Boot Sequence - Gathering Initial Stats...]"
+  echo -e "\r${CGreen}              [Initiating Boot Sequence - Gathering Initial Stats...]"
   echo ""
   INITIALBOOT=1
+  trimlogs
   echo -e "$(date) - RTRMON - Initial Boot Sequence - Gathering Initial Stats..." >> $LOGFILE
 
 # Capture initial traffic and store current WAN/WiFi bytes stats
-  if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
-  if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
-  oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
-  oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+  if [ "$WAN0AltModes" == "0" ]; then
+    if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+    if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
+    oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
+    oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+  fi
 
   if [ "$FourBandCustomAXE16000" == "True" ]; then
     ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
@@ -3197,15 +3883,14 @@ _VPN_GetClientState_()
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
 
-  vpn=0
-  while [ $vpn -ne 5 ]; do
-    vpn=$(($vpn+1))
-    VPNState="$(_VPN_GetClientState_ ${vpn})"
+  #Get the latest VPN stats
+    vpn1slot=1
+    VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
     if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
     if [ $VPNState -eq 2 ]; then
-      TUN="tun1"$vpn
-      NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
-      NVRAMVPNIP=$(ping -c 2 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+      TUN="tun1"$vpn1slot
+      NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
+      NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpnip=$NVRAMVPNIP
@@ -3221,45 +3906,125 @@ _VPN_GetClientState_()
           echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpnip ($oldvpncity)" >> $LOGFILE
         fi
       fi
-      vpnon="True"
-      #Check to see if there's a secondary VPN connection
-        vpn2=$vpn
-        while [ $vpn2 -ne 5 ]; do
-          vpn2=$(($vpn2+1))
-          VPN2State="$(_VPN_GetClientState_ ${vpn2})"
-          if [ $VPN2State -eq 2 ]; then
-            TUN2="tun1"$vpn2
-            NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
-            NVRAMVPN2IP=$(ping -c 2 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-            if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-              oldvpn2ip=$NVRAMVPN2IP
-              oldvpn2city="Private Network"
-            else
-              lastvpn2ip=$oldvpn2ip
-              oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
-              if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
-              if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
-                oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
-                oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
-                echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
-              fi
-            fi
-            vpn2on="True"
-            break
-          else
-            vpn2on="False"
-          fi
-        done
-      break
+      vpn1on="True"
     else
-      vpnon="False"
+      vpn1on="False"
+    fi
+    
+  #Check to see if there's a secondary VPN connection
+    vpn2slot=2
+    VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+    if [ -z $VPN2State ]; then VPN2State=0; fi # to catch possible wireguard interference
+    if [ $VPN2State -eq 2 ]; then
+      TUN2="tun1"$vpn2slot
+      NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
+      NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn2ip=$NVRAMVPN2IP
+        oldvpn2city="Private Network"
+      else
+        lastvpn2ip=$oldvpn2ip
+        oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+        if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+          oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+          oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+          vpn2city=$oldvpn2city
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+        fi
+      fi
+      vpn2on="True"
+    else
       vpn2on="False"
     fi
-  done
 
-  if [ "$vpnon" == "True" ]; then
-    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+  #Check to see if there's a third VPN connection
+    vpn3slot=3
+    VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+    if [ -z $VPN3State ]; then VPN3State=0; fi # to catch possible wireguard interference
+    if [ $VPN3State -eq 2 ]; then
+      TUN3="tun1"$vpn3slot
+      NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
+      NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn3ip=$NVRAMVPN3IP
+        oldvpn3city="Private Network"
+      else
+        lastvpn3ip=$oldvpn3ip
+        oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+        if [ "$lastvpn3ip" != "$oldvpn3ip" ]; then
+          oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+          oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
+          vpn3city=$oldvpn3city
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
+        fi
+      fi
+      vpn3on="True"
+    else
+      vpn3on="False"
+    fi
+    
+  #Check to see if there's a fourth VPN connection
+    vpn4slot=4
+    VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+    if [ -z $VPN4State ]; then VPN4State=0; fi # to catch possible wireguard interference
+    if [ $VPN4State -eq 2 ]; then
+      TUN4="tun1"$vpn4slot
+      NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
+      NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn4ip=$NVRAMVPN4IP
+        oldvpn4city="Private Network"
+      else
+        lastvpn4ip=$oldvpn4ip
+        oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+        if [ "$lastvpn4ip" != "$oldvpn4ip" ]; then
+          oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+          oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
+          vpn4city=$oldvpn4city
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
+        fi
+      fi
+      vpn4on="True"
+    else
+      vpn4on="False"
+    fi
+
+  #Check to see if there's a fifth VPN connection
+    vpn5slot=5
+    VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+    if [ -z $VPN5State ]; then VPN5State=0; fi # to catch possible wireguard interference
+    if [ $VPN5State -eq 2 ]; then
+      TUN5="tun1"$vpn5slot
+      NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
+      NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn5ip=$NVRAMVPN5IP
+        oldvpn5city="Private Network"
+      else
+        lastvpn5ip=$oldvpn5ip
+        oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+        if [ "$lastvpn5ip" != "$oldvpn5ip" ]; then
+          oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+          oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
+          vpn5city=$oldvpn5city
+          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
+        fi
+      fi
+      vpn5on="True"
+    else
+      vpn5on="False"
+    fi
+    
+  if [ "$vpn1on" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
     oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
     oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
     if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
@@ -3274,7 +4039,7 @@ _VPN_GetClientState_()
   fi
 
   if [ "$vpn2on" == "True" ]; then
-    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
     oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
     oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
     if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
@@ -3287,10 +4052,59 @@ _VPN_GetClientState_()
     fi
 
   fi
+  
+  if [ "$vpn3on" == "True" ]; then
+    oldvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+    oldvpn3rxbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f1)"
+    oldvpn3txbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn3rxbytes ]; then oldvpn3rxbytes=0; fi
+    if [ -z $oldvpn3txbytes ]; then oldvpn3txbytes=0; fi
 
+    if [ $oldvpn3rxbytes -le 0 ]; then
+      oldvpn3rxbytes=0
+    elif [ $oldvpn3txbytes -le 0 ]; then
+      oldvpn3txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn4on" == "True" ]; then
+    oldvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+    oldvpn4rxbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f1)"
+    oldvpn4txbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn4rxbytes ]; then oldvpn4rxbytes=0; fi
+    if [ -z $oldvpn4txbytes ]; then oldvpn4txbytes=0; fi
+
+    if [ $oldvpn4rxbytes -le 0 ]; then
+      oldvpn4rxbytes=0
+    elif [ $oldvpn4txbytes -le 0 ]; then
+      oldvpn4txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn5on" == "True" ]; then
+    oldvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+    oldvpn5rxbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f1)"
+    oldvpn5txbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn5rxbytes ]; then oldvpn5rxbytes=0; fi
+    if [ -z $oldvpn5txbytes ]; then oldvpn5txbytes=0; fi
+
+    if [ $oldvpn5rxbytes -le 0 ]; then
+      oldvpn5rxbytes=0
+    elif [ $oldvpn5txbytes -le 0 ]; then
+      oldvpn5txbytes=0
+    fi
+
+  fi
+
+	FWVER=$(nvram get firmver | tr -d '.')
+	BUILDNO=$(nvram get buildno)
+	EXTENDNO=$(nvram get extendno)
+	if [ -z $EXTENDNO ]; then EXTENDNO=0; fi
+	FWBUILD=$FWVER"."$BUILDNO"_"$EXTENDNO
 
 # Get initial TOP stats to average across the interval period
-
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
@@ -3299,11 +4113,7 @@ _VPN_GetClientState_()
       i=$(($i+1))
       gettopstats $i
       preparebar 53 "|"
-      if [ "$ProgPref" == "0" ]; then
-        progressbar $i $Interval "" "s" "Standard"
-      else
-        progressbaroverride $i $Interval "" "s" "Standard"
-      fi
+      progressbaroverride $i $Interval "" "s" "Standard"
   done
 
 calculatestats
@@ -3317,28 +4127,23 @@ INITIALBOOT=0
 
 while true; do
 
+
   if [ "$NextPage" == "1" ]; then
-    clear
     DisplayPage1
     echo ""
   elif [ "$NextPage" == "2" ]; then
-    clear
     DisplayPage2
     echo ""
   elif [ "$NextPage" == "3" ]; then
-    clear
     DisplayPage3
     echo ""
   elif [ "$NextPage" == "4" ]; then
-    clear
     DisplayPage4
     echo ""
   elif [ "$NextPage" == "5" ]; then
-    clear
     DisplayPage5
     #echo ""
   elif [ "$NextPage" == "6" ]; then
-    clear
     DisplayPage6
     #echo ""
   fi
@@ -3365,8 +4170,10 @@ while true; do
   displaycpuirq1=0
 
   # Get fresh WAN stats
-  oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
-  oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+  if [ "$WAN0AltModes" == "0" ]; then
+    oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
+    oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
+  fi
   old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
   old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
   old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
@@ -3384,71 +4191,148 @@ while true; do
 
   # Get fresh VPN stats
   echo ""
-  vpn=0
-  while [ $vpn -ne 5 ]; do
-    vpn=$(($vpn+1))
-    VPNState="$(_VPN_GetClientState_ ${vpn})"
-    if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
-    if [ $VPNState -eq 2 ]; then
-      TUN="tun1"$vpn
-      NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn"_addr)
-      printf "${CGreen}\r[Refreshing Stats...]"
-      NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+  vpn1slot=1
+  VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
+  if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
+  if [ $VPNState -eq 2 ]; then
+    TUN="tun1"$vpn1slot
+    NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN1 Stats...]"
+    NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
-      if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-        oldvpnip=$NVRAMVPNIP
-        oldvpncity="Private Network"
-      else
-        lastvpnip=$oldvpnip
-        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
-        if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
-        if [ "$lastvpnip" != "$oldvpnip" ]; then
-          oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
-          oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
-          vpncity=$oldvpncity
-          echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpnip ($oldvpncity)" >> $LOGFILE
-        fi
-      fi
-      vpnon="True"
-      #Check to see if there's a secondary VPN connection
-        vpn2=$vpn
-        while [ $vpn2 -ne 5 ]; do
-          vpn2=$(($vpn2+1))
-          VPN2State="$(_VPN_GetClientState_ ${vpn2})"
-          if [ $VPN2State -eq 2 ]; then
-            TUN2="tun1"$vpn2
-            NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2"_addr)
-            printf "${CGreen}\r[Refreshing Stats...]"
-            NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-            if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-              oldvpn2ip=$NVRAMVPN2IP
-              oldvpn2city="Private Network"
-            else
-              lastvpn2ip=$oldvpn2ip
-              oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
-              if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
-              if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
-                oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
-                oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
-                echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
-              fi
-            fi
-            vpn2on="True"
-            break
-          else
-            vpn2on="False"
-          fi
-        done
-      break
+    if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpnip=$NVRAMVPNIP
+      oldvpncity="Private Network"
     else
-      vpnon="False"
-      vpn2on="False"
+      lastvpnip=$oldvpnip
+      oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
+      if [ "$lastvpnip" != "$oldvpnip" ]; then
+        oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
+        oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
+        vpncity=$oldvpncity
+        echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpnip ($oldvpncity)" >> $LOGFILE
+      fi
     fi
-  done
+    vpn1on="True"
+  else
+    vpn1on="False"
+  fi
+    
+  #Check to see if there's a secondary VPN connection
+  vpn2slot=2
+  VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+  if [ -z $VPN2State ]; then VPN2State=0; fi # to catch possible wireguard interference
+  if [ $VPN2State -eq 2 ]; then
+    TUN2="tun1"$vpn2slot
+    NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN2 Stats...]"
+    NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-  if [ "$vpnon" == "True" ]; then
-    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn/status 2>/dev/null)
+    if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn2ip=$NVRAMVPN2IP
+      oldvpn2city="Private Network"
+    else
+      lastvpn2ip=$oldvpn2ip
+      oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+      if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+        oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+        oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+        echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+      fi
+    fi
+    vpn2on="True"
+  else
+    vpn2on="False"
+  fi
+
+  #Check to see if there's a third VPN connection
+  vpn3slot=3
+  VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+  if [ -z $VPN3State ]; then VPN3State=0; fi # to catch possible wireguard interference
+  if [ $VPN3State -eq 2 ]; then
+    TUN3="tun1"$vpn3slot
+    NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN3 Stats...]"
+    NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn3ip=$NVRAMVPN3IP
+      oldvpn3city="Private Network"
+    else
+      lastvpn3ip=$oldvpn3ip
+      oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+      if [ "$lastvpn3ip" != "$oldvpn3ip" ]; then
+        oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+        oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
+        echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
+      fi
+    fi
+    vpn3on="True"
+  else
+    vpn3on="False"
+  fi
+
+  #Check to see if there's a fourth VPN connection
+  vpn4slot=4
+  VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+  if [ -z $VPN4State ]; then VPN4State=0; fi # to catch possible wireguard interference
+  if [ $VPN4State -eq 2 ]; then
+    TUN4="tun1"$vpn4slot
+    NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN4 Stats...]"
+    NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn4ip=$NVRAMVPN4IP
+      oldvpn4city="Private Network"
+    else
+      lastvpn4ip=$oldvpn4ip
+      oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+      if [ "$lastvpn4ip" != "$oldvpn4ip" ]; then
+        oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+        oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
+        echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
+      fi
+    fi
+    vpn4on="True"
+  else
+    vpn4on="False"
+  fi
+  
+  #Check to see if there's a fifth VPN connection
+  vpn5slot=5
+  VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+  if [ -z $VPN5State ]; then VPN5State=0; fi # to catch possible wireguard interference
+  if [ $VPN5State -eq 2 ]; then
+    TUN5="tun1"$vpn5slot
+    NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN5 Stats...]"
+    NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn5ip=$NVRAMVPN5IP
+      oldvpn5city="Private Network"
+    else
+      lastvpn5ip=$oldvpn5ip
+      oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+      if [ "$lastvpn5ip" != "$oldvpn5ip" ]; then
+        oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+        oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
+        echo -e "$(date) - RTRMON - API call made to determine geolocation of $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
+      fi
+    fi
+    vpn5on="True"
+  else
+    vpn5on="False"
+  fi
+  
+  if [ "$vpn1on" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
     oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
     oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
     if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
@@ -3463,7 +4347,7 @@ while true; do
   fi
 
   if [ "$vpn2on" == "True" ]; then
-    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2/status 2>/dev/null)
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
     oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
     oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
     if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
@@ -3477,11 +4361,55 @@ while true; do
 
   fi
 
-  printf "${CGreen}\r                     "
+  if [ "$vpn3on" == "True" ]; then
+    oldvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+    oldvpn3rxbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f1)"
+    oldvpn3txbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn3rxbytes ]; then oldvpn3rxbytes=0; fi
+    if [ -z $oldvpn3txbytes ]; then oldvpn3txbytes=0; fi
+
+    if [ $oldvpn3rxbytes -le 0 ]; then
+      oldvpn3rxbytes=0
+    elif [ $oldvpn3txbytes -le 0 ]; then
+      oldvpn3txbytes=0
+    fi
+
+  fi
+  
+  if [ "$vpn4on" == "True" ]; then
+    oldvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+    oldvpn4rxbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f1)"
+    oldvpn4txbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn4rxbytes ]; then oldvpn4rxbytes=0; fi
+    if [ -z $oldvpn4txbytes ]; then oldvpn4txbytes=0; fi
+
+    if [ $oldvpn4rxbytes -le 0 ]; then
+      oldvpn4rxbytes=0
+    elif [ $oldvpn4txbytes -le 0 ]; then
+      oldvpn4txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn5on" == "True" ]; then
+    oldvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+    oldvpn5rxbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f1)"
+    oldvpn5txbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn5rxbytes ]; then oldvpn5rxbytes=0; fi
+    if [ -z $oldvpn5txbytes ]; then oldvpn5txbytes=0; fi
+
+    if [ $oldvpn5rxbytes -le 0 ]; then
+      oldvpn5rxbytes=0
+    elif [ $oldvpn5txbytes -le 0 ]; then
+      oldvpn5txbytes=0
+    fi
+
+  fi
+  
+  printf "${CGreen}\r                                         "
   printf "${CGreen}\r"
 
   # Run through the stats gathering loop based on the current interval
-  #echo ""
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
@@ -3491,13 +4419,10 @@ while true; do
       i=$(($i+1))
       gettopstats $i
       preparebar 46 "|"
-      if [ "$ProgPref" == "0" ]; then
-        progressbar $i $Interval "" "s" "Standard"
-      else
-        progressbaroverride $i $Interval "" "s" "Standard"
-      fi
+      progressbaroverride $i $Interval "" "s" "Standard"
+      if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
-
+  
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
   oldstats
