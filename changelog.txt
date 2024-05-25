@@ -21,6 +21,8 @@ v1.7.8b1  - (TBA)
           - PATCH: Added a new item (12) under the Configuration menu that allows you to specify whether the router
             that RTRMON is running on is an iMesh Node, Repeater or Bridge. In these operating modes, the eth0
             interface is most likely not being used, and will no longer be reporting on any WAN0 traffic.
+          - PATCH: Added a new item (13) under the Configuration menu that allows you to specify how large you want
+            your log file to reach. The default is currently 2000 rows, which would give you many months of log data.
 
 v1.6.9    - (May 3, 2024)
           - PATCH: After @bubba123 reported some display issues with his SDA devices, it was determined that the large
