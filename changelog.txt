@@ -1,4 +1,4 @@
-v1.7.x    - (TBA)
+v1.7.8b1  - (TBA)
           - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
             screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
             better use of screen space. This also includes an operations menu which you can show/hide in order to
