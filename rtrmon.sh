@@ -3251,7 +3251,7 @@ DisplayPage6 () {
     	echo -e "${InvGreen} ${CClear}"
     	echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  | ${InvDkGray} ${CGreen}(L)${CWhite}AN ${CClear}${CWhite} |  ${CGreen}(V)${CWhite}PN${CClear}"
     else
-      echo echo -e "${InvGreen} ${CClear}"
+      echo -e "${InvGreen} ${CClear}"
     	echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  | ${InvDkGray} ${CGreen}(L)${CWhite}AN ${CClear}"
     fi
 
