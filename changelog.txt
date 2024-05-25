@@ -15,6 +15,12 @@ v1.7.x    - (TBA)
           - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
           - PATCH: Brought compatibility to the 3 new devices recently announced by @RMerlin: the RT-BE96U, GT-BE98
             and GT-BE98_PRO.
+          - PATCH: On the Network Diagnostics page, RTRMON is now showing a preview of the test command involved in
+            determining if a function works or not. This gives more insight as to the command, IP or network address
+            that the test is trying to attempt.
+          - PATCH: Added a new item (12) under the Configuration menu that allows you to specify whether the router
+            that RTRMON is running on is an iMesh Node, Repeater or Bridge. In these operating modes, the eth0
+            interface is most likely not being used, and will no longer be reporting on any WAN0 traffic.
 
 v1.6.9    - (May 3, 2024)
           - PATCH: After @bubba123 reported some display issues with his SDA devices, it was determined that the large
