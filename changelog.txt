@@ -1,8 +1,10 @@
-v1.7.xb2  - (TBA)
+v1.7.11b2 - (TBA)
           - PATCH: After getting some nvram feedback from @visortgw and @dave14503, I've made more modifications on
             how to determine if a router is truly a router, not an AP/Repeater/iMesh Node.
           - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
             on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
+          - PATCH: Now includes compatibility for the newly announced supported Merlin FW routers: the GT-BE98_PRO
+            and the RT-BE96U. The BE98_PRO is the first router that makes use of 2 x 6GHz ranges.
 
 v1.7.8b1  - (TBA)
           - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
