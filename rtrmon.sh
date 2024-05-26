@@ -1120,7 +1120,11 @@ vsetup () {
     echo -e "${InvGreen} ${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
     echo ""
-    read -p "Please select? (1-5, e=Exit): " InstallSelection
+    if [ "$FromUI" == "0" ]; then
+      read -p "Please select? (1-7, e=Exit): " InstallSelection
+    else
+      read -p "Please select? (1-5, e=Exit): " InstallSelection
+    fi
 
     # Execute chosen selections
         case "$InstallSelection" in
@@ -1556,7 +1560,7 @@ oldstats () {
     oldw52rxmbratedisplay=$w52rxmbratedisplay
     oldw52txmbratedisplay=$w52txmbratedisplay
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
     oldw6rxmbratedisplay=$w6rxmbratedisplay
     oldw6txmbratedisplay=$w6txmbratedisplay
   fi
@@ -2948,18 +2952,6 @@ DisplayPage5 () {
     echo ""
 
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-	    printf "${InvYellow} ${CClear} ${CWhite}Network Resolution Test...   ${CYellow}[Checking] ${CDkGray}| nslookup google.com${CClear}"
-	      RES_STATE="$(nslookup google.com >/dev/null 2>&1; echo $?)"
-	      sleep 1
-	      if [ "$RES_STATE" = "0" ]; then
-	        printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com${CClear}"
-	        NetworkResTest="Passed"
-	      else
-	        printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com${CClear}"
-	        NetworkResTest="Failed"
-	      fi
-	    echo ""
-    else
 	    printf "${InvYellow} ${CClear} ${CWhite}Network Resolution Test...   ${CYellow}[Checking] ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
 	      RES_STATE="$(nslookup google.com 127.0.0.1 >/dev/null 2>&1; echo $?)"
 	      sleep 1
@@ -2968,6 +2960,18 @@ DisplayPage5 () {
 	        NetworkResTest="Passed"
 	      else
 	        printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
+	        NetworkResTest="Failed"
+	      fi
+	    echo ""
+	  else
+	    printf "${InvYellow} ${CClear} ${CWhite}Network Resolution Test...   ${CYellow}[Checking] ${CDkGray}| nslookup google.com${CClear}"
+	      RES_STATE="$(nslookup google.com >/dev/null 2>&1; echo $?)"
+	      sleep 1
+	      if [ "$RES_STATE" = "0" ]; then
+	        printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com${CClear}"
+	        NetworkResTest="Passed"
+	      else
+	        printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com${CClear}"
 	        NetworkResTest="Failed"
 	      fi
 	    echo ""
@@ -3089,15 +3093,15 @@ else
   echo ""
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
 	  if [ "$NetworkResTest" == "Passed" ]; then
-	    printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com${CClear}"
-	  else
-	    printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com${CClear}"
-	  fi
-  else
-	  if [ "$NetworkResTest" == "Passed" ]; then
 	    printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
 	  else
 	    printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com 127.0.0.1${CClear}"
+	  fi
+	else
+	  if [ "$NetworkResTest" == "Passed" ]; then
+	    printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com${CClear}"
+	  else
+	    printf "\r${InvRed} ${CClear} ${CWhite}Network Resolution Test...   ${CRed}[Failed]   ${CDkGray}| nslookup google.com${CClear}"
 	  fi
 	fi
   echo ""
@@ -3694,16 +3698,16 @@ _VPN_GetClientState_()
   ThreeBand2456="False"
   ThreeBand2455="False"
   [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-  if [ $RouterModel == "GT-AXE16000" ]; then
+  if [ "$RouterModel" == "GT-AXE16000" ]; then
     FourBandCustomAXE16000="True"
   fi
-  if [ $RouterModel == "GT-BE98_PRO" ]; then
+  if [ "$RouterModel" == "GT-BE98_PRO" ]; then
     FourBandCustomBE98PRO="True"
   fi
-  if [ $RouterModel == "GT-AXE11000" ] || [ $RouterModel == "RT-BE96U" ]; then
+  if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "RT-BE96U" ]; then
     ThreeBand2456="True"
   fi
-  if [ $RouterModel == "GT-AX11000_PRO" ] || [ $RouterModel == "GT-AX11000" ] || [ $RouterModel == "ZenWiFi_Pro_XT12" ] || [ $RouterModel == "ZenWIFI_AX" ]; then
+  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ]; then
     ThreeBand2455="True"
   fi
   
@@ -3881,10 +3885,11 @@ _VPN_GetClientState_()
             cp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
           fi
 
-          if [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-            NextPage="$2"
+          NextPage=$(echo $2 | tr -d -c 1-6)
+          if [ -z "$NextPage" ]; then 
+          	NextPage=1
           fi
-
+           
 				  # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
 				  if [ "$FourBandCustomAXE16000" == "True" ]; then
 				    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
