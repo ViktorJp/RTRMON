@@ -1487,7 +1487,7 @@ oldstats () {
   oldjffsused=$jffsused
   oldswaptotal=$swaptotal
   oldswapused=$swapused
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     oldwan0ip=$wan0ip
     oldwan1ip=$wan1ip
   fi
@@ -1495,7 +1495,7 @@ oldstats () {
   olddns2ip=$dns2ip
   oldwanip6=$wanip6
   oldlanip6=$lanip6
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     oldwanrxmbrate=$wanrxmbrate
     oldwantxmbrate=$wantxmbrate
   fi
@@ -1544,7 +1544,7 @@ oldstats () {
   oldvpn5ip=$vpn5ip
   oldvpn5city=$vpn5city
   
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     oldwanrxmbratedisplay=$wanrxmbratedisplay
     oldwantxmbratedisplay=$wantxmbratedisplay
   fi
@@ -1655,7 +1655,7 @@ calculatestats () {
     df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
 
   # Network - WAN/LAN/DNS IP Addresses
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
       wan1ip=$($timeoutcmd$timeoutsec nvram get wan1_ipaddr)
     fi
@@ -1800,7 +1800,7 @@ calculatestats () {
         vpn5on="False"
       fi
     
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then  
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then  
       if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
       if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
     fi
@@ -1816,7 +1816,7 @@ calculatestats () {
     if [ "$vpn5on" == "False" ]; then vpn5ip="0.0.0.0"; fi
 
     # Many thanks to @SomewhereOverTheRainbow for his help and suggestions on getting IP6 info!
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
     fi
     lanip6="$(ip -o -6 addr list br0 scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
@@ -1919,7 +1919,7 @@ calculatestats () {
     newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
 
   # Network - WAN - Traffic
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
       newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
       newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
@@ -1998,7 +1998,7 @@ calculatestats () {
     fi
 
   # Network - Traffic - Calculations to find the difference between old and new total bytes send/received and divided to give Megabits
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
@@ -2043,7 +2043,7 @@ calculatestats () {
     
 
   # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
@@ -2085,7 +2085,7 @@ calculatestats () {
       vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
@@ -2243,7 +2243,7 @@ DisplayPage2 () {
     echo -e "$UpdateNotify${CClear}"
   fi
   showheader
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
 	  echo ""
 	  echo -e "${InvDkGray}${CWhite} WAN                                                                                                           ${CClear}"
 	  echo ""
@@ -2947,7 +2947,7 @@ DisplayPage5 () {
       fi
     echo ""
 
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
 	    printf "${InvYellow} ${CClear} ${CWhite}Network Resolution Test...   ${CYellow}[Checking] ${CDkGray}| nslookup google.com${CClear}"
 	      RES_STATE="$(nslookup google.com >/dev/null 2>&1; echo $?)"
 	      sleep 1
@@ -3028,7 +3028,7 @@ DisplayPage5 () {
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
-      if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+      if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
         echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
         WANnmap=$(nmap $oldwan0ip | grep "open")
         if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open"; fi
@@ -3042,7 +3042,7 @@ DisplayPage5 () {
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
-      if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+      if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
         echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
         WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
         if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open"; fi
@@ -3063,7 +3063,7 @@ DisplayPage5 () {
     echo 'SSLHandshakeTest="'"$SSLHandshakeTest"'"'
   } > $DIAGRESPATH
 
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     nmap $oldwan0ip -oN $NMAPWANRESPATH | grep "open" >/dev/null 2>&1
     nmap $oldwan0ip -sU -oN $NMAPUWANRESPATH | grep "open" >/dev/null 2>&1
   fi
@@ -3087,7 +3087,7 @@ else
     printf "\r${InvRed} ${CClear} ${CWhite}Network Connectivity Test... ${CRed}[Failed]   ${CDkGray}| ping 1.1.1.1 -c1 -W2${CClear}"
   fi
   echo ""
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
 	  if [ "$NetworkResTest" == "Passed" ]; then
 	    printf "\r${InvGreen} ${CClear} ${CWhite}Network Resolution Test...   ${CGreen}[Passed]   ${CDkGray}| nslookup google.com${CClear}"
 	  else
@@ -3134,7 +3134,7 @@ else
     echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     #oldwan0ip="23.32.44.106" #demo
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPWANRESPATH ]; then
         echo "None"
@@ -3156,7 +3156,7 @@ else
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
 	    if [ ! -f $NMAPUWANRESPATH ]; then
 	      echo "None"
@@ -3193,7 +3193,7 @@ DisplayPage6 () {
   if [ "$QueueNetworkConn" == "1" ]; then
   #run network diags and save Results
     printf "${InvGreen} ${CClear} ${CWhite}[Updating WAN( ) LAN( ) VPN( ) Statistics ... Please stand by...]"
-    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
     fi
     printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN( ) VPN( ) Statistics ... Please stand by...]"
@@ -4001,7 +4001,7 @@ _VPN_GetClientState_()
   echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: RTRMON is initializing for the first time..." >> $LOGFILE
 
 # Capture initial traffic and store current WAN/WiFi bytes stats
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
     if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
     oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
@@ -4337,7 +4337,7 @@ while true; do
   displaycpuirq1=0
 
   # Get fresh WAN stats
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then
+  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
   fi
