@@ -2500,9 +2500,9 @@ DisplayPage3 () {
       echo ""
       echo ""
       if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - UP                                                  ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
       else
-        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - DOWN                                                ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
       fi
       preparebar 79 "|"
       progressbar $oldw52rxmbrate $MaxSpeed5GhzNow " Avg 5G2 RX" "Mbps" "Standard" $oldw52rxmbratedisplay $MaxSpeed5GhzNow
