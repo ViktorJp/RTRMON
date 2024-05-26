@@ -2536,7 +2536,7 @@ DisplayPage3 () {
   fi
   
   echo ""
-  echo -e "${InvDkGray}${CWhite} WiFi                                                                                                         ${CClear}"
+  echo -e "${InvDkGray}${CWhite} WiFi                                                                                                          ${CClear}"
   echo ""
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
