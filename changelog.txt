@@ -1,3 +1,9 @@
+v1.7.xb2  - (TBA)
+          - PATCH: After getting some nvram feedback from @visortgw and @dave14503, I've made more modifications on
+            how to determine if a router is truly a router, not an AP/Repeater/iMesh Node.
+          - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
+            on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
+
 v1.7.8b1  - (TBA)
           - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
             screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
