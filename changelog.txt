@@ -1,6 +1,7 @@
 v1.7.12b2 - (TBA)
           - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
-            how to determine if a router is truly a router, not an AP/Repeater/iMesh Node.
+            how to determine if a router is truly a router, not an AP/Repeater/iMesh Node. This version is now
+            compliant in supporting routers in these particular configurations.
           - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
             on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
           - PATCH: Now includes compatibility for the newly announced supported Merlin FW routers: the GT-BE98_PRO
