@@ -1,5 +1,5 @@
 v1.7.12b2 - (TBA)
-          - PATCH: After getting some nvram feedback from @visortgw and @dave14503, I've made more modifications on
+          - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
             how to determine if a router is truly a router, not an AP/Repeater/iMesh Node.
           - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
             on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
