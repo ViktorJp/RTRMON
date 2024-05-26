@@ -511,7 +511,7 @@ vconfig () {
 
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(11)${CClear} : WAN0 Interface Override?                     : ${CGreen}$WANOverride"
       
-      if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
+      if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(12)${CClear} : Mark Router As iMesh Node/Repeater/Bridge?   : ${CGreen}$WAN0AltModesdisp"
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(13)${CClear} : Custom Event Log Size?                       : ${CGreen}$LOGSIZE"
       
@@ -898,7 +898,7 @@ vconfig () {
 			        echo -e "${InvGreen} ${CClear} (Default = No)${CClear}"
 			        echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
 			        echo ""
-			        if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" != "1" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
+			        if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
 			        echo -e "${CClear}Current: ${CGreen}$WAN0AltModesdisp${CClear}"
               echo ""
               echo -e "Is this router an iMesh Node/Repeater/Bridge?${CClear}"
@@ -3709,6 +3709,7 @@ _VPN_GetClientState_()
   
   # Check what mode the router is in
   OpsMode=$(nvram get sw_mode) # 1=router, 2=ap, 3=iMesh Node
+	#OpsMode=3
 
   # Check and see if any commandline option is being used
   if [ $# -eq 0 ]
