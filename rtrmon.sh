@@ -3704,10 +3704,10 @@ _VPN_GetClientState_()
   if [ "$RouterModel" == "GT-BE98_PRO" ]; then
     FourBandCustom56624="True"
   fi
-  if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "RT-BE96U" ]; then
+  if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "ZenWiFi_ET8" ] || [ "$RouterModel" == "RT-BE96U" ]; then
     ThreeBand2456="True"
   fi
-  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ]; then
+  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ] || [ "$RouterModel" == "ZenWIFI_XT8" ]; then
     ThreeBand2455="True"
   fi
 
