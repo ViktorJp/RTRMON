@@ -28,10 +28,11 @@ v2.0.8b1  - (TBA)
           - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
           - PATCH: On the Network Diagnostics page, RTRMON is now showing a preview of the test command involved in
             determining if a function works or not. This gives more insight as to the command, IP or network address
-            that the test is trying to attempt.
+            that the test is attempting to connect to.
           - PATCH: Added a new item (12) under the Configuration menu that allows you to specify whether the router
-            that RTRMON is running on is an iMesh Node, Repeater or Bridge. In these operating modes, the eth0
-            interface is most likely not being used, and will no longer be reporting on any WAN0 traffic.
+            that RTRMON is running on is an iMesh Node, AP, Repeater or Bridge. In these operating modes, the eth0
+            interface is most likely not being used, and will no longer be reporting on or capturing any WAN0 traffic
+            in the RTRMON UI.
           - PATCH: Added a new item (13) under the Configuration menu that allows you to specify how large you want
             your log file to reach. The default is currently 2000 rows, which would give you many months of log data.
 
