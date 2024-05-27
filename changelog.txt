@@ -1,4 +1,4 @@
-v1.7.12b2 - (TBA)
+v2.0.12b2 - (TBA)
           - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
             how to determine if a router is truly a router, not an AP/Repeater/iMesh Node. This version is now
             compliant in supporting routers in these particular configurations.
@@ -9,8 +9,8 @@ v1.7.12b2 - (TBA)
           - PATCH: Logging standards have been updated across the script, and open to suggestions for other log
             events that might be reported on.
 
-v1.7.8b1  - (TBA)
-          - MINOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
+v2.0.8b1  - (TBA)
+          - MAJOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
             screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
             better use of screen space. This also includes an operations menu which you can show/hide in order to
             capitalize on even more screen space in much of the same way VPNMON-R3 functions.
@@ -24,8 +24,6 @@ v1.7.8b1  - (TBA)
           - PATCH: Prevously, the iftop network stats would only gather WAN, LAN and the first available VPN slot.
             Page 6 (network/bandwidth stats) now queries and displays all VPN connection info.
           - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
-          - PATCH: Brought compatibility to the 3 new devices recently announced by @RMerlin: the RT-BE96U, GT-BE98
-            and GT-BE98_PRO.
           - PATCH: On the Network Diagnostics page, RTRMON is now showing a preview of the test command involved in
             determining if a function works or not. This gives more insight as to the command, IP or network address
             that the test is trying to attempt.
