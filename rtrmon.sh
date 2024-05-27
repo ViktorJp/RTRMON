@@ -488,7 +488,7 @@ vconfig () {
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 5)${CClear} : Max 2.4GHz Speed (Mbps)                      : ${CGreen}$MaxSpeed24Ghz"
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 6)${CClear} : Max 5GHz Speed (Mbps)                        : ${CGreen}$MaxSpeed5Ghz"
 
-      if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+      if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
         echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 7)${CClear} : Max 6GHz Speed (Mbps)                        : ${CGreen}$MaxSpeed6Ghz"
       else
         echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}( 7)${CClear} : ${CDkGray}Max 6GHz Speed (Mbps)                        : N/A"
@@ -636,7 +636,7 @@ vconfig () {
 
             7) # -----------------------------------------------------------------------------------------
               clear
-              if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+              if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
                 echo -e "${InvGreen} ${InvDkGray}${CWhite} Maximum 6GHz Bandwidth Speed                                                          ${CClear}"
                 echo -e "${InvGreen} ${CClear}"
                 echo -e "${InvGreen} ${CClear} Please indicate what your maximum realistic 6GHz speed is in Mbps?${CClear}"
@@ -1509,17 +1509,17 @@ oldstats () {
   oldw5txmbrate=$w5txmbrate
   oldw24temp=$w24temp
   oldw5temp=$w5temp
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     oldw52rxmbrate=$w52rxmbrate
     oldw52txmbrate=$w52txmbrate
     oldw52temp=$w52temp
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     oldw6rxmbrate=$w6rxmbrate
     oldw6txmbrate=$w6txmbrate
     oldw6temp=$w6temp
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     oldw62rxmbrate=$w62rxmbrate
     oldw62txmbrate=$w62txmbrate
     oldw62temp=$w62temp
@@ -1556,15 +1556,15 @@ oldstats () {
   oldw24txmbratedisplay=$w24txmbratedisplay
   oldw5rxmbratedisplay=$w5rxmbratedisplay
   oldw5txmbratedisplay=$w5txmbratedisplay
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     oldw52rxmbratedisplay=$w52rxmbratedisplay
     oldw52txmbratedisplay=$w52txmbratedisplay
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     oldw6rxmbratedisplay=$w6rxmbratedisplay
     oldw6txmbratedisplay=$w6txmbratedisplay
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     oldw62rxmbratedisplay=$w62rxmbratedisplay
     oldw62txmbratedisplay=$w62txmbratedisplay
   fi
@@ -1835,30 +1835,30 @@ calculatestats () {
     w5temp=$(awk -v v1=$w5tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
 
     # Tri or Quad Band 5GHz
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
       if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=1; fi
       w52temp=$(awk -v v1=$w52tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
     # Tri or Quad-Band 6GHz
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
       w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
       if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=1; fi
       w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
-    if [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom56624" == "True" ]; then
       w62tempraw=$($timeoutcmd$timeoutsec wl -i $ifname62 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
       if [ -z $w62tempraw ] || [ $w62tempraw -eq 0 ]; then w62tempraw=1; fi
       w62temp=$(awk -v v1=$w62tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
     fi
 
   # Network - Wifi - Up/Down via Scheduler
-  if [ "$FourBandCustomAXE16000" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ]; then
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w52udsched="Scheduler[+]"; else w52udsched="Scheduler[-]"; fi
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl2_sched_v2) ]; then w6udsched="Scheduler[+]"; else w6udsched="Scheduler[-]"; fi
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl3_sched_v2) ]; then w24udsched="Scheduler[+]"; else w24udsched="Scheduler[-]"; fi
-  elif [ "$FourBandCustomBE98PRO" == "True" ]; then
+  elif [ "$FourBandCustom56624" == "True" ]; then
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl0_sched_v2) ]; then w5udsched="Scheduler[+]"; else w5udsched="Scheduler[-]"; fi
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl1_sched_v2) ]; then w6udsched="Scheduler[+]"; else w6udsched="Scheduler[-]"; fi
     if [ ! -z $($timeoutcmd$timeoutsec nvram get wl2_sched_v2) ]; then w62udsched="Scheduler[+]"; else w62udsched="Scheduler[-]"; fi
@@ -1882,16 +1882,16 @@ calculatestats () {
   if [ -z "$w5updown" ]; then w5updown="UP"; fi
 
   # Tri or Quad Band 5GHz
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     w52updown=$($timeoutcmd$timeoutsec wl -i $ifname52 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
     if [ -z "$w52updown" ]; then w52updown="UP"; fi
   fi
   # Tri or Quad-Band 6GHz
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     w6updown=$($timeoutcmd$timeoutsec wl -i $ifname6 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
     if [ -z $w6updown ]; then w6updown="UP"; fi
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     w62updown=$($timeoutcmd$timeoutsec wl -i $ifname62 bss | awk '{print toupper($1)}' ) >/dev/null 2>&1
     if [ -z $w62updown ]; then w62updown="UP"; fi
   fi
@@ -1904,16 +1904,16 @@ calculatestats () {
     new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
 
     # Tri or Quad Band 5GHz
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
       new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
     fi
     # Tri or Quad Band 6GHz
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
       new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
       new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
     fi
-    if [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom56624" == "True" ]; then
       new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
       new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
     fi
@@ -2012,15 +2012,15 @@ calculatestats () {
     diff5txbytes=$(awk -v new=$new5txbytes -v old=$old5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     difflanrxbytes=$(awk -v new=$newlanrxbytes -v old=$oldlanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     difflantxbytes=$(awk -v new=$newlantxbytes -v old=$oldlantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       diff52rxbytes=$(awk -v new=$new52rxbytes -v old=$old52rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff52txbytes=$(awk -v new=$new52txbytes -v old=$old52txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
       diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
-    if [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom56624" == "True" ]; then
       diff62rxbytes=$(awk -v new=$new62rxbytes -v old=$old62rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
       diff62txbytes=$(awk -v new=$new62txbytes -v old=$old62txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
     fi
@@ -2057,15 +2057,15 @@ calculatestats () {
     w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
     lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
       w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
-    if [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom56624" == "True" ]; then
       w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
       w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
     fi
@@ -2099,15 +2099,15 @@ calculatestats () {
     w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
     lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
       w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
-    if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
       w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
-    if [ "$FourBandCustomBE98PRO" == "True" ]; then
+    if [ "$FourBandCustom56624" == "True" ]; then
       w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
       w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
     fi
@@ -2452,7 +2452,7 @@ DisplayPage3 () {
   fi
   showheader
   # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
-  if [ "$FourBandCustomAXE16000" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ]; then
     if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
       MaxSpeed5GhzNow=0
     else
@@ -2473,7 +2473,7 @@ DisplayPage3 () {
     else
       MaxSpeed24GhzNow=$MaxSpeed24Ghz
     fi
-  elif [ "$FourBandCustomBE98PRO" == "True" ]; then
+  elif [ "$FourBandCustom56624" == "True" ]; then
     if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
       MaxSpeed5GhzNow=0
     else
@@ -2582,7 +2582,7 @@ DisplayPage3 () {
     echo ""
     echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (1) ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
       echo ""
       echo ""
@@ -2606,7 +2606,7 @@ DisplayPage3 () {
       echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
     fi
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed6GhzNow" != "0" ]; then
       echo ""
       echo ""
@@ -2630,7 +2630,7 @@ DisplayPage3 () {
       echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
     fi
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed62GhzNow" != "0" ]; then
       echo ""
       echo ""
@@ -3693,16 +3693,16 @@ _VPN_GetClientState_()
   updatecheck
 
   # Check for advanced router Features
-  FourBandCustomAXE16000="False"
-  FourBandCustomBE98PRO="False"
+  FourBandCustom55624="False"
+  FourBandCustom56624="False"
   ThreeBand2456="False"
   ThreeBand2455="False"
   [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-  if [ "$RouterModel" == "GT-AXE16000" ]; then
-    FourBandCustomAXE16000="True"
+  if [ "$RouterModel" == "GT-AXE16000" ] || [ "$RouterModel" == "GT-BE98" ]; then
+    FourBandCustom55624="True"
   fi
   if [ "$RouterModel" == "GT-BE98_PRO" ]; then
-    FourBandCustomBE98PRO="True"
+    FourBandCustom56624="True"
   fi
   if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "RT-BE96U" ]; then
     ThreeBand2456="True"
@@ -3891,7 +3891,7 @@ _VPN_GetClientState_()
           fi
 
           # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
-          if [ "$FourBandCustomAXE16000" == "True" ]; then
+          if [ "$FourBandCustom55624" == "True" ]; then
             if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
               MaxSpeed5GhzNow=0
             else
@@ -3912,7 +3912,7 @@ _VPN_GetClientState_()
             else
               MaxSpeed24GhzNow=$MaxSpeed24Ghz
             fi
-          elif [ "$FourBandCustomBE98PRO" == "True" ]; then
+          elif [ "$FourBandCustom56624" == "True" ]; then
             if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
               MaxSpeed5GhzNow=0
             else
@@ -4013,12 +4013,12 @@ _VPN_GetClientState_()
     oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
   fi
 
-  if [ "$FourBandCustomAXE16000" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ]; then
     ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname52=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
     ifname6=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
     ifname24=$($timeoutcmd$timeoutsec nvram get wl3_ifname)
-  elif [ "$FourBandCustomBE98PRO" == "True" ]; then
+  elif [ "$FourBandCustom56624" == "True" ]; then
     ifname5=$($timeoutcmd$timeoutsec nvram get wl0_ifname)
     ifname6=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
     ifname62=$($timeoutcmd$timeoutsec nvram get wl2_ifname)
@@ -4040,15 +4040,15 @@ _VPN_GetClientState_()
   old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
   old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
   old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
     old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
     old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
     old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
   fi
@@ -4350,15 +4350,15 @@ while true; do
   old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
   old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
   old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
     old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
   fi
-  if [ "$FourBandCustomAXE16000" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
     old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
   fi
-  if [ "$FourBandCustomBE98PRO" == "True" ]; then
+  if [ "$FourBandCustom56624" == "True" ]; then
     old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
     old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
   fi
