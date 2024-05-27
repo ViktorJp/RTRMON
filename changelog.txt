@@ -4,8 +4,9 @@ v2.0.12b2 - (TBA)
             compliant in supporting routers in these particular configurations.
           - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
             on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
-          - PATCH: Now includes compatibility for the newly announced supported Merlin FW routers: the GT-BE98_PRO
-            and the RT-BE96U. The BE98_PRO is the first router that makes use of 2 x 6GHz ranges.
+          - PATCH: Now proudly includes compatibility for the newly announced supported Asus-Merlin FW routers:
+            the GT-BE98_PRO, RT-BE96U and GT-BE98. The BE98_PRO is the first router that makes use of two distinct
+            6GHz ranges requiring new capabilities from RTRMON!
           - PATCH: Logging standards have been updated across the script, and open to suggestions for other log
             events that might be reported on.
 
@@ -13,7 +14,8 @@ v2.0.8b1  - (TBA)
           - MAJOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
             screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
             better use of screen space. This also includes an operations menu which you can show/hide in order to
-            capitalize on even more screen space in much of the same way VPNMON-R3 functions.
+            capitalize on even more screen space in much of the same way VPNMON-R3 functions. It just feels like a
+            whole new script! ;)
           - PATCH: In previous versions, only 2 VPN slots would be presented with relevant info. In today's version, 
             up to 5 different VPN slots are displayed depending on which ones are in use.
           - PATCH: In previous versions, you could only run a speedtest against your first VPN connection. In this
