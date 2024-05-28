@@ -246,6 +246,23 @@ logoNMexit () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# hideinput and cleanup prevents people from pressing keys during the calculation cycle causing malformed operator errors
+
+hideinput()
+{
+  if [ -t 0 ]; then
+     stty -echo -icanon time 0 min 0
+  fi
+}
+
+cleanup()
+{
+  if [ -t 0 ]; then
+    stty sane
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
 # promptyn takes input for Y/N questions
 
 promptyn () {   # No defaults, just y or n
@@ -3707,7 +3724,7 @@ _VPN_GetClientState_()
   if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "ZenWiFi_ET8" ] || [ "$RouterModel" == "RT-BE96U" ]; then
     ThreeBand2456="True"
   fi
-  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWIFI_AX" ] || [ "$RouterModel" == "ZenWIFI_XT8" ]; then
+  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWiFi_XT8" ]; then
     ThreeBand2455="True"
   fi
 
@@ -4585,6 +4602,7 @@ while true; do
   RM_START_TIME=$(date +%s)
   i=0
 
+  cleanup
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4593,6 +4611,7 @@ while true; do
       progressbaroverride $i $Interval "" "s" "Standard"
       if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
+  hideinput
 
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
