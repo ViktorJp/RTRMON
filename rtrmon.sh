@@ -246,23 +246,6 @@ logoNMexit () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# hideinput and cleanup prevents people from pressing keys during the calculation cycle causing malformed operator errors
-
-hideinput()
-{
-  if [ -t 0 ]; then
-     stty -echo -icanon time 0 min 0
-  fi
-}
-
-cleanup()
-{
-  if [ -t 0 ]; then
-    stty sane
-  fi
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
 # promptyn takes input for Y/N questions
 
 promptyn () {   # No defaults, just y or n
@@ -4316,7 +4299,6 @@ INITIALBOOT=0
 
 while true; do
 
-
   if [ "$NextPage" == "1" ]; then
     DisplayPage1
     echo ""
@@ -4602,7 +4584,6 @@ while true; do
   RM_START_TIME=$(date +%s)
   i=0
 
-  cleanup
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4611,7 +4592,6 @@ while true; do
       progressbaroverride $i $Interval "" "s" "Standard"
       if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
-  hideinput
 
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
