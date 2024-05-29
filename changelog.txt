@@ -6,7 +6,9 @@ v2.0.12b2 - (TBA)
             on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
           - PATCH: Now proudly includes compatibility for the newly announced supported Asus-Merlin FW routers:
             the GT-BE98_PRO, RT-BE96U and GT-BE98. The BE98_PRO is the first router that makes use of two distinct
-            6GHz ranges requiring new capabilities from RTRMON!
+            6GHz ranges requiring new capabilities from RTRMON! Huge thanks to @nzwayne for installing the Alpha
+            on his GT-BE98_PRO and making sure RTRMON worked flawlessly on it! Also, many thanks to @GNUton for
+            his help determining Wifi interface ranges on the GT-BE98!
           - PATCH: Logging standards have been updated across the script, and open to suggestions for other log
             events that might be reported on.
 
