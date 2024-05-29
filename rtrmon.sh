@@ -3997,6 +3997,8 @@ _VPN_GetClientState_()
 # -------------------------------------------------------------------------------------------------------------------------
 
 # Display the logo and indicator that stats are being gathered.
+  
+  trap '' 2 # deny keyboard input
   clear
   logoNM
   echo -e "\r${CGreen}              [Initiating Boot Sequence - Gathering Initial Stats...]"
@@ -4292,6 +4294,7 @@ calculatestats
 oldstats
 clear
 INITIALBOOT=0
+trap - 2 # accept keyboard input
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Main loop that calls functions to perform all necessary calculations across the interval period
@@ -4299,6 +4302,8 @@ INITIALBOOT=0
 
 while true; do
 
+  trap '' 2 # deny keyboard input
+  
   if [ "$NextPage" == "1" ]; then
     DisplayPage1
     echo ""
@@ -4584,6 +4589,7 @@ while true; do
   RM_START_TIME=$(date +%s)
   i=0
 
+  trap - 2 # accept keyboard input
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4592,7 +4598,8 @@ while true; do
       progressbaroverride $i $Interval "" "s" "Standard"
       if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
-
+  trap '' 2 # deny keyboard input
+  
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
   oldstats
