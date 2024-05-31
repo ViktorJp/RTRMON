@@ -652,7 +652,7 @@ vconfig () {
                 echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: A new 6GHz Bandwidth speed ($MaxSpeed6Ghz Mbps) has been selected." >> $LOGFILE
               else
                 echo -e "${CRed}This item is currently only available for router models:"
-                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U and GT-BE98_PRO"
+                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U and GT-BE98_Pro"
                 echo ""
                 sleep 3
               fi
@@ -3701,7 +3701,7 @@ _VPN_GetClientState_()
   if [ "$RouterModel" == "GT-AXE16000" ] || [ "$RouterModel" == "GT-BE98" ]; then
     FourBandCustom55624="True"
   fi
-  if [ "$RouterModel" == "GT-BE98_PRO" ]; then
+  if [ "$RouterModel" == "GT-BE98_Pro" ]; then
     FourBandCustom56624="True"
   fi
   if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "ZenWiFi_ET8" ] || [ "$RouterModel" == "RT-BE96U" ]; then
@@ -3998,6 +3998,7 @@ _VPN_GetClientState_()
 
 # Display the logo and indicator that stats are being gathered.
   
+  stty -echo >/dev/null 2>&1
   trap '' 2 # deny keyboard input
   clear
   logoNM
@@ -4295,6 +4296,7 @@ oldstats
 clear
 INITIALBOOT=0
 trap - 2 # accept keyboard input
+stty echo >/dev/null 2>&1
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Main loop that calls functions to perform all necessary calculations across the interval period
@@ -4302,6 +4304,7 @@ trap - 2 # accept keyboard input
 
 while true; do
 
+  stty -echo >/dev/null 2>&1
   trap '' 2 # deny keyboard input
   
   if [ "$NextPage" == "1" ]; then
@@ -4590,6 +4593,7 @@ while true; do
   i=0
 
   trap - 2 # accept keyboard input
+  stty echo >/dev/null 2>&1
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4598,6 +4602,7 @@ while true; do
       progressbaroverride $i $Interval "" "s" "Standard"
       if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
+  stty -echo >/dev/null 2>&1
   trap '' 2 # deny keyboard input
   
   # Do a fresh round of stats and save them to the old stats for display purposes
