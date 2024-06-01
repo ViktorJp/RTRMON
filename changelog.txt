@@ -1,3 +1,13 @@
+v2.0.14b3 - (TBA)
+          - PATCH: Implemented the -now switch functionality, giving you the ability to bypass the 5 second SCREEN
+            utility instructions and timer. This functionality works inconjunction with being able to specify which
+            page (1-6) you want to jump to. Examples: "rtrmon -screen -now", "rtrmon -screen 2 -now". The second
+            example would jump to page 2 using screen with no wait.
+          - PATCH: With many thanks to @nzwayne for allowing us some time to play with his GT-BE98_Pro, and making
+            sure RTRMON is fully compatible with the new dual 6GHz bands, we have worked through all issues! Wanted
+            to say how much I truly appreciate @nzwayne jumping in, being willing to sacrifice his router and load
+            the latest Merlin FW Alpha version on there to ensure compatibility. You rock!
+
 v2.0.12b2 - (TBA)
           - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
             how to determine if a router is truly a router, not an AP/Repeater/iMesh Node. This version is now
