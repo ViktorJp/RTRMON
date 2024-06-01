@@ -265,14 +265,16 @@ promptyn () {   # No defaults, just y or n
 
 spinner() {
 
-  i=0
-  j=$((SPIN / 4))
-  while [ $i -le $j ]; do
-    for s in / - \\ \|; do
-      printf "\r$s"
+  spins=$1
+
+  spin=0
+  totalspins=$((spins / 4))
+  while [ $spin -le $totalspins ]; do
+    for spinchar in / - \\ \|; do
+      printf "\r$spinchar"
       sleep 1
     done
-    i=$((i+1))
+    spin=$((spin+1))
   done
 
   printf "\r"
@@ -1679,7 +1681,7 @@ calculatestats () {
       if [ $VPNState -eq 2 ]; then
         TUN="tun1"$vpn1slot
         NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-        NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpnip=$NVRAMVPNIP
@@ -1706,7 +1708,7 @@ calculatestats () {
       if [ $VPN2State -eq 2 ]; then
         TUN2="tun1"$vpn2slot
         NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
-        NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn2ip=$NVRAMVPN2IP
@@ -1733,7 +1735,7 @@ calculatestats () {
       if [ $VPN3State -eq 2 ]; then
         TUN3="tun1"$vpn3slot
         NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
-        NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn3ip=$NVRAMVPN3IP
@@ -1760,7 +1762,7 @@ calculatestats () {
       if [ $VPN4State -eq 2 ]; then
         TUN4="tun1"$vpn4slot
         NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
-        NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn4ip=$NVRAMVPN4IP
@@ -1787,7 +1789,7 @@ calculatestats () {
       if [ $VPN5State -eq 2 ]; then
         TUN5="tun1"$vpn5slot
         NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
-        NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn5ip=$NVRAMVPN5IP
@@ -3872,8 +3874,7 @@ _VPN_GetClientState_()
 	        sleep 2
 	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
 	        echo -e "${CClear}"
-	        SPIN=5
-	        spinner
+	        spinner 5
 	        screen -r rtrmon
 	        exit 0
 	      fi
@@ -3890,8 +3891,7 @@ _VPN_GetClientState_()
 	        echo ""
 	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
 	        echo -e "${CClear}"
-	        SPIN=5
-	        spinner
+	        spinner 5
 	      fi
       fi
       screen -dr $ScreenSess
@@ -4024,8 +4024,7 @@ _VPN_GetClientState_()
         echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - ERROR: RTRMON is not configured/missing dependencies. Please run the setup tool." >> $LOGFILE
         echo ""
         echo -e "${CGreen}Launching the Setup Menu in T-5 sec...${CClear}"
-        SPIN=5
-        spinner
+        spinner 5
         vsetup
         echo -e "${CClear}"
         exit 0
@@ -4103,7 +4102,7 @@ _VPN_GetClientState_()
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn1slot
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-      NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpnip=$NVRAMVPNIP
@@ -4131,7 +4130,7 @@ _VPN_GetClientState_()
     if [ $VPN2State -eq 2 ]; then
       TUN2="tun1"$vpn2slot
       NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
-      NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn2ip=$NVRAMVPN2IP
@@ -4159,7 +4158,7 @@ _VPN_GetClientState_()
     if [ $VPN3State -eq 2 ]; then
       TUN3="tun1"$vpn3slot
       NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
-      NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn3ip=$NVRAMVPN3IP
@@ -4187,7 +4186,7 @@ _VPN_GetClientState_()
     if [ $VPN4State -eq 2 ]; then
       TUN4="tun1"$vpn4slot
       NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
-      NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn4ip=$NVRAMVPN4IP
@@ -4215,7 +4214,7 @@ _VPN_GetClientState_()
     if [ $VPN5State -eq 2 ]; then
       TUN5="tun1"$vpn5slot
       NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
-      NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn5ip=$NVRAMVPN5IP
@@ -4416,7 +4415,7 @@ while true; do
     TUN="tun1"$vpn1slot
     NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
     printf "${CGreen}\r[Refreshing VPN1 Stats...]"
-    NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpnip=$NVRAMVPNIP
@@ -4445,7 +4444,7 @@ while true; do
     TUN2="tun1"$vpn2slot
     NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
     printf "${CGreen}\r[Refreshing VPN2 Stats...]"
-    NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn2ip=$NVRAMVPN2IP
@@ -4473,7 +4472,7 @@ while true; do
     TUN3="tun1"$vpn3slot
     NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
     printf "${CGreen}\r[Refreshing VPN3 Stats...]"
-    NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn3ip=$NVRAMVPN3IP
@@ -4501,7 +4500,7 @@ while true; do
     TUN4="tun1"$vpn4slot
     NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
     printf "${CGreen}\r[Refreshing VPN4 Stats...]"
-    NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn4ip=$NVRAMVPN4IP
@@ -4529,7 +4528,7 @@ while true; do
     TUN5="tun1"$vpn5slot
     NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
     printf "${CGreen}\r[Refreshing VPN5 Stats...]"
-    NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn5ip=$NVRAMVPN5IP
