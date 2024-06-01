@@ -1284,7 +1284,7 @@ vsetup () {
             echo ""
             echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
             echo ""
-            [ -z "$(nvram get odmpid)" ] && RouterModel="$(nvram get productid)" || RouterModel="$(nvram get odmpid)" # Thanks @thelonelycoder for this logic
+            [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
             echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
             echo ""
             echo -e "Force Re-install?"
@@ -3715,7 +3715,7 @@ _VPN_GetClientState_()
   fi
 
   # Check what mode the router is in
-  OpsMode=$(nvram get sw_mode) # 1=router, 2=ap, 3=iMesh Node
+  OpsMode=$($timeoutcmd$timeoutsec nvram get sw_mode) # 1=router, 2=ap, 3=iMesh Node
   #OpsMode=3
 
   # Check and see if any commandline option is being used
@@ -3733,7 +3733,7 @@ _VPN_GetClientState_()
   fi
 
   # Check and see if an invalid commandline option is being used
-  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ] || [ "$1" == "-now" ]
+  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ] || [ "$2" == "-now" ] || [ "$3" == "-now" ]
     then
       clear
     else
@@ -4311,9 +4311,9 @@ _VPN_GetClientState_()
 
   fi
 
-  FWVER=$(nvram get firmver | tr -d '.')
-  BUILDNO=$(nvram get buildno)
-  EXTENDNO=$(nvram get extendno)
+  FWVER=$($timeoutcmd$timeoutsec nvram get firmver | tr -d '.')
+  BUILDNO=$($timeoutcmd$timeoutsec nvram get buildno)
+  EXTENDNO=$($timeoutcmd$timeoutsec nvram get extendno)
   if [ -z $EXTENDNO ]; then EXTENDNO=0; fi
   FWBUILD=$FWVER"."$BUILDNO"_"$EXTENDNO
 
