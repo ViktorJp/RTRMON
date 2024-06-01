@@ -1,4 +1,4 @@
-v2.0.14b3 - (TBA)
+v2.0.14RC - (TBA)
           - PATCH: Implemented the -now switch functionality, giving you the ability to bypass the 5 second SCREEN
             utility instructions and timer. This functionality works inconjunction with being able to specify which
             page (1-6) you want to jump to. Examples: "rtrmon -screen -now", "rtrmon -screen 2 -now". The second
