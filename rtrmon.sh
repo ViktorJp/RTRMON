@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v2.0.12b2 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.12b3 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,7 +17,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.12b2"
+Version="2.0.12b3"
 Beta=1
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -373,13 +373,47 @@ progressbaroverride() {
 
     if [ ! -z $6 ]; then AltNum=$6; else AltNum=$1; fi
 
+
     if [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 0 ]; then
       printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear} [${CGreen}e${CClear}=Exit] [Selection? ${InvGreen} ${CClear}${CGreen}]\r${CClear}" "$barchars" "$barspaces"
     elif [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 1 ]; then
-      #printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3} ${CDkGray}            [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
       printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
     fi
+    
+    if [ "$INITIALBOOT" == "0" ]; then
+    # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
+    key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
+
+	    if [ $key_press ]; then
+	      case $key_press in
+	          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
+	          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
+	          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
+	          [Hh]) timerreset=1; hideoptions=1;;
+	          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
+	          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+	          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+	          [Oo]) vlogs;;
+	          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
+	          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
+	          [Ss]) timerreset=1; hideoptions=0;;
+	          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
+	          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
+	          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
+	          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
+	          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	      esac
+	    fi
+    else
+      sleep 1
+    fi
   fi
+  
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1428,38 +1462,6 @@ displaycpunice1=$(awk -v v1=$displaycpunice1 -v v2=$displaycpunice 'BEGIN{printf
 displaycpuidle1=$(awk -v v1=$displaycpuidle1 -v v2=$displaycpuidle 'BEGIN{printf "%0.2f\n", v1+v2}')
 displaycpuirq1=$(awk -v v1=$displaycpuirq1 -v v2=$displaycpuirq 'BEGIN{printf "%0.2f\n", v1+v2}')
 
-if [ "$INITIALBOOT" == "0" ]; then
-  # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
-  key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
-
-  if [ $key_press ]; then
-      case $key_press in
-          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
-          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
-          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
-          [Hh]) timerreset=1; hideoptions=1;;
-          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
-          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
-          [Oo]) vlogs;;
-          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
-          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
-          [Ss]) timerreset=1; hideoptions=0;;
-          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
-          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
-          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
-          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
-          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-      esac
-  fi
-else
-  sleep 1
-fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1676,7 +1678,7 @@ calculatestats () {
       if [ $VPNState -eq 2 ]; then
         TUN="tun1"$vpn1slot
         NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-        NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpnip=$NVRAMVPNIP
@@ -1703,7 +1705,7 @@ calculatestats () {
       if [ $VPN2State -eq 2 ]; then
         TUN2="tun1"$vpn2slot
         NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
-        NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn2ip=$NVRAMVPN2IP
@@ -1730,7 +1732,7 @@ calculatestats () {
       if [ $VPN3State -eq 2 ]; then
         TUN3="tun1"$vpn3slot
         NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
-        NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn3ip=$NVRAMVPN3IP
@@ -1757,7 +1759,7 @@ calculatestats () {
       if [ $VPN4State -eq 2 ]; then
         TUN4="tun1"$vpn4slot
         NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
-        NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn4ip=$NVRAMVPN4IP
@@ -1784,7 +1786,7 @@ calculatestats () {
       if [ $VPN5State -eq 2 ]; then
         TUN5="tun1"$vpn5slot
         NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
-        NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+        NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
         if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
           vpn5ip=$NVRAMVPN5IP
@@ -4063,7 +4065,7 @@ _VPN_GetClientState_()
     if [ $VPNState -eq 2 ]; then
       TUN="tun1"$vpn1slot
       NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-      NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpnip=$NVRAMVPNIP
@@ -4091,7 +4093,7 @@ _VPN_GetClientState_()
     if [ $VPN2State -eq 2 ]; then
       TUN2="tun1"$vpn2slot
       NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
-      NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn2ip=$NVRAMVPN2IP
@@ -4119,7 +4121,7 @@ _VPN_GetClientState_()
     if [ $VPN3State -eq 2 ]; then
       TUN3="tun1"$vpn3slot
       NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
-      NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn3ip=$NVRAMVPN3IP
@@ -4147,7 +4149,7 @@ _VPN_GetClientState_()
     if [ $VPN4State -eq 2 ]; then
       TUN4="tun1"$vpn4slot
       NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
-      NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn4ip=$NVRAMVPN4IP
@@ -4175,7 +4177,7 @@ _VPN_GetClientState_()
     if [ $VPN5State -eq 2 ]; then
       TUN5="tun1"$vpn5slot
       NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
-      NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+      NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
       if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldvpn5ip=$NVRAMVPN5IP
@@ -4280,6 +4282,7 @@ _VPN_GetClientState_()
 # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
+  
   i=0
   while [ $i -ne $Interval ]
     do
@@ -4289,8 +4292,9 @@ _VPN_GetClientState_()
       progressbaroverride $i $Interval "" "s" "Standard"
   done
 
-calculatestats
-oldstats
+  calculatestats
+  oldstats
+
 clear
 INITIALBOOT=0
 
@@ -4374,7 +4378,7 @@ while true; do
     TUN="tun1"$vpn1slot
     NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
     printf "${CGreen}\r[Refreshing VPN1 Stats...]"
-    NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPNIP=$(ping -c 1 -W 0 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpnip=$NVRAMVPNIP
@@ -4403,7 +4407,7 @@ while true; do
     TUN2="tun1"$vpn2slot
     NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
     printf "${CGreen}\r[Refreshing VPN2 Stats...]"
-    NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN2IP=$(ping -c 1 -W 0 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn2ip=$NVRAMVPN2IP
@@ -4431,7 +4435,7 @@ while true; do
     TUN3="tun1"$vpn3slot
     NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
     printf "${CGreen}\r[Refreshing VPN3 Stats...]"
-    NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN3IP=$(ping -c 1 -W 0 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn3ip=$NVRAMVPN3IP
@@ -4459,7 +4463,7 @@ while true; do
     TUN4="tun1"$vpn4slot
     NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
     printf "${CGreen}\r[Refreshing VPN4 Stats...]"
-    NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN4IP=$(ping -c 1 -W 0 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn4ip=$NVRAMVPN4IP
@@ -4487,7 +4491,7 @@ while true; do
     TUN5="tun1"$vpn5slot
     NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
     printf "${CGreen}\r[Refreshing VPN5 Stats...]"
-    NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN5IP=$(ping -c 1 -W 0 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
       oldvpn5ip=$NVRAMVPN5IP
@@ -4584,7 +4588,7 @@ while true; do
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
-
+  
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4598,7 +4602,7 @@ while true; do
   calculatestats
   oldstats
   clear
-
+  
   if [ "$autorotate" == "1" ] && [ $Interval -eq $i ]; then
     if [ "$NextPage" == "1" ]; then clear; NextPage=2 #DisplayPage2
     elif [ "$NextPage" == "2" ]; then clear; NextPage=3 #DisplayPage3
