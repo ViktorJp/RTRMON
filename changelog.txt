@@ -5,8 +5,9 @@ v2.0.14RC - (TBA)
             example would jump to page 2 using screen with no wait.
           - PATCH: With many thanks to @nzwayne for allowing us some time to play with his GT-BE98_Pro, and making
             sure RTRMON is fully compatible with the new dual 6GHz bands, we have worked through all issues! Wanted
-            to say how much I truly appreciate @nzwayne jumping in, being willing to sacrifice his router and load
-            the latest Merlin FW Alpha version on there to ensure compatibility. You rock!
+            to say how much I truly appreciate SNB Forum members like @nzwayne for jumping in, being willing to
+            sacrifice his router and load the latest Merlin FW Alpha version on there to ensure compatibility. You
+            rock!
 
 v2.0.12b2 - (TBA)
           - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
