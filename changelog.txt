@@ -1,3 +1,8 @@
+v2.0.15RC - (TBA)
+          - PATCH: After some debug/testing with @visorgtw, it was determined that a change to the ping command
+            needed to be reverted due to site-to-site VPNs not returning pings as expected. Huge thanks for his
+            great help testing this on his various pieces of router and iMesh-configured equipment!
+
 v2.0.14RC - (TBA)
           - PATCH: Implemented the -now switch functionality, giving you the ability to bypass the 5 second SCREEN
             utility instructions and timer. This functionality works inconjunction with being able to specify which
