@@ -2461,7 +2461,7 @@ DisplayPage3 () {
     if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
       MaxSpeed52GhzNow=0
     else
-      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+      MaxSpeed52GhzNow=$MaxSpeed5Ghz
     fi
     if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
       MaxSpeed6GhzNow=0
@@ -2487,7 +2487,7 @@ DisplayPage3 () {
     if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
       MaxSpeed62GhzNow=0
     else
-      MaxSpeed62GhzNow=$MaxSpeed62Ghz
+      MaxSpeed62GhzNow=$MaxSpeed6Ghz
     fi
     if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
       MaxSpeed24GhzNow=0
@@ -2524,7 +2524,7 @@ DisplayPage3 () {
     if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
       MaxSpeed52GhzNow=0
     else
-      MaxSpeed52GhzNow=$MaxSpeed52Ghz
+      MaxSpeed52GhzNow=$MaxSpeed5Ghz
     fi
   else
     if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
@@ -3900,7 +3900,7 @@ _VPN_GetClientState_()
             if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
               MaxSpeed52GhzNow=0
             else
-              MaxSpeed52GhzNow=$MaxSpeed52Ghz
+              MaxSpeed52GhzNow=$MaxSpeed5Ghz
             fi
             if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
               MaxSpeed6GhzNow=0
@@ -3926,7 +3926,7 @@ _VPN_GetClientState_()
             if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
               MaxSpeed62GhzNow=0
             else
-              MaxSpeed62GhzNow=$MaxSpeed62Ghz
+              MaxSpeed62GhzNow=$MaxSpeed6Ghz
             fi
             if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
               MaxSpeed24GhzNow=0
@@ -3963,7 +3963,7 @@ _VPN_GetClientState_()
             if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
               MaxSpeed52GhzNow=0
             else
-              MaxSpeed52GhzNow=$MaxSpeed52Ghz
+              MaxSpeed52GhzNow=$MaxSpeed5Ghz
             fi
           else
             if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
