@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v2.0.12b3 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.14RC - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -17,7 +17,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.12b3"
+Version="2.0.14RC"
 Beta=1
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -3732,7 +3732,7 @@ _VPN_GetClientState_()
   fi
 
   # Check and see if an invalid commandline option is being used
-  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ]
+  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ] || [ "$1" == "-now" ]
     then
       clear
     else
@@ -3763,6 +3763,7 @@ _VPN_GetClientState_()
     echo "rtrmon.sh -screen"
     echo "rtrmon.sh -monitor"
     echo "rtrmon.sh -screen/-monitor X"
+    echo "rtrmon.sh -screen (X) -now"
     echo ""
     echo " -h | -help (this output)"
     echo " -log (display the current log contents)"
@@ -3772,7 +3773,14 @@ _VPN_GetClientState_()
     echo " -uninstall (uninstall utility)"
     echo " -screen (normal router monitoring using the screen utility)"
     echo " -monitor (normal router monitoring operations)"
-    echo " -screen/-monitor X (X = display screen 1-6 on execution)"
+    echo " -screen/-monitor X (X = display screen 1-6 upon execution)"
+    echo " -screen -now (bypass screen instructions and 5 sec timer)"
+    echo ""
+    echo " Examples:"
+    echo " rtrmon -screen -now (bypass screen timer directly into monitor mode)"
+    echo " rtrmon -screen 2 (jump to page 2 upon execution using screen)"
+    echo " rtrmon -screen 3 -now (bypass timer and jump to page 3 using screen)"
+    echo " rtrmon -monitor 4 (jump to page 4 in monitoring mode)"
     echo ""
     echo -e "${CClear}"
     exit 0
@@ -3814,6 +3822,15 @@ _VPN_GetClientState_()
       echo -e "${CClear}"
       exit 0
   fi
+  
+  # Check to see if the -now parameter is being called to bypass the screen timer
+  if [ "$2" == "-now" ]
+    then
+      bypassscreentimer=1
+  elif [ "$3" == "-now" ]
+    then
+    	bypassscreentimer2=1
+  fi
 
   # Check to see if the screen option is being called and run operations normally using the screen utility
   if [ "$1" == "-screen" ]
@@ -3822,42 +3839,62 @@ _VPN_GetClientState_()
       sleep 1
       ScreenSess=$(screen -ls | grep "rtrmon" | awk '{print $1}' | cut -d . -f 1)
       if [ -z $ScreenSess ]; then
-        clear
-        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
-        echo ""
-        echo -e "${CCyan}IMPORTANT:${CClear}"
-        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-        echo ""
-        if [ -z $2 ]; then
-          screen -dmS "rtrmon" $APPPATH -monitor
-        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-          screen -dmS "rtrmon" $APPPATH -monitor $2
+      	if [ "$bypassscreentimer" == "1" ]; then
+      		screen -dmS "rtrmon" $APPPATH -monitor
+          sleep 1
+          screen -r rtrmon
+        elif [ "$bypassscreentimer2" == "1" ]; then
+ 	        if [ -z $2 ]; then
+	          screen -dmS "rtrmon" $APPPATH -monitor
+	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+	          screen -dmS "rtrmon" $APPPATH -monitor $2
+	        else
+	          screen -dmS "rtrmon" $APPPATH -monitor
+	        fi
+          sleep 1
+          screen -r rtrmon
         else
-          screen -dmS "rtrmon" $APPPATH -monitor
-        fi
-        sleep 2
-        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-        echo -e "${CClear}"
-        SPIN=5
-        spinner
-        screen -r rtrmon
-        exit 0
+          clear        
+	        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
+	        echo ""
+	        echo -e "${CCyan}IMPORTANT:${CClear}"
+	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+	        echo ""
+	        if [ -z $2 ]; then
+	          screen -dmS "rtrmon" $APPPATH -monitor
+	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+	          screen -dmS "rtrmon" $APPPATH -monitor $2
+	        else
+	          screen -dmS "rtrmon" $APPPATH -monitor
+	        fi
+	        sleep 2
+	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+	        echo -e "${CClear}"
+	        SPIN=5
+	        spinner
+	        screen -r rtrmon
+	        exit 0
+	      fi
       else
-        clear
-        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
-        echo ""
-        echo -e "${CCyan}IMPORTANT:${CClear}"
-        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-        echo ""
-        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-        echo -e "${CClear}"
-        SPIN=5
-        spinner
-        screen -dr $ScreenSess
-        exit 0
+        if [ "$bypassscreentimer" == "1" ]; then
+          sleep 1
+        else
+	        clear
+	        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
+	        echo ""
+	        echo -e "${CCyan}IMPORTANT:${CClear}"
+	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+	        echo ""
+	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+	        echo -e "${CClear}"
+	        SPIN=5
+	        spinner
+	      fi
       fi
+      screen -dr $ScreenSess
+      exit 0
   fi
 
   # Check to see if the monitor option is being called and run operations normally
