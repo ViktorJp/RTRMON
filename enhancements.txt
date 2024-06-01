@@ -5,10 +5,10 @@ Future Enhancements (Possible/Planned)
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
-* Implement -now switch
 
 Completed:
 ----------
+* Implement -now switch
 * Instead of just showing up-to-2 VPN connections, show all of them
 * Startup on a certain page (Stephen Harrington)
 * Go direct to pages 1-5 (Stephen Harrington)
