@@ -1,24 +1,26 @@
 #!/bin/sh
 
-# RTRMON v2.0.15RC - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.15 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
 # stat dashboard.  Having a 'system' dashboard showing current CPU, Memory, Disk and Network stats would compiment other
 # dashboard-like scripts greatly (like RTRMON), sitting side-by-side in their own SSH windows to give you everything
-# you need to know with a glance at your screen.
+# you need to know that's happening on your network with a glance at your screen.
 #
-# Capabilities have been added to give a full view of your router's CPU, Memory, Disk, NVRAM, Swap file, WAN, LAN, W0, W1,
-# IP4/6 addresses, CPU/Antenna Temps, with the latest addition having incorporated the Ookla Speedtest Binaries for you to
-# run an on-demand Speedtest with the press of a button.
+# Capabilities have been added to give a full view of your router's CPU, Memory, Disk, NVRAM, Swap file, WAN, LAN, Wi-FI,
+# IP4/6 addresses, CPU/Antenna Temps, in addition to having incorporated the Ookla Speedtest Binaries for you to run an on
+# -demand Speedtest with the press of a button. New supported models are continually being added as @RMerlin adds support
+# for them with his own firmware.
 #
-# Please use the 'rtrmon.sh -setup' to configure the necessary parameters that match your environment the best!
+# Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.15RC"
-Beta=1
+Version="2.0.15"
+Beta=0
+ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
@@ -2256,8 +2258,20 @@ DisplayPage2 () {
     echo ""
     echo -e "${InvDkGray}${CWhite} WAN                                                                                                           ${CClear}"
     echo ""
-    #oldwan0ip="1.2.3.4" #demo
-    #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
+    if [ "$ScreenshotMode" == "1" ]; then
+      oldwan0ip="1.2.3.4" #demo
+      oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
+      oldvpnip="2.3.4.5" #demo
+      oldvpnip2="2.3.4.5" #demo
+      oldvpnip3="3.4.5.6" #demo
+      oldvpnip4="4.5.6.7" #demo
+      oldvpnip5="5.6.7.8" #demo
+      oldvpncity="Rivendell" #demo
+      oldvpn2city="Mordor" #demo
+      oldvpn2city="Minas Tirith" #demo
+      oldvpn2city="Edoras" #demo
+      oldvpn2city="Aglarond" #demo
+    fi
     echo -en "${InvGreen} ${CClear} ${CWhite}WAN 0/1 IP ${CDkGray}[ ${CWhite}"
     printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
     echo -en " / "
@@ -2268,7 +2282,6 @@ DisplayPage2 () {
     if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
     echo -e "${CDkGray} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
     if [ ! -z $oldwanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}WAN 0/1 I6 ${CDkGray}[ ${CWhite}$oldwanip6${CClear}"; fi
-
     preparebar 79 "|"
     progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
     echo ""
@@ -2858,7 +2871,9 @@ DisplaySpdtst () {
   SpdDownload=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
   SpdUpload=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
 
-  #SpdServer="Your Local Test Server name/location"
+	if [ "$ScreenshotMode" == "1" ]; then
+    SpdServer="Starlink Satellite Transceiver #488028"
+  fi
 
   if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest / Initiate VPN Speedtest on VPN Slot ${CGreen}(1)(2)(3)(4)(5)${CClear}"
@@ -3142,7 +3157,9 @@ else
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
-    #oldwan0ip="23.32.44.106" #demo
+    if [ "$ScreenshotMode" == "1" ]; then
+      oldwan0ip="12.34.56.78" #demo
+    fi
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPWANRESPATH ]; then
