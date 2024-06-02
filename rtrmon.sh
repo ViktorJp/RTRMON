@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v2.0.15 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.16 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.15"
+Version="2.0.16"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -2262,15 +2262,15 @@ DisplayPage2 () {
       oldwan0ip="1.2.3.4" #demo
       oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
       oldvpnip="2.3.4.5" #demo
-      oldvpnip2="2.3.4.5" #demo
-      oldvpnip3="3.4.5.6" #demo
-      oldvpnip4="4.5.6.7" #demo
-      oldvpnip5="5.6.7.8" #demo
+      oldvpnip2="3.4.5.6" #demo
+      oldvpnip3="4.5.6.7" #demo
+      oldvpnip4="5.6.7.8" #demo
+      oldvpnip5="6.7.8.9" #demo
       oldvpncity="Rivendell" #demo
       oldvpn2city="Mordor" #demo
-      oldvpn2city="Minas Tirith" #demo
-      oldvpn2city="Edoras" #demo
-      oldvpn2city="Aglarond" #demo
+      oldvpn3city="Minas Tirith" #demo
+      oldvpn4city="Edoras" #demo
+      oldvpn5city="Aglarond" #demo
     fi
     echo -en "${InvGreen} ${CClear} ${CWhite}WAN 0/1 IP ${CDkGray}[ ${CWhite}"
     printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
@@ -3234,7 +3234,14 @@ DisplayPage6 () {
         selectedslot="vpn${slot}on"
         eval selectedslot="\$${selectedslot}"
         if [ "$selectedslot" == "True" ]; then
-          iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+        	NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
+          NVRAMVPNSLOTIP=$(ping -c 1 -w 1 $NVRAMVPNSLOTADDR | awk -F '[()]' '/PING/ { print $2}')
+          if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+            { echo 'Private Tunnel'
+            } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+ 				  else
+            iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+          fi
         fi
       done
     fi
