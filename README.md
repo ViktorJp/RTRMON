@@ -1,7 +1,7 @@
 # RTRMON v2.0.15
 Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 
-![image](https://github.com/ViktorJp/RTRMON/assets/97465574/8dd08d9d-653c-4b02-93e4-fa23c77a29fc)
+![image](https://github.com/ViktorJp/RTRMON/assets/97465574/d28ac9a0-d963-4048-8dae-95601d6a5afe)
 
 RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to find this information on various different screens or apps, this tool was built to bring all this info together in one stat dashboard.  Having a 'system' dashboard showing current CPU, Memory, Disk and Network stats would compiment other dashboard-like scripts greatly (like RTRMON), sitting side-by-side in their own SSH windows to give you everything you need to know that's happening on your network with a glance at your screen.
 
