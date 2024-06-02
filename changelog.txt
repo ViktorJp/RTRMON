@@ -1,3 +1,63 @@
+v2.0.15   - (June 1, 2024)
+          - RTRMON v2.0.15 is finally live... Enjoy! Thanks to everyone for all their input and testing throughout
+            the development of this release! I hope you all enjoy it and find it useful as much as I do. :)
+
+v2.0.15RC - (TBA)
+          - PATCH: After some debug/testing with @visorgtw, it was determined that a change to the ping command
+            needed to be reverted due to site-to-site VPNs not returning pings as expected. Huge thanks for his
+            great help testing this on his various pieces of router and iMesh-configured equipment!
+
+v2.0.14RC - (TBA)
+          - PATCH: Implemented the -now switch functionality, giving you the ability to bypass the 5 second SCREEN
+            utility instructions and timer. This functionality works inconjunction with being able to specify which
+            page (1-6) you want to jump to. Examples: "rtrmon -screen -now", "rtrmon -screen 2 -now". The second
+            example would jump to page 2 using screen with no wait.
+          - PATCH: With many thanks to @nzwayne for allowing us some time to play with his GT-BE98_Pro, and making
+            sure RTRMON is fully compatible with the new dual 6GHz bands, we have worked through all issues! Wanted
+            to say how much I truly appreciate SNB Forum members like @nzwayne for jumping in, being willing to
+            sacrifice his router and load the latest Merlin FW Alpha version on there to ensure compatibility. You
+            rock!
+
+v2.0.12b2 - (TBA)
+          - PATCH: After getting some nvram feedback from @visortgw and @dave14305, I've made more modifications on
+            how to determine if a router is truly a router, not an AP/Repeater/iMesh Node. This version is now
+            compliant in supporting routers in these particular configurations.
+          - PATCH: Through testing with @visortgw, it was determined that the nslookup diag command does not work
+            on iMesh nodes, and made a small modification to it so that it may hopefully pass this test.
+          - PATCH: Now proudly includes compatibility for the newly announced supported Asus-Merlin FW routers:
+            the GT-BE98_PRO, RT-BE96U and GT-BE98. The BE98_PRO is the first router that makes use of two distinct
+            6GHz ranges requiring new capabilities from RTRMON! Huge thanks to @nzwayne for installing the Alpha
+            on his GT-BE98_PRO and making sure RTRMON worked flawlessly on it! Also, many thanks to @GNUton for
+            his help determining Wifi interface ranges on the GT-BE98!
+          - PATCH: Logging standards have been updated across the script, and open to suggestions for other log
+            events that might be reported on.
+
+v2.0.8b1  - (TBA)
+          - MAJOR: Brought RTRMON up to the new visual standards in use across VPNMON-R3, TAILMON and BACKUPMON. All
+            screens have been resized for the more "wide-screen" look, allowing me to condense information, and make
+            better use of screen space. This also includes an operations menu which you can show/hide in order to
+            capitalize on even more screen space in much of the same way VPNMON-R3 functions. It just feels like a
+            whole new script! ;)
+          - PATCH: In previous versions, only 2 VPN slots would be presented with relevant info. In today's version, 
+            up to 5 different VPN slots are displayed depending on which ones are in use.
+          - PATCH: In previous versions, you could only run a speedtest against your first VPN connection. In this
+            release, you can indicate whether to run a speedtest against any of your up to 5 VPN slots.
+          - PATCH: Previously, when WiFi interfaces turn on or shut off, they would not be represented in RTRMON as
+            doing such, and would require a restart of RTRMON to see the current WiFi state. Now, the WiFi interfaces
+            reflect reality in realtime.
+          - PATCH: Prevously, the iftop network stats would only gather WAN, LAN and the first available VPN slot.
+            Page 6 (network/bandwidth stats) now queries and displays all VPN connection info.
+          - PATCH: Added some additional information on page 1: Total Available RAM, and Total Swap File Size.
+          - PATCH: On the Network Diagnostics page, RTRMON is now showing a preview of the test command involved in
+            determining if a function works or not. This gives more insight as to the command, IP or network address
+            that the test is attempting to connect to.
+          - PATCH: Added a new item (12) under the Configuration menu that allows you to specify whether the router
+            that RTRMON is running on is an iMesh Node, AP, Repeater or Bridge. In these operating modes, the eth0
+            interface is most likely not being used, and will no longer be reporting on or capturing any WAN0 traffic
+            in the RTRMON UI.
+          - PATCH: Added a new item (13) under the Configuration menu that allows you to specify how large you want
+            your log file to reach. The default is currently 2000 rows, which would give you many months of log data.
+
 v1.6.9    - (May 3, 2024)
           - PATCH: After @bubba123 reported some display issues with his SDA devices, it was determined that the large
             size of his drive was creating some sort of math/integer problem, and was causing the division problem to

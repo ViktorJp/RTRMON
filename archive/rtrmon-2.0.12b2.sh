@@ -1,26 +1,24 @@
 #!/bin/sh
 
-# RTRMON v2.0.15 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.12b2 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
 # stat dashboard.  Having a 'system' dashboard showing current CPU, Memory, Disk and Network stats would compiment other
 # dashboard-like scripts greatly (like RTRMON), sitting side-by-side in their own SSH windows to give you everything
-# you need to know that's happening on your network with a glance at your screen.
+# you need to know with a glance at your screen.
 #
-# Capabilities have been added to give a full view of your router's CPU, Memory, Disk, NVRAM, Swap file, WAN, LAN, Wi-FI,
-# IP4/6 addresses, CPU/Antenna Temps, in addition to having incorporated the Ookla Speedtest Binaries for you to run an on
-# -demand Speedtest with the press of a button. New supported models are continually being added as @RMerlin adds support
-# for them with his own firmware.
+# Capabilities have been added to give a full view of your router's CPU, Memory, Disk, NVRAM, Swap file, WAN, LAN, W0, W1,
+# IP4/6 addresses, CPU/Antenna Temps, with the latest addition having incorporated the Ookla Speedtest Binaries for you to
+# run an on-demand Speedtest with the press of a button.
 #
-# Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
+# Please use the 'rtrmon.sh -setup' to configure the necessary parameters that match your environment the best!
 #
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.15"
-Beta=0
-ScreenshotMode=0
+Version="2.0.12b2"
+Beta=1
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
 CFGPATH="/jffs/addons/rtrmon.d/rtrmon.cfg"            # Path to the location of rtrmon.cfg
@@ -33,7 +31,6 @@ NMAPWANRESPATH="/jffs/addons/rtrmon.d/nwanres.txt"    # Path to the nmap WAN ope
 NMAPLANRESPATH="/jffs/addons/rtrmon.d/nlanres.txt"    # Path to the nmap LAN open TCP port results
 NMAPUWANRESPATH="/jffs/addons/rtrmon.d/nuwanres.txt"  # Path to the nmap WAN open UDP port results
 NMAPULANRESPATH="/jffs/addons/rtrmon.d/nulanres.txt"  # Path to the nmap LAN open UDP port results
-INITIALBOOT=0
 CHANGES=0
 LOGSIZE=2000
 Interval=10
@@ -267,16 +264,14 @@ promptyn () {   # No defaults, just y or n
 
 spinner() {
 
-  spins=$1
-
-  spin=0
-  totalspins=$((spins / 4))
-  while [ $spin -le $totalspins ]; do
-    for spinchar in / - \\ \|; do
-      printf "\r$spinchar"
+  i=0
+  j=$((SPIN / 4))
+  while [ $i -le $j ]; do
+    for s in / - \\ \|; do
+      printf "\r$s"
       sleep 1
     done
-    spin=$((spin+1))
+    i=$((i+1))
   done
 
   printf "\r"
@@ -378,47 +373,13 @@ progressbaroverride() {
 
     if [ ! -z $6 ]; then AltNum=$6; else AltNum=$1; fi
 
-
     if [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 0 ]; then
       printf "  ${CWhite}${InvDkGray}$AltNum${4} / ${progr}%%${CClear} [${CGreen}e${CClear}=Exit] [Selection? ${InvGreen} ${CClear}${CGreen}]\r${CClear}" "$barchars" "$barspaces"
     elif [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 1 ]; then
+      #printf "${InvGreen}${CWhite}$insertspc${CClear}${CWhite}${3} ${CDkGray}            [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
       printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
     fi
-    
-    if [ "$INITIALBOOT" == "0" ]; then
-    # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
-    key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
-
-	    if [ $key_press ]; then
-	      case $key_press in
-	          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
-	          [Hh]) timerreset=1; hideoptions=1;;
-	          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-	          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
-	          [Oo]) vlogs;;
-	          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
-	          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
-	          [Ss]) timerreset=1; hideoptions=0;;
-	          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	      esac
-	    fi
-    else
-      sleep 1
-    fi
   fi
-  
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -1288,7 +1249,7 @@ vsetup () {
             echo ""
             echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
             echo ""
-            [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
+            [ -z "$(nvram get odmpid)" ] && RouterModel="$(nvram get productid)" || RouterModel="$(nvram get odmpid)" # Thanks @thelonelycoder for this logic
             echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
             echo ""
             echo -e "Force Re-install?"
@@ -1467,6 +1428,38 @@ displaycpunice1=$(awk -v v1=$displaycpunice1 -v v2=$displaycpunice 'BEGIN{printf
 displaycpuidle1=$(awk -v v1=$displaycpuidle1 -v v2=$displaycpuidle 'BEGIN{printf "%0.2f\n", v1+v2}')
 displaycpuirq1=$(awk -v v1=$displaycpuirq1 -v v2=$displaycpuirq 'BEGIN{printf "%0.2f\n", v1+v2}')
 
+if [ "$INITIALBOOT" == "0" ]; then
+  # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
+  key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
+
+  if [ $key_press ]; then
+      case $key_press in
+          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
+          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
+          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
+          [Hh]) timerreset=1; hideoptions=1;;
+          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
+          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+          [Oo]) vlogs;;
+          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=6; clear; DisplayPage6; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; fi;;
+          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
+          [Ss]) timerreset=1; hideoptions=0;;
+          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
+          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
+          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
+          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
+          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+      esac
+  fi
+else
+  sleep 1
+fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2258,20 +2251,8 @@ DisplayPage2 () {
     echo ""
     echo -e "${InvDkGray}${CWhite} WAN                                                                                                           ${CClear}"
     echo ""
-    if [ "$ScreenshotMode" == "1" ]; then
-      oldwan0ip="1.2.3.4" #demo
-      oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
-      oldvpnip="2.3.4.5" #demo
-      oldvpnip2="2.3.4.5" #demo
-      oldvpnip3="3.4.5.6" #demo
-      oldvpnip4="4.5.6.7" #demo
-      oldvpnip5="5.6.7.8" #demo
-      oldvpncity="Rivendell" #demo
-      oldvpn2city="Mordor" #demo
-      oldvpn2city="Minas Tirith" #demo
-      oldvpn2city="Edoras" #demo
-      oldvpn2city="Aglarond" #demo
-    fi
+    #oldwan0ip="1.2.3.4" #demo
+    #oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
     echo -en "${InvGreen} ${CClear} ${CWhite}WAN 0/1 IP ${CDkGray}[ ${CWhite}"
     printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
     echo -en " / "
@@ -2282,6 +2263,7 @@ DisplayPage2 () {
     if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
     echo -e "${CDkGray} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
     if [ ! -z $oldwanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}WAN 0/1 I6 ${CDkGray}[ ${CWhite}$oldwanip6${CClear}"; fi
+
     preparebar 79 "|"
     progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
     echo ""
@@ -2582,9 +2564,9 @@ DisplayPage3 () {
     echo ""
     echo ""
     if [ "$w5updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (1) ${CDkGray}[ ${CWhite}Enabled - $w5udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
     else
-      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (1) ${CDkGray}[ ${CWhite}Enabled - $w5udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
     fi
     preparebar 79 "|"
     progressbar $oldw5rxmbrate $MaxSpeed5GhzNow " Avg 5G1 RX" "Mbps" "Standard" $oldw5rxmbratedisplay $MaxSpeed5GhzNow
@@ -2598,7 +2580,7 @@ DisplayPage3 () {
   else
     echo ""
     echo ""
-    echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (1) ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
@@ -2871,9 +2853,7 @@ DisplaySpdtst () {
   SpdDownload=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
   SpdUpload=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
 
-	if [ "$ScreenshotMode" == "1" ]; then
-    SpdServer="Starlink Satellite Transceiver #488028"
-  fi
+  #SpdServer="Your Local Test Server name/location"
 
   if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]; then
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest / Initiate VPN Speedtest on VPN Slot ${CGreen}(1)(2)(3)(4)(5)${CClear}"
@@ -3157,9 +3137,7 @@ else
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
-    if [ "$ScreenshotMode" == "1" ]; then
-      oldwan0ip="12.34.56.78" #demo
-    fi
+    #oldwan0ip="23.32.44.106" #demo
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPWANRESPATH ]; then
@@ -3734,7 +3712,7 @@ _VPN_GetClientState_()
   fi
 
   # Check what mode the router is in
-  OpsMode=$($timeoutcmd$timeoutsec nvram get sw_mode) # 1=router, 2=ap, 3=iMesh Node
+  OpsMode=$(nvram get sw_mode) # 1=router, 2=ap, 3=iMesh Node
   #OpsMode=3
 
   # Check and see if any commandline option is being used
@@ -3752,7 +3730,7 @@ _VPN_GetClientState_()
   fi
 
   # Check and see if an invalid commandline option is being used
-  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ] || [ "$2" == "-now" ] || [ "$3" == "-now" ]
+  if [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "-config" ] || [ "$1" == "-monitor" ] || [ "$1" == "-log" ] || [ "$1" == "-update" ] || [ "$1" == "-setup" ] || [ "$1" == "-uninstall" ] || [ "$1" == "-screen" ] || [ "$1" == "-reset" ]
     then
       clear
     else
@@ -3783,7 +3761,6 @@ _VPN_GetClientState_()
     echo "rtrmon.sh -screen"
     echo "rtrmon.sh -monitor"
     echo "rtrmon.sh -screen/-monitor X"
-    echo "rtrmon.sh -screen (X) -now"
     echo ""
     echo " -h | -help (this output)"
     echo " -log (display the current log contents)"
@@ -3793,14 +3770,7 @@ _VPN_GetClientState_()
     echo " -uninstall (uninstall utility)"
     echo " -screen (normal router monitoring using the screen utility)"
     echo " -monitor (normal router monitoring operations)"
-    echo " -screen/-monitor X (X = display screen 1-6 upon execution)"
-    echo " -screen -now (bypass screen instructions and 5 sec timer)"
-    echo ""
-    echo " Examples:"
-    echo " rtrmon -screen -now (bypass screen timer directly into monitor mode)"
-    echo " rtrmon -screen 2 (jump to page 2 upon execution using screen)"
-    echo " rtrmon -screen 3 -now (bypass timer and jump to page 3 using screen)"
-    echo " rtrmon -monitor 4 (jump to page 4 in monitoring mode)"
+    echo " -screen/-monitor X (X = display screen 1-6 on execution)"
     echo ""
     echo -e "${CClear}"
     exit 0
@@ -3842,15 +3812,6 @@ _VPN_GetClientState_()
       echo -e "${CClear}"
       exit 0
   fi
-  
-  # Check to see if the -now parameter is being called to bypass the screen timer
-  if [ "$2" == "-now" ]
-    then
-      bypassscreentimer=1
-  elif [ "$3" == "-now" ]
-    then
-    	bypassscreentimer2=1
-  fi
 
   # Check to see if the screen option is being called and run operations normally using the screen utility
   if [ "$1" == "-screen" ]
@@ -3859,60 +3820,42 @@ _VPN_GetClientState_()
       sleep 1
       ScreenSess=$(screen -ls | grep "rtrmon" | awk '{print $1}' | cut -d . -f 1)
       if [ -z $ScreenSess ]; then
-      	if [ "$bypassscreentimer" == "1" ]; then
-      		screen -dmS "rtrmon" $APPPATH -monitor
-          sleep 1
-          screen -r rtrmon
-        elif [ "$bypassscreentimer2" == "1" ]; then
- 	        if [ -z $2 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor $2
-	        else
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        fi
-          sleep 1
-          screen -r rtrmon
+        clear
+        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
+        echo ""
+        echo -e "${CCyan}IMPORTANT:${CClear}"
+        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+        echo ""
+        if [ -z $2 ]; then
+          screen -dmS "rtrmon" $APPPATH -monitor
+        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+          screen -dmS "rtrmon" $APPPATH -monitor $2
         else
-          clear        
-	        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
-	        echo ""
-	        echo -e "${CCyan}IMPORTANT:${CClear}"
-	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-	        echo ""
-	        if [ -z $2 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor $2
-	        else
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        fi
-	        sleep 2
-	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-	        echo -e "${CClear}"
-	        spinner 5
-	        screen -r rtrmon
-	        exit 0
-	      fi
+          screen -dmS "rtrmon" $APPPATH -monitor
+        fi
+        sleep 2
+        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+        echo -e "${CClear}"
+        SPIN=5
+        spinner
+        screen -r rtrmon
+        exit 0
       else
-        if [ "$bypassscreentimer" == "1" ]; then
-          sleep 1
-        else
-	        clear
-	        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
-	        echo ""
-	        echo -e "${CCyan}IMPORTANT:${CClear}"
-	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-	        echo ""
-	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-	        echo -e "${CClear}"
-	        spinner 5
-	      fi
+        clear
+        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
+        echo ""
+        echo -e "${CCyan}IMPORTANT:${CClear}"
+        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+        echo ""
+        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+        echo -e "${CClear}"
+        SPIN=5
+        spinner
+        screen -dr $ScreenSess
+        exit 0
       fi
-      screen -dr $ScreenSess
-      exit 0
   fi
 
   # Check to see if the monitor option is being called and run operations normally
@@ -4041,7 +3984,8 @@ _VPN_GetClientState_()
         echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - ERROR: RTRMON is not configured/missing dependencies. Please run the setup tool." >> $LOGFILE
         echo ""
         echo -e "${CGreen}Launching the Setup Menu in T-5 sec...${CClear}"
-        spinner 5
+        SPIN=5
+        spinner
         vsetup
         echo -e "${CClear}"
         exit 0
@@ -4327,16 +4271,15 @@ _VPN_GetClientState_()
 
   fi
 
-  FWVER=$($timeoutcmd$timeoutsec nvram get firmver | tr -d '.')
-  BUILDNO=$($timeoutcmd$timeoutsec nvram get buildno)
-  EXTENDNO=$($timeoutcmd$timeoutsec nvram get extendno)
+  FWVER=$(nvram get firmver | tr -d '.')
+  BUILDNO=$(nvram get buildno)
+  EXTENDNO=$(nvram get extendno)
   if [ -z $EXTENDNO ]; then EXTENDNO=0; fi
   FWBUILD=$FWVER"."$BUILDNO"_"$EXTENDNO
 
 # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
-  
   i=0
   while [ $i -ne $Interval ]
     do
@@ -4346,9 +4289,8 @@ _VPN_GetClientState_()
       progressbaroverride $i $Interval "" "s" "Standard"
   done
 
-  calculatestats
-  oldstats
-
+calculatestats
+oldstats
 clear
 INITIALBOOT=0
 
@@ -4642,7 +4584,7 @@ while true; do
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
-  
+
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -4656,7 +4598,7 @@ while true; do
   calculatestats
   oldstats
   clear
-  
+
   if [ "$autorotate" == "1" ] && [ $Interval -eq $i ]; then
     if [ "$NextPage" == "1" ]; then clear; NextPage=2 #DisplayPage2
     elif [ "$NextPage" == "2" ]; then clear; NextPage=3 #DisplayPage3

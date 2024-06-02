@@ -1,14 +1,15 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Possible integration with ModMon NVRAM checker (JGrana)
 
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
-* Instead of just showing up-to-2 VPN connections, show all of them
-* Possible integration with ModMon NVRAM checker (JGrana)
 
 Completed:
 ----------
+* Implement -now switch
+* Instead of just showing up-to-2 VPN connections, show all of them
 * Startup on a certain page (Stephen Harrington)
 * Go direct to pages 1-5 (Stephen Harrington)
 * Implement the exec command to apply changes immediately per @thelonelycoder
