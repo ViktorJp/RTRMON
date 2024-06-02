@@ -1,3 +1,7 @@
+v2.0.15   - (June 1, 2024)
+          - RTRMON v2.0.15 is finally live... Enjoy! Thanks to everyone for all their input and testing throughout
+            the development of this release! I hope you all enjoy it and find it useful as much as I do. :)
+
 v2.0.15RC - (TBA)
           - PATCH: After some debug/testing with @visorgtw, it was determined that a change to the ping command
             needed to be reverted due to site-to-site VPNs not returning pings as expected. Huge thanks for his
