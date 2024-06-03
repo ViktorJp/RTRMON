@@ -1,5 +1,6 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Find way to exclude VPN from Connection test due to private site-to-site private IPs causing delays (visortgw)
 * Possible integration with ModMon NVRAM checker (JGrana)
 
 To-Do:
