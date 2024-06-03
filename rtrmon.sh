@@ -47,6 +47,7 @@ TempUnits="C"
 Speedtst=0
 WANOverride="Auto"
 WAN0AltModes=0
+VPNSite2Site=0
 PSView="TCP"
 NCView="WAN"
 spdtestsvrID=0
@@ -552,8 +553,9 @@ vconfig () {
 
       if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(12)${CClear} : Mark Router As iMesh Node/Repeater/Bridge?   : ${CGreen}$WAN0AltModesdisp"
-      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(13)${CClear} : Custom Event Log Size?                       : ${CGreen}$LOGSIZE"
-
+      if [ "$VPNSite2Site" == "0" ]; then VPNSite2Sitedisp="No"; else VPNSite2Sitedisp="Yes"; fi
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(13)${CClear} : Mark Router As VPN Site-To-Site Only?        : ${CGreen}$VPNSite2Sitedisp"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(14)${CClear} : Custom Event Log Size?                       : ${CGreen}$LOGSIZE"
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}  | ${CClear}"
 
       if [ $CHANGES -eq 0 ]; then
@@ -566,7 +568,7 @@ vconfig () {
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
       echo ""
-      read -p "Please select? (1-13, s=Save, e=Exit): " ConfigSelection
+      read -p "Please select? (1-14, s=Save, e=Exit): " ConfigSelection
       CHANGES=1
       # Execute chosen selections
           case "$ConfigSelection" in
@@ -950,7 +952,35 @@ vconfig () {
               fi
             ;;
 
-            13)
+            13) # -----------------------------------------------------------------------------------------
+              clear
+              echo -e "${InvGreen} ${InvDkGray}${CWhite} Mark VPN As Site-To-Site Only                                                         ${CClear}"
+              echo -e "${InvGreen} ${CClear}"
+              echo -e "${InvGreen} ${CClear} Please indicate if you would like to mark that this router is purely being used in a${CClear}"
+              echo -e "${InvGreen} ${CClear} VPN Site-To-Site only configuration. In cases like this, the public-facing IP is a${CClear}"
+              echo -e "${InvGreen} ${CClear} private IP, which could hinder certain network connection and bandwidth tests, and${CClear}"
+              echo -e "${InvGreen} ${CClear} potentially cause delays and/or a lack of data.${CClear}"
+              echo -e "${InvGreen} ${CClear}"
+              echo -e "${InvGreen} ${CClear} By default, it is assumed that this router's VPN configuration will be marked as${CClear}"
+              echo -e "${InvGreen} ${CClear} being in a normal VPN provider configuration.${CClear}"
+              echo -e "${InvGreen} ${CClear}"
+              echo -e "${InvGreen} ${CClear} (Default = No)${CClear}"
+              echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
+              echo ""
+              if [ "$VPNSite2Site" == "0" ]; then VPNSite2Sitedisp="No"; else VPNSite2Sitedisp="Yes"; fi
+              echo -e "${CClear}Current: ${CGreen}$VPNSite2Sitedisp${CClear}"
+              echo ""
+              echo -e "Is this router purely used in a VPN Site-to-Site Configuration?${CClear}"
+              if promptyn "[y/n]: "; then
+                VPNSite2Site=1
+                echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: This device's VPN operating mode was marked as being in a VPN Site-to-Site only configuration." >> $LOGFILE
+              else
+                VPNSite2Site=0
+                echo -e "$(date +'%b %d %Y %X') $($timeoutcmd$timeoutsec nvram get lan_hostname) RTRMON[$$] - INFO: This device's VPN operating mode was marked as being in a Normal VPN Provider configuration." >> $LOGFILE
+              fi
+            ;;
+
+            14)
               clear
               echo -e "${InvGreen} ${InvDkGray}${CWhite} Custom Event Log Size                                                                 ${CClear}"
               echo -e "${InvGreen} ${CClear}"
@@ -991,6 +1021,7 @@ vconfig () {
                 echo 'spdtestsvrID='$spdtestsvrID
                 echo 'WANOverride="'"$WANOverride"'"'
                 echo 'WAN0AltModes='$WAN0AltModes
+                echo 'VPNSite2Site='$VPNSite2Site
                 echo 'LOGSIZE='$LOGSIZE
               } > $CFGPATH
               echo -e "\n${CClear}Applying config changes to RTRMON..."
@@ -1020,6 +1051,7 @@ vconfig () {
         echo 'spdtestsvrID=0'
         echo 'WANOverride="Auto"'
         echo 'WAN0AltModes=0'
+        echo 'VPNSite2Site=0'
         echo 'LOGSIZE=2000'
       } > $CFGPATH
 
@@ -3236,7 +3268,7 @@ DisplayPage6 () {
         if [ "$selectedslot" == "True" ]; then
         	NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
           NVRAMVPNSLOTIP=$(ping -c 1 -w 1 $NVRAMVPNSLOTADDR | awk -F '[()]' '/PING/ { print $2}')
-          if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ] || [ "$VPNSite2Site" == "1" ]; then
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
  				  else
@@ -3643,6 +3675,8 @@ DisplayPage6 () {
 
         if [ "$line1" == "1" ]; then
           printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+        elif [ "$VPNSite2Site" == "1" ]; then
+        	echo "Private Tunnel"
         else
           echo "No Data"
         fi
