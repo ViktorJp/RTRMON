@@ -1,3 +1,10 @@
+v2.0.16   - (June 3, 2024)
+          - PATCH: Added some logic to the network connections/bandwidth test to try to exclude VPN connections
+            that come up with a private IP address in the vpn_clientX_addr NVRAM field. In the process, added
+            another option under the configuration menu (item #13) that asks whether or not the router is purely
+            being used in a VPN site-to-site configuration, as that would have a bearing on how the "public-
+            facing" IP ends up, and is most likely a private IP that will cause delays or no data during testing.
+
 v2.0.15   - (June 1, 2024)
           - RTRMON v2.0.15 is finally live... Enjoy! Thanks to everyone for all their input and testing throughout
             the development of this release! I hope you all enjoy it and find it useful as much as I do. :)

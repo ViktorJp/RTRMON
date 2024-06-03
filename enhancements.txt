@@ -8,6 +8,7 @@ To-Do:
 
 Completed:
 ----------
+* Find way to exclude VPN from Connection test due to private site-to-site private IPs causing delays (visortgw)
 * Implement -now switch
 * Instead of just showing up-to-2 VPN connections, show all of them
 * Startup on a certain page (Stephen Harrington)
