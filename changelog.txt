@@ -1,4 +1,4 @@
-v2.0.17   - (TBA)
+v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
             incorrect model name... Thanks to @Kingp1n for noticing that his 2nd 5GHz band was not showing up.
 
