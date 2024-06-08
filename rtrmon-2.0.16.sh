@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON v2.0.17 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON v2.0.16 - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.0.17"
+Version="2.0.16"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -568,7 +568,7 @@ vconfig () {
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
       echo ""
-      read -p "Please select? (1-13, s=Save, e=Exit): " ConfigSelection
+      read -p "Please select? (1-14, s=Save, e=Exit): " ConfigSelection
       CHANGES=1
       # Execute chosen selections
           case "$ConfigSelection" in
@@ -956,13 +956,13 @@ vconfig () {
               clear
               echo -e "${InvGreen} ${InvDkGray}${CWhite} Mark VPN As Site-To-Site Only                                                         ${CClear}"
               echo -e "${InvGreen} ${CClear}"
-              echo -e "${InvGreen} ${CClear} Please indicate if you would like to mark that this router is purely being used${CClear}"
-              echo -e "${InvGreen} ${CClear} in a VPN Site-To-Site only configuration. In cases like this, the public-facing${CClear}"
-              echo -e "${InvGreen} ${CClear} IP is a private IP, which could hinder certain network connection and bandwidth$CClear}"
-              echo -e "${InvGreen} ${CClear} tests, and potentially cause delays and/or a lack of data.${CClear}"
+              echo -e "${InvGreen} ${CClear} Please indicate if you would like to mark that this router is purely being used in a${CClear}"
+              echo -e "${InvGreen} ${CClear} VPN Site-To-Site only configuration. In cases like this, the public-facing IP is a${CClear}"
+              echo -e "${InvGreen} ${CClear} private IP, which could hinder certain network connection and bandwidth tests, and${CClear}"
+              echo -e "${InvGreen} ${CClear} potentially cause delays and/or a lack of data.${CClear}"
               echo -e "${InvGreen} ${CClear}"
-              echo -e "${InvGreen} ${CClear} By default, it is assumed that this router's VPN configuration will be marked${CClear}"
-              echo -e "${InvGreen} ${CClear} as being in a normal VPN provider configuration.${CClear}"
+              echo -e "${InvGreen} ${CClear} By default, it is assumed that this router's VPN configuration will be marked as${CClear}"
+              echo -e "${InvGreen} ${CClear} being in a normal VPN provider configuration.${CClear}"
               echo -e "${InvGreen} ${CClear}"
               echo -e "${InvGreen} ${CClear} (Default = No)${CClear}"
               echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
@@ -3268,7 +3268,7 @@ DisplayPage6 () {
         if [ "$selectedslot" == "True" ]; then
         	NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
           NVRAMVPNSLOTIP=$(ping -c 1 -w 1 $NVRAMVPNSLOTADDR | awk -F '[()]' '/PING/ { print $2}')
-          if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+          if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ] || [ "$VPNSite2Site" == "1" ]; then
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
  				  else
@@ -3675,6 +3675,8 @@ DisplayPage6 () {
 
         if [ "$line1" == "1" ]; then
           printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+        elif [ "$VPNSite2Site" == "1" ]; then
+        	echo "Private Tunnel"
         else
           echo "No Data"
         fi
@@ -3768,7 +3770,7 @@ _VPN_GetClientState_()
   if [ "$RouterModel" == "GT-AXE11000" ] || [ "$RouterModel" == "ZenWiFi_ET8" ] || [ "$RouterModel" == "RT-BE96U" ]; then
     ThreeBand2456="True"
   fi
-  if [ "$RouterModel" == "GT-AX11000_Pro" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWiFi_XT8" ]; then
+  if [ "$RouterModel" == "GT-AX11000_PRO" ] || [ "$RouterModel" == "GT-AX11000" ] || [ "$RouterModel" == "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" == "ZenWiFi_XT8" ]; then
     ThreeBand2455="True"
   fi
 
