@@ -5,6 +5,7 @@ Future Enhancements (Possible/Planned)
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
+* add a success event for when the script starts up, and perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 
 Completed:
 ----------
