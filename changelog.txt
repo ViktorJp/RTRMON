@@ -2,9 +2,9 @@ v2.1.0b1  - (TBA)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
             connected time, it seemed like a great idea to provide a view of which connected clients are
             currently attached to your router, and on what interface. This new view (page #7) shows the client
-            name, IP, MAC, TX/RX Totals (in GB), TX/RX Speeds (in Mbps) for each wireless interface, and also
-            shows the name, IP and MAC for everything else connected to the LAN (br0). Still a bit experimental
-            as I'm refining this, and would definitely appreciate your feedback!
+            name, IP, MAC, Uptime, TX/RX Totals (in GB), TX/RX Speeds (in Mbps) for each wireless interface, and
+            also shows the name, IP and MAC for everything else connected to the LAN (br0). Still a bit
+            experimental as I'm refining this, and would definitely appreciate your feedback!
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
