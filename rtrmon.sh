@@ -4004,7 +4004,7 @@ while [ $clientcount -ne $maxclientcount ]
   if [ $maxclientcount -ge 1 ]; then
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"Total TX","Total RX","TX Mbps","RX Mbps" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
-    echo -e "  No Results"
+    echo -e "  No Devices Connected"
   fi
 }
 
@@ -4055,7 +4055,7 @@ while [ $clientcount -ne $maxclientcount ]
   if [ $maxclientcount -ge 1 ]; then
     column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
   else
-    echo -e "  No Results"
+    echo -e "  No Devices Connected"
   fi
 }
 
