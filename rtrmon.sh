@@ -3964,7 +3964,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	client="UNKNOWN"
-        	mac="UNKNOWN"
+        	mac=$clientmac
           break
         fi
 
