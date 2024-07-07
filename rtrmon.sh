@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b2"
+Version="2.1.0b3"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -66,6 +66,9 @@ vpn4slot=0
 vpn5slot=0
 VPNState=0
 VPN2State=0
+VPN3State=0
+VPN4State=0
+VPN5State=0
 vpncity="Unknown"
 vpn2city="Unknown"
 vpn3city="Unknown"
@@ -112,6 +115,7 @@ w5updown="UP"
 w52updown="UP"
 w6updown="UP"
 w62updown="UP"
+Sortby="Name"
 
 # Color variables
 CBlack="\e[1;30m"
@@ -413,6 +417,9 @@ progressbaroverride() {
 	          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
 	          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
 	          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+	          [\!]) Sortby="Name"; timerreset=1;;
+	          [\@]) Sortby="IP"; timerreset=1;;
+	          [\#]) Sortby="MAC"; timerreset=1;; 
 	      esac
 	    fi
     else
@@ -3823,12 +3830,34 @@ DisplayPage7 () {
     fi
   fi
 
+	if [ "$Sortby" == "Name" ]; then
+		SortbyNum="1"
+	elif [ "$Sortby" == "IP" ]; then
+		SortbyNum="2"
+	elif [ "$Sortby" == "MAC" ]; then
+		SortbyNum="3"
+	else
+		SortbyNum="1"
+	fi
+	
   #Testing
   #MaxSpeed24GhzNow=0
   #w24updown="UP" #testing
   echo ""
-  echo -e "${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                                                             ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                                                            ${CClear}"
+  if [ "$Sortby" == "Name" ]; then
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}"
+  elif [ "$Sortby" == "IP" ]; then
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}"
+  elif [ "$Sortby" == "MAC" ]; then
+    echo -e "${InvGreen} ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}"
+  fi
+  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
+
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
@@ -3922,7 +3951,7 @@ DisplayPage7 () {
 	sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
 	attachedlanclients
 	rm -f /jffs/addons/rtrmon.d/temparp.txt
-
+	
   #Testing
   #FourBandCustom55624="False" #testing
   #MaxSpeed52GhzNow=0 #testing
@@ -3999,6 +4028,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
+  	sort -f -g -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k $SortbyNum -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"Total TX","Total RX","TX Mbps","RX Mbps" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4052,6 +4082,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
+  	sort -f -g -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k $SortbyNum -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
