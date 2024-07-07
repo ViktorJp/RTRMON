@@ -1,5 +1,6 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Sorting of attached clients, name/ip/mac, etc.
 * Possible integration with ModMon NVRAM checker (JGrana)
 
 To-Do:
