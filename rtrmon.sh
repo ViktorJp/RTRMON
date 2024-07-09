@@ -4004,6 +4004,8 @@ while [ $clientcount -ne $maxclientcount ]
         rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
         txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
+        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
+
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
 
@@ -4031,13 +4033,13 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb GB,$rxtotalgb GB,$txratembps,$rxratembps" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
   if [ $maxclientcount -ge 1 ]; then
   	sort -f -g -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k $SortbyNum -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"Total TX","Total RX","TX Mbps","RX Mbps" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
   fi
@@ -4075,6 +4077,7 @@ while [ $clientcount -ne $maxclientcount ]
         rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
         txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
+        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
 
@@ -4102,13 +4105,13 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb GB,$rxtotalgb GB,$txratembps,$rxratembps" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
   if [ $maxclientcount -ge 1 ]; then
   	sort -f -g -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k $SortbyNum -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"Total TX","Total RX","TX Mbps","RX Mbps" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
   fi
