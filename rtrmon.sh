@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b3"
+Version="2.1.0b4"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3943,6 +3943,14 @@ DisplayPage7 () {
     fi
   fi
 
+	# Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
+  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs)
+    do
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Guest Wi-Fi${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface    ${CClear}"
+      attachedguestclients "$guestiface"
+      echo ""
+    done
+
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN        ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
 	#Remove non-LAN records
 	sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
@@ -3968,6 +3976,77 @@ DisplayPage7 () {
 # attachedwificlients pulls connected client info from wl, arp and nvram
 
 attachedwificlients ()
+{
+
+iface="$1"
+rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
+wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
+rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
+
+clientcount=0
+while [ $clientcount -ne $maxclientcount ]
+  do
+    clientcount=$(($clientcount+1))
+    clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+
+    #find matchine client name
+    clients=$(nvram get custom_clientlist)
+
+    counter=0
+    while true
+      do
+        counter=$(($counter+1))
+        clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+
+        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
+        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
+        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
+        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
+        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
+        maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
+        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
+
+        #delete entry from temparp table
+        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
+
+        #calcs
+        conntime=$(date -d@$networktime -u +%Hh:%Mm)
+        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}')
+        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}')
+        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}')
+        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
+
+        if [ -z "$clientextract" ]; then
+        	clientname="UNKNOWN"
+          break
+        fi
+
+        client="$(echo $clientextract | awk -F ">" '{print $1}')"
+        mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+
+        if [ "$mac" == "$clientmac" ]; then
+          clientname=$client
+          break
+        fi
+      done
+
+      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb GB,$rxtotalgb GB,$txratembps,$rxratembps" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+
+  done
+
+  if [ $maxclientcount -ge 1 ]; then
+  	sort -f -g -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k $SortbyNum -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"Total TX","Total RX","TX Mbps","RX Mbps" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+  else
+    echo -e "  No Devices Connected"
+  fi
+}
+
+# -------------------------------------------------------------------------------------------------------------------------
+# attachedguestclients pulls connected client info from wl, arp and nvram
+
+attachedguestclients ()
 {
 
 iface="$1"
