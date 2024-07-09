@@ -2904,8 +2904,8 @@ DisplaySpdtst () {
   fi
 
   # Display previous results
-  if [ $SpdDownload -eq 0 ]; then SpdDownload=1; fi
-  if [ $SpdUpload -eq 0 ]; then SpdUpload=1; fi
+  if [ $SpdDownload -eq 0 ] || [ -z $SpdDownload ]; then SpdDownload=1; fi
+  if [ $SpdUpload -eq 0 ] || [ -z $SpdUpload ]; then SpdUpload=1; fi
 
   SpdDownload=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
   SpdUpload=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
