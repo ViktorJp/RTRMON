@@ -1,4 +1,4 @@
-v2.1.0b3  - (TBA)
+v2.1.0b4  - (TBA)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
             connected time, it seemed like a great idea to provide a view of which connected clients are
             currently attached to your router, and on what interface. This new view (page #7) shows the client
@@ -10,6 +10,11 @@ v2.1.0b3  - (TBA)
           - PATCH: Introduced the option to sort your connected client lists by Name, IP or MAC address! Columns
             will sort by alpha or numerical order... in the case of MAC, it seems to go alpha then numeric. Huge
             thanks to @visortgw for suggesting this feature!
+          - PATCH: Some additional work was done on the connected clients to account for guest wi-fi clients per
+            feedback by both @visortgw and @CaptainSTX. Thanks also to @ColinTaylor and @CaptainSTX for narrowing
+            down what interface guest wi-fi clients reside on, and providing script samples of pulling legit
+            guest wi-fi interface names. RTRMON will now display enabled guest wi-fi ranges along with their
+            associated connections.
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
