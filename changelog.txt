@@ -15,6 +15,8 @@ v2.1.0b4  - (TBA)
             down what interface guest wi-fi clients reside on, and providing script samples of pulling legit
             guest wi-fi interface names. RTRMON will now display enabled guest wi-fi ranges along with their
             associated connections.
+          - PATCH: Based on a suggestion from @DJones, the client signal strength value has been added to the
+            column layout!
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
