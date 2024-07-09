@@ -11,7 +11,7 @@ v2.1.0b4  - (TBA)
             will sort by alpha or numerical order... in the case of MAC, it seems to go alpha then numeric. Huge
             thanks to @visortgw for suggesting this feature!
           - PATCH: Some additional work was done on the connected clients to account for guest wi-fi clients per
-            feedback by both @visortgw and @CaptainSTX. Thanks also to @ColinTaylor and @CaptainSTX for narrowing
+            feedback by both @visortgw and @CaptainSTX. Thanks also to @ColinTaylor and @DJones for narrowing
             down what interface guest wi-fi clients reside on, and providing script samples of pulling legit
             guest wi-fi interface names. RTRMON will now display enabled guest wi-fi ranges along with their
             associated connections.
