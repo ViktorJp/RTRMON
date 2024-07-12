@@ -4024,6 +4024,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
 
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
@@ -4049,7 +4050,7 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
@@ -4096,7 +4097,8 @@ while [ $clientcount -ne $maxclientcount ]
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
-
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
 
@@ -4121,7 +4123,7 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
@@ -4169,6 +4171,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
 
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
@@ -4194,7 +4197,7 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
@@ -4234,7 +4237,8 @@ while [ $clientcount -ne $maxclientcount ]
 
         #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
         clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}')
-        
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
            break
@@ -4249,7 +4253,7 @@ while [ $clientcount -ne $maxclientcount ]
         fi
       done
 
-      echo "$clientname,$clientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
+      echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
 
   done
 
