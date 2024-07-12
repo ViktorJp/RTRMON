@@ -3975,7 +3975,7 @@ DisplayPage7 () {
 	sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
 	attachedlanclients
 	rm -f /jffs/addons/rtrmon.d/temparp.txt
-	
+
   #Testing
   #FourBandCustom55624="False" #testing
   #MaxSpeed52GhzNow=0 #testing
@@ -4054,7 +4054,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+  	sort -f -n -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4126,7 +4126,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+  	sort -f -n -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4199,7 +4199,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+  	sort -f -n -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4254,7 +4254,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
+  	sort -f -n -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
