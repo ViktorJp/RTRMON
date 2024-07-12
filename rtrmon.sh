@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b5"
+Version="2.1.0b6"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3959,7 +3959,7 @@ DisplayPage7 () {
   
   for vlanlabels in $(nvram get apg_ifnames)
     do
-      for vlaniface in $(nvram get apg_$vlanlabels_fh_wlifnames)
+      for vlaniface in $(nvram get apg_"${vlanlabels}"_fh_wlifnames)
         do
           echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlaniface    ${CClear}"
           attachedvlanclients "$vlaniface"
