@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b6"
+Version="2.1.0b7"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3944,7 +3944,7 @@ DisplayPage7 () {
   fi
 
 	# Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
-  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs)
+  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Guest Wi-Fi${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface    ${CClear}"
       attachedguestclients "$guestiface"
@@ -3957,15 +3957,41 @@ DisplayPage7 () {
   #apg_br54_fh_wlifnames=wl0.53 wl1.53 wl2.53 wl3.53
   #apg_br55_fh_wlifnames=wl0.54 wl1.54 wl2.54 wl3.54
   
-  for vlanlabels in $(nvram get apg_ifnames)
-    do
-      for vlaniface in $(nvram get apg_"${vlanlabels}"_fh_wlifnames)
-        do
-          echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlaniface    ${CClear}"
-          attachedvlanclients "$vlaniface"
-          echo ""
-        done
-    done
+  #lan1_ifname=br53
+  #lan1_ifnames=wl3.1 eth0.52 eth1.52 eth2.52 eth3.52 wl0.52 wl1.52 wl2.52 wl3.52
+  #lan2_ifname=br54
+  #lan2_ifnames=wl0.1 eth0.53 eth1.53 eth2.53 eth3.53 wl0.53 wl1.53 wl2.53 wl3.53
+  #lan3_ifname=br55
+  #lan3_ifnames=wl3.2 wl0.2 wl2.1 eth0.54 eth1.54 eth2.54 eth3.54 wl0.54 wl1.54 wl2.54 wl3.54
+
+  lancount=0
+  while true; do
+   	lancount=$(($lancount+1))
+    brifname=$(nvram get lan${lancount}_ifname)
+    if [ -z "$brifname" ]; then break; fi
+    	
+    for lanifnames in $(nvram get lan${lancount}_ifnames)
+    	do 
+    		wl -i $lanifnames assoclist 2>/dev/null
+    		testifname=$?
+        if [ $testifname -ne 0 ]; then  # If ping come back successful, then proceed
+          break
+        fi
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $lanifnames    ${CClear}"
+        attachedvlanclients "$lanifnames"
+        echo ""
+      done
+  done
+    
+  #for vlanlabels in $(nvram get apg_ifnames)
+  #  do
+  #    for vlaniface in $(nvram get apg_"${vlanlabels}"_fh_wlifnames)
+  #      do
+  #        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlaniface    ${CClear}"
+  #        attachedvlanclients "$vlaniface"
+  #        echo ""
+  #      done
+  #  done
 
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN        ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
 	#Remove non-LAN records
