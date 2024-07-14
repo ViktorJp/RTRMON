@@ -1,4 +1,4 @@
-v2.1.0b4  - (TBA)
+v2.1.0b8  - (TBA)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
             connected time, it seemed like a great idea to provide a view of which connected clients are
             currently attached to your router, and on what interface. This new view (page #7) shows the client
@@ -17,6 +17,10 @@ v2.1.0b4  - (TBA)
             associated connections.
           - PATCH: Based on a suggestion from @DJones, the client signal strength value has been added to the
             column layout!
+          - PATCH: After much back and forth with @visortgw, sleuthing through NVRAM, I have not been able to
+            get past the VLAN brick wall, in order to show which devices are on which VLAN. So for the moment,
+            until 3006 arrives for my router, I will need to put a pin in it, and will just combine LAN and VLAN
+            devices under the same section.
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
