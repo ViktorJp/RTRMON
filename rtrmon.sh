@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b7"
+Version="2.1.0b8"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3964,24 +3964,24 @@ DisplayPage7 () {
   #lan3_ifname=br55
   #lan3_ifnames=wl3.2 wl0.2 wl2.1 eth0.54 eth1.54 eth2.54 eth3.54 wl0.54 wl1.54 wl2.54 wl3.54
 
-  lancount=0
-  while true; do
-   	lancount=$(($lancount+1))
-    brifname=$(nvram get lan${lancount}_ifname)
-    if [ -z "$brifname" ]; then break; fi
-    	
-    for lanifnames in $(nvram get lan${lancount}_ifnames)
-    	do 
-    		wl -i $lanifnames assoclist 2>/dev/null
-    		testifname=$?
-        if [ $testifname -ne 0 ]; then  # If ping come back successful, then proceed
-          break
-        fi
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $lanifnames    ${CClear}"
-        attachedvlanclients "$lanifnames"
-        echo ""
-      done
-  done
+  #lancount=0
+  #while true; do
+  # 	lancount=$(($lancount+1))
+  #  brifname=$(nvram get lan${lancount}_ifname)
+  #  if [ -z "$brifname" ]; then break; fi
+  #  	
+  #  for lanifnames in $(nvram get lan${lancount}_ifnames)
+  #  	do 
+  #  		wl -i $lanifnames assoclist 2>/dev/null
+  #  		testifname=$?
+  #      if [ $testifname -ne 0 ]; then  # If ping come back successful, then proceed
+  #        break
+  #      fi
+  #      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $lanifnames    ${CClear}"
+  #      attachedvlanclients "$lanifnames"
+  #      echo ""
+  #    done
+  #done
     
   #for vlanlabels in $(nvram get apg_ifnames)
   #  do
@@ -3993,7 +3993,7 @@ DisplayPage7 () {
   #      done
   #  done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN        ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN/VLAN   ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
 	#Remove non-LAN records
 	sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
 	sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
