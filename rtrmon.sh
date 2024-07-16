@@ -4270,7 +4270,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-        	clientip="000.000.000.000"
+        	paddedclientip="000.000.000.000"
           break
         fi
 
