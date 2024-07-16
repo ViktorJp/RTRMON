@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b8"
+Version="2.1.0b9"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -4064,6 +4064,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
+        	clientip="000.000.000.000"
           break
         fi
 
@@ -4137,6 +4138,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
+        	clientip="000.000.000.000"
           break
         fi
 
@@ -4211,6 +4213,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
+        	clientip="000.000.000.000"
           break
         fi
 
@@ -4267,7 +4270,8 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-           break
+        	clientip="000.000.000.000"
+          break
         fi
 
         client="$(echo $clientextract | awk -F ">" '{print $1}')"
