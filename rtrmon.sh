@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b9"
+Version="2.1.0b10"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3983,15 +3983,12 @@ DisplayPage7 () {
   #    done
   #done
     
-  #for vlanlabels in $(nvram get apg_ifnames)
-  #  do
-  #    for vlaniface in $(nvram get apg_"${vlanlabels}"_fh_wlifnames)
-  #      do
-  #        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlaniface    ${CClear}"
-  #        attachedvlanclients "$vlaniface"
-  #        echo ""
-  #      done
-  #  done
+  for vlanlabels in $(nvram get apg_ifnames)
+    do
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
+      attachedvlanclients "$vlanlabels"
+      echo ""
+    done
 
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN/VLAN   ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
 	#Remove non-LAN records
@@ -4051,6 +4048,7 @@ while [ $clientcount -ne $maxclientcount ]
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
@@ -4064,7 +4062,6 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-        	paddedclientip="000.000.000.000"
           break
         fi
 
@@ -4125,7 +4122,8 @@ while [ $clientcount -ne $maxclientcount ]
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
-        
+        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+        	
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
 
@@ -4138,7 +4136,6 @@ while [ $clientcount -ne $maxclientcount ]
 
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-        	paddedclientip="000.000.000.000"
           break
         fi
 
@@ -4170,16 +4167,17 @@ attachedvlanclients ()
 {
 
 iface="$1"
+cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
+maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp2.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
-wl -i $iface assoclist > /jffs/addons/rtrmon.d/vlanclients$iface.txt
-maxclientcount=$(cat /jffs/addons/rtrmon.d/vlanclients$iface.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
 
 clientcount=0
 while [ $clientcount -ne $maxclientcount ]
   do
+  	stopproc=0
     clientcount=$(($clientcount+1))
-    clientmac=$(cat /jffs/addons/rtrmon.d/vlanclients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+    clientmac=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | awk 'NR=='$clientcount' {print $4}')
+    macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
 
     #find matchine client name
     clients=$(nvram get custom_clientlist)
@@ -4190,19 +4188,43 @@ while [ $clientcount -ne $maxclientcount ]
         counter=$(($counter+1))
         clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
-        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
-        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
-        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
-        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
-        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
-
-        maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
-        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
-
+				# Logic below by @ExtremeFiretop / modified for RTRMON flow by ViktorJp
+		    # Step 1: Get the bridge ID
+		    local bridge_id
+		    bridge_id=$(arp -a | grep -i "$clientmac" | awk '{print $7}')
+		    
+		    if [ -z "$bridge_id" ]; then
+		    	  stopproc=1
+		        break
+		    fi
+		    
+		    # Step 2: Get the port ID
+		    local port_id
+		    port_id=$(brctl showmacs "$bridge_id" | grep -i "$clientmac" | awk '{print $1}')
+		    
+		    if [ -z "$port_id" ]; then
+		        stopproc=1
+		        break
+		    fi
+		    
+		    # Step 3: Get the interface name
+		    local interface_name
+		    interface_name=$(brctl showstp "$bridge_id" | grep -i "($port_id)" | awk '{print $1}')
+		    
+		    if [ -z "$interface_name" ]; then
+		        stopproc=1
+		        break
+		    fi
+		    
+        networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
+        txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
+        rxtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
+        txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
+        rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
+        sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
+        
         #delete entry from temparp table
-        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
+        sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
 
         #calcs
         conntime=$(date -d@$networktime -u +%Hh:%Mm)
@@ -4210,32 +4232,39 @@ while [ $clientcount -ne $maxclientcount ]
         rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}')
         txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}')
         rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
-
+        
+        #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
+        clientip=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | grep $clientmac | awk '{print $1}')
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+        	
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-        	paddedclientip="000.000.000.000"
           break
         fi
 
         client="$(echo $clientextract | awk -F ">" '{print $1}')"
         mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$clientmac" ]; then
+        if [ "$mac" == "$macupper" ]; then
           clientname=$client
           break
         fi
       done
 
-      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+			if [ $stopproc -eq 0 ]; then
+        echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
+      fi
 
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+  	sort -f -d -o /jffs/addons/rtrmon.d/vlanclients$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null
+    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
   fi
+
 }
 
 
@@ -4267,10 +4296,11 @@ while [ $clientcount -ne $maxclientcount ]
         #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
         clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}')
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
-
+        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+        	
         if [ -z "$clientextract" ]; then
         	clientname="UNKNOWN"
-        	paddedclientip="000.000.000.000"
+        	#paddedclientip="000.000.000.000"
           break
         fi
 
