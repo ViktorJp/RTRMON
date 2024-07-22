@@ -4168,7 +4168,7 @@ attachedvlanclients ()
 
 iface="$1"
 cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
-maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp2.txt | wc -l)
+maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
 
 clientcount=0
