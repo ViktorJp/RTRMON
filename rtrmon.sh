@@ -4023,20 +4023,21 @@ wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
 
-clientcount=0
+local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
   do
-    clientcount=$(($clientcount+1))
-    clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+    clientname=""
+    local clientcount=$(($clientcount+1))
+    local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
 
     #find matchine client name
-    clients=$(nvram get custom_clientlist)
+    local clients=$(nvram get custom_clientlist)
 
-    counter=0
+    local counter=0
     while true
       do
         counter=$(($counter+1))
-        clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
         txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
@@ -4044,7 +4045,6 @@ while [ $clientcount -ne $maxclientcount ]
         txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
-
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
@@ -4065,13 +4065,14 @@ while [ $clientcount -ne $maxclientcount ]
           break
         fi
 
-        client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
         if [ "$mac" == "$clientmac" ]; then
           clientname=$client
           break
         fi
+	    break
       done
 
       echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
@@ -4098,20 +4099,21 @@ wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
 
-clientcount=0
+local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
   do
-    clientcount=$(($clientcount+1))
-    clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+    clientname=""
+    local clientcount=$(($clientcount+1))
+    local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
 
     #find matchine client name
-    clients=$(nvram get custom_clientlist)
+    local clients=$(nvram get custom_clientlist)
 
-    counter=0
+    local counter=0
     while true
       do
         counter=$(($counter+1))
-        clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
         txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
@@ -4139,13 +4141,14 @@ while [ $clientcount -ne $maxclientcount ]
           break
         fi
 
-        client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
         if [ "$mac" == "$clientmac" ]; then
           clientname=$client
           break
         fi
+	    break
       done
 
       echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
@@ -4167,54 +4170,59 @@ attachedvlanclients ()
 {
 
 iface="$1"
+vlansfound=0
 cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
+#remove the first line which is causing formatting issues
+sed -i '1d' /jffs/addons/rtrmon.d/temparpvlan.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
 
-clientcount=0
+local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
   do
-  	stopproc=0
-    clientcount=$(($clientcount+1))
-    clientmac=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | awk 'NR=='$clientcount' {print $4}')
-    macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
+    stopproc=0
+    clientname=""
+    local clientcount=$(($clientcount+1))
+    local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
+    local clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
+    local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
 
     #find matchine client name
-    clients=$(nvram get custom_clientlist)
+    local clients=$(nvram get custom_clientlist)
 
-    counter=0
+    local counter=0
     while true
       do
         counter=$(($counter+1))
-        clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-				# Logic below by @ExtremeFiretop / modified for RTRMON flow by ViktorJp
-		    # Step 1: Get the bridge ID
-		    local bridge_id
-		    bridge_id=$(arp -a -n | grep -i "$clientmac" | awk '{print $7}')
+        # Check if the bridge ID is empty or does not match the given interface
+        if [ -z "$clientbridgeid" ]; then
+          vlansfound=1
+          break
+        fi
+
+        # Check if the bridge ID is empty or does not match the given interface
+        if [ "$clientbridgeid" != "$iface" ]; then
+          break
+        fi
+
+        # Logic below by @ExtremeFiretop / modified for RTRMON flow by ViktorJp		    
+        # Step 2: Get the port ID
+        local port_id
+        port_id=$(brctl showmacs "$iface" | grep -i "$clientmac" | awk '{print $1}')
 		    
-		    if [ -z "$bridge_id" ]; then
-		    	  stopproc=1
-		        break
-		    fi
+        if [ -z "$port_id" ]; then
+          break
+        fi
 		    
-		    # Step 2: Get the port ID
-		    local port_id
-		    port_id=$(brctl showmacs "$bridge_id" | grep -i "$clientmac" | awk '{print $1}')
+        # Step 3: Get the interface name
+        local interface_name
+        interface_name=$(brctl showstp "$iface" | grep -i "($port_id)" | awk '{print $1}')
 		    
-		    if [ -z "$port_id" ]; then
-		        stopproc=1
-		        break
-		    fi
-		    
-		    # Step 3: Get the interface name
-		    local interface_name
-		    interface_name=$(brctl showstp "$bridge_id" | grep -i "($port_id)" | awk '{print $1}')
-		    
-		    if [ -z "$interface_name" ]; then
-		        stopproc=1
-		        break
-		    fi
+        if [ -z "$interface_name" ]; then
+          break
+        fi
 		    
         networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
         txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
@@ -4243,22 +4251,22 @@ while [ $clientcount -ne $maxclientcount ]
           break
         fi
 
-        client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
         if [ "$mac" == "$macupper" ]; then
           clientname=$client
           break
         fi
-      done
 
-			if [ $stopproc -eq 0 ]; then
         echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
-      fi
+
+	    break
+      done
 
   done
 
-  if [ $maxclientcount -ge 1 ]; then
+  if [ $vlansfound -eq 0 ]; then
   	sort -f -d -o /jffs/addons/rtrmon.d/vlanclients$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
   else
@@ -4277,21 +4285,22 @@ attachedlanclients ()
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt 
 
-clientcount=0
+local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
   do
-    clientcount=$(($clientcount+1))
-    clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}')
-    macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
+    clientname=""
+    local clientcount=$(($clientcount+1))
+    local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}')
+    local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
 
     #find matchine client name
-    clients=$(nvram get custom_clientlist)
+    local clients=$(nvram get custom_clientlist)
 
-    counter=0
+    local counter=0
     while true
       do
         counter=$(($counter+1))
-        clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
         #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
         clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}')
@@ -4311,6 +4320,7 @@ while [ $clientcount -ne $maxclientcount ]
           clientname=$client
           break
         fi
+        break
       done
 
       echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
