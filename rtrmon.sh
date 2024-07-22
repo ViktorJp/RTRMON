@@ -4106,7 +4106,8 @@ iface="$1"
 rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
 wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
+rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
+dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4119,6 +4120,7 @@ while [ $clientcount -ne $maxclientcount ]
     local clients=$(nvram get custom_clientlist)
 
     local counter=0
+    local found=0
     while true
       do
         counter=$(($counter+1))
@@ -4146,21 +4148,28 @@ while [ $clientcount -ne $maxclientcount ]
         rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
 
         if [ -z "$clientextract" ]; then
-        	clientname="UNKNOWN"
-          break
+            break
         fi
 
         local client="$(echo $clientextract | awk -F ">" '{print $1}')"
         local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
         if [ "$mac" == "$clientmac" ]; then
-          clientname=$client
-          break
+            clientname=$client
+            found=1
+            break
         fi
-	    break
+		break
       done
 
-      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+    # Fallback to using dnsmasq.leases if no match found
+    if [ $found -ne 1 ]; then
+        clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+            clientname="UNKNOWN"
+        fi
+    fi
+    echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
@@ -4185,6 +4194,7 @@ cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
 sed -i '1d' /jffs/addons/rtrmon.d/temparpvlan.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
+dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4195,11 +4205,13 @@ while [ $clientcount -ne $maxclientcount ]
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
     local clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
     local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
+    local maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
 
     #find matchine client name
     local clients=$(nvram get custom_clientlist)
 
     local counter=0
+    local found=0
     while true
       do
         counter=$(($counter+1))
@@ -4256,23 +4268,29 @@ while [ $clientcount -ne $maxclientcount ]
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
         	
         if [ -z "$clientextract" ]; then
-        	clientname="UNKNOWN"
-          break
+            break
         fi
 
         local client="$(echo $clientextract | awk -F ">" '{print $1}')"
         local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$macupper" ]; then
-          clientname=$client
-          break
+        if [ "$mac" == "$clientmac" ]; then
+            clientname=$client
+            found=1
+            break
         fi
 
+        # Fallback to using dnsmasq.leases if no match found
+        if [ $found -ne 1 ]; then
+            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+            if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+                clientname="UNKNOWN"
+            fi
+        fi
         echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
 
 	    break
       done
-
   done
 
   if [ $vlansfound -eq 0 ]; then
@@ -4293,6 +4311,7 @@ attachedlanclients ()
 
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt 
+dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4301,11 +4320,13 @@ while [ $clientcount -ne $maxclientcount ]
     local clientcount=$(($clientcount+1))
     local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}')
     local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
+    local maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
 
     #find matchine client name
     local clients=$(nvram get custom_clientlist)
 
     local counter=0
+    local found=0
     while true
       do
         counter=$(($counter+1))
@@ -4317,21 +4338,26 @@ while [ $clientcount -ne $maxclientcount ]
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
         	
         if [ -z "$clientextract" ]; then
-        	clientname="UNKNOWN"
-        	#paddedclientip="000.000.000.000"
-          break
+            break
         fi
 
-        client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$macupper" ]; then
-          clientname=$client
-          break
+        if [ "$mac" == "$clientmac" ]; then
+            clientname=$client
+            found=1
+            break
         fi
         break
       done
-
+      # Fallback to using dnsmasq.leases if no match found
+      if [ $found -ne 1 ]; then
+          clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+          if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+              clientname="UNKNOWN"
+          fi
+      fi
       echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
 
   done
