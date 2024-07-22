@@ -4191,7 +4191,7 @@ while [ $clientcount -ne $maxclientcount ]
 				# Logic below by @ExtremeFiretop / modified for RTRMON flow by ViktorJp
 		    # Step 1: Get the bridge ID
 		    local bridge_id
-		    bridge_id=$(arp -a | grep -i "$clientmac" | awk '{print $7}')
+		    bridge_id=$(arp -a -n | grep -i "$clientmac" | awk '{print $7}')
 		    
 		    if [ -z "$bridge_id" ]; then
 		    	  stopproc=1
