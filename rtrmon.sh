@@ -4022,6 +4022,7 @@ rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
 wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
+dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4034,6 +4035,7 @@ while [ $clientcount -ne $maxclientcount ]
     local clients=$(nvram get custom_clientlist)
 
     local counter=0
+    local found=0
     while true
       do
         counter=$(($counter+1))
@@ -4061,21 +4063,28 @@ while [ $clientcount -ne $maxclientcount ]
         rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
 
         if [ -z "$clientextract" ]; then
-        	clientname="UNKNOWN"
-          break
+            break
         fi
 
         local client="$(echo $clientextract | awk -F ">" '{print $1}')"
         local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
         if [ "$mac" == "$clientmac" ]; then
-          clientname=$client
-          break
+            clientname=$client
+            found=1
+            break
         fi
-	    break
+		break
       done
 
-      echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+    # Fallback to using dnsmasq.leases if no match found
+    if [ $found -ne 1 ]; then
+        clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+            clientname="UNKNOWN"
+        fi
+    fi
+    echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
 
   done
 
