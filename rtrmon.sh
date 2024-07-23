@@ -3997,7 +3997,7 @@ DisplayPage7 () {
 	sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
 	sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
 	attachedlanclients
-	rm -f /jffs/addons/rtrmon.d/temparp.txt
+	#rm -f /jffs/addons/rtrmon.d/temparp.txt
 
   #Testing
   #FourBandCustom55624="False" #testing
@@ -4023,6 +4023,8 @@ wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
+local clients=$(nvram get custom_clientlist)
+local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4031,12 +4033,9 @@ while [ $clientcount -ne $maxclientcount ]
     local clientcount=$(($clientcount+1))
     local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
 
-    #find matchine client name
-    local clients=$(nvram get custom_clientlist)
-
     local counter=0
     local found=0
-    while true
+    while [ $counter -ne $maxextractcount ]
       do
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
@@ -4074,7 +4073,6 @@ while [ $clientcount -ne $maxclientcount ]
             found=1
             break
         fi
-		break
       done
 
     # Fallback to using dnsmasq.leases if no match found
@@ -4108,6 +4106,8 @@ wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
+local clients=$(nvram get custom_clientlist)
+local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4116,12 +4116,9 @@ while [ $clientcount -ne $maxclientcount ]
     local clientcount=$(($clientcount+1))
     local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
 
-    #find matchine client name
-    local clients=$(nvram get custom_clientlist)
-
     local counter=0
     local found=0
-    while true
+    while [ $counter -ne $maxextractcount ]
       do
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
@@ -4154,12 +4151,11 @@ while [ $clientcount -ne $maxclientcount ]
         local client="$(echo $clientextract | awk -F ">" '{print $1}')"
         local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$clientmac" ]; then
+        if [ "$mac" == "$macupper" ]; then
             clientname=$client
             found=1
             break
         fi
-		break
       done
 
     # Fallback to using dnsmasq.leases if no match found
@@ -4195,6 +4191,9 @@ sed -i '1d' /jffs/addons/rtrmon.d/temparpvlan.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
+#find matchine client name
+local clients=$(nvram get custom_clientlist)
+local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4207,12 +4206,9 @@ while [ $clientcount -ne $maxclientcount ]
     local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
     local maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
 
-    #find matchine client name
-    local clients=$(nvram get custom_clientlist)
-
     local counter=0
     local found=0
-    while true
+    while [ $counter -ne $maxextractcount ]
       do
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
@@ -4289,7 +4285,6 @@ while [ $clientcount -ne $maxclientcount ]
         fi
         echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
 
-	    break
       done
   done
 
@@ -4308,10 +4303,12 @@ while [ $clientcount -ne $maxclientcount ]
 
 attachedlanclients ()
 {
-
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
 rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt 
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
+#find matchine client name
+local clients=$(nvram get custom_clientlist)
+local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
 local clientcount=0
 while [ $clientcount -ne $maxclientcount ]
@@ -4320,14 +4317,10 @@ while [ $clientcount -ne $maxclientcount ]
     local clientcount=$(($clientcount+1))
     local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}')
     local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
-    local maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
-
-    #find matchine client name
-    local clients=$(nvram get custom_clientlist)
 
     local counter=0
     local found=0
-    while true
+    while [ $counter -ne $maxextractcount ]
       do
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
@@ -4344,22 +4337,20 @@ while [ $clientcount -ne $maxclientcount ]
         local client="$(echo $clientextract | awk -F ">" '{print $1}')"
         local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$clientmac" ]; then
+        if [ "$mac" == "$macupper" ]; then
             clientname=$client
             found=1
             break
         fi
-        break
       done
       # Fallback to using dnsmasq.leases if no match found
       if [ $found -ne 1 ]; then
-          clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+          clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
           if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
               clientname="UNKNOWN"
           fi
       fi
       echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
-
   done
 
   if [ $maxclientcount -ge 1 ]; then
