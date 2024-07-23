@@ -4135,9 +4135,6 @@ while [ $clientcount -ne $maxclientcount ]
         clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
-        	
-        #delete entry from temparp table
-        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
 
         #calcs
         conntime=$(date -d@$networktime -u +%Hh:%Mm)
