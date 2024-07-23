@@ -3997,7 +3997,7 @@ DisplayPage7 () {
 	sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
 	sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
 	attachedlanclients
-	#rm -f /jffs/addons/rtrmon.d/temparp.txt
+	rm -f /jffs/addons/rtrmon.d/temparp.txt
 
   #Testing
   #FourBandCustom55624="False" #testing
