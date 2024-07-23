@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b11"
+Version="2.1.0b12"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -389,44 +389,44 @@ progressbaroverride() {
     elif [ "$5" == "Standard" ] && [ "$INITIALBOOT" -eq 1 ]; then
       printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]\r${CClear}" "$barchars" "$barspaces"
     fi
-    
+
     if [ "$INITIALBOOT" == "0" ]; then
     # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
     key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
 
-	    if [ $key_press ]; then
-	      case $key_press in
-	          [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
-	          [Hh]) timerreset=1; hideoptions=1;;
-	          [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
-	          [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=7; clear; DisplayPage7; echo -e "\n"; elif [ "$NextPage" == "7" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
-	          [Oo]) vlogs;;
-	          [Pp]) if [ "$NextPage" == "1" ]; then NextPage=7; clear; DisplayPage7; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; elif [ "$NextPage" == "7" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; fi;;
-	          [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
-	          [Ss]) timerreset=1; hideoptions=0;;
-	          [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
-	          [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
-	          1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
-	          [\!]) Sortby="Name"; timerreset=1;;
-	          [\@]) Sortby="IP"; timerreset=1;;
-	          [\#]) Sortby="MAC"; timerreset=1;; 
-	      esac
-	    fi
+      if [ $key_press ]; then
+        case $key_press in
+            [Cc]) QueueNetworkConn=1; echo -e "${CClear}[Queuing Network Connection Stats]                                       "; sleep 1; clear; NextPage=6; DisplayPage6; echo "";;
+            [Dd]) QueueNetworkDiag=1; echo -e "${CClear}[Queuing Network Diagnostics]                                            "; sleep 1; clear; NextPage=5; DisplayPage5; echo "";;
+            [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0;;
+            [Hh]) timerreset=1; hideoptions=1;;
+            [Ii]) QueueSpdtst=1; echo -e "${CClear}[Queuing WAN Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo "";;
+            [Mm]) FromUI=1; (vsetup); source $CFGPATH; echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   "; sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n";;
+            [Nn]) if [ "$NextPage" == "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=5; clear; DisplayPage5; echo ""; elif [ "$NextPage" == "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=7; clear; DisplayPage7; echo -e "\n"; elif [ "$NextPage" == "7" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; fi;;
+            [Oo]) vlogs;;
+            [Pp]) if [ "$NextPage" == "1" ]; then NextPage=7; clear; DisplayPage7; echo ""; elif [ "$NextPage" == "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"; elif [ "$NextPage" == "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"; elif [ "$NextPage" == "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"; elif [ "$NextPage" == "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"; elif [ "$NextPage" == "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"; elif [ "$NextPage" == "7" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"; fi;;
+            [Rr]) if [ "$autorotate" == 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"; elif [ "$autorotate" == "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"; fi;;
+            [Ss]) timerreset=1; hideoptions=0;;
+            [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo "";;
+            [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo "";;
+            [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo "";;
+            [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo "";;
+            1) QueueVPNSlot1=1; echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            2) QueueVPNSlot2=1; echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            3) QueueVPNSlot3=1; echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            4) QueueVPNSlot4=1; echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            5) QueueVPNSlot5=1; echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  "; sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n";;
+            [\!]) Sortby="Name"; timerreset=1;;
+            [\@]) Sortby="IP"; timerreset=1;;
+            [\#]) Sortby="MAC"; timerreset=1;;
+        esac
+      fi
     else
       sleep 1
     fi
   fi
-  
+
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2910,7 +2910,7 @@ DisplaySpdtst () {
   SpdDownload=$(awk -v down=$SpdDownload -v mb=125000 'BEGIN{printf "%.0f\n", down/mb}')
   SpdUpload=$(awk -v up=$SpdUpload -v mb=125000 'BEGIN{printf "%.0f\n", up/mb}')
 
-	if [ "$ScreenshotMode" == "1" ]; then
+  if [ "$ScreenshotMode" == "1" ]; then
     SpdServer="Starlink Satellite Transceiver #488028"
   fi
 
@@ -3273,12 +3273,12 @@ DisplayPage6 () {
         selectedslot="vpn${slot}on"
         eval selectedslot="\$${selectedslot}"
         if [ "$selectedslot" == "True" ]; then
-        	NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
+          NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
           NVRAMVPNSLOTIP=$(ping -c 1 -w 1 $NVRAMVPNSLOTADDR | awk -F '[()]' '/PING/ { print $2}')
           if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
- 				  else
+          else
             iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
           fi
         fi
@@ -3738,10 +3738,10 @@ DisplayPage7 () {
     echo -e "$UpdateNotify${CClear}"
   fi
   showheader
-  
+
   # Create a temp arp table of connected wifi/lan clients
   cat /proc/net/arp > /jffs/addons/rtrmon.d/temparp.txt
-  
+
   # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
   if [ "$FourBandCustom55624" == "True" ]; then
     if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
@@ -3830,16 +3830,16 @@ DisplayPage7 () {
     fi
   fi
 
-	if [ "$Sortby" == "Name" ]; then
-		SortbyNum="1"
-	elif [ "$Sortby" == "IP" ]; then
-		SortbyNum="2"
-	elif [ "$Sortby" == "MAC" ]; then
-		SortbyNum="3"
-	else
-		SortbyNum="1"
-	fi
-	
+  if [ "$Sortby" == "Name" ]; then
+    SortbyNum="1"
+  elif [ "$Sortby" == "IP" ]; then
+    SortbyNum="2"
+  elif [ "$Sortby" == "MAC" ]; then
+    SortbyNum="3"
+  else
+    SortbyNum="1"
+  fi
+
   #Testing
   #MaxSpeed24GhzNow=0
   #w24updown="UP" #testing
@@ -3943,7 +3943,7 @@ DisplayPage7 () {
     fi
   fi
 
-	# Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
+  # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
   for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Guest Wi-Fi${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface    ${CClear}"
@@ -3959,13 +3959,13 @@ DisplayPage7 () {
     done
 
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN/VLAN   ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
-	#Remove non-LAN records
-	sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
-	sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
-	sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
-	sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
-	attachedlanclients
-	rm -f /jffs/addons/rtrmon.d/temparp.txt
+  #Remove non-LAN records
+  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
+  attachedlanclients
+  rm -f /jffs/addons/rtrmon.d/temparp.txt
 
   #Testing
   #FourBandCustom55624="False" #testing
@@ -3989,7 +3989,7 @@ iface="$1"
 rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
 wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
 maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt 
+rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 local clients=$(nvram get custom_clientlist)
 local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
@@ -4009,26 +4009,26 @@ while [ $clientcount -ne $maxclientcount ]
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
-        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
-        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
-        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
-        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
-        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
-        maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
-        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
+        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
+        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
+        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
+        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+        maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}') 2>/dev/null
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
 
         #calcs
-        conntime=$(date -d@$networktime -u +%Hh:%Mm)
-        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}')
-        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}')
-        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}')
-        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
+        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
+        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
+        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
+        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
+        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
         if [ -z "$clientextract" ]; then
             break
@@ -4056,7 +4056,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+    sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4093,23 +4093,23 @@ while [ $clientcount -ne $maxclientcount ]
         counter=$(($counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
-        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
-        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
-        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
-        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
-        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
-        maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
-        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}')
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
+        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
+        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
+        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
+        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+        maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}') 2>/dev/null
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
         #calcs
-        conntime=$(date -d@$networktime -u +%Hh:%Mm)
-        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}')
-        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}')
-        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}')
-        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
+        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
+        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
+        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
+        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
+        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
         if [ -z "$clientextract" ]; then
             break
@@ -4137,7 +4137,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+    sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4185,25 +4185,25 @@ attachedvlanclients () {
       continue
     fi
 
-    networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}')
-    txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}')
-    rxtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}')
-    txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}')
-    rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}')
-    sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}')
+    networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+    txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
+    rxtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
+    txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
+    rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
+    sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
 
     # Delete entry from temparp table
     sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
 
     # Calculations
-    conntime=$(date -d@$networktime -u +%Hh:%Mm)
-    txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}')
-    rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}')
-    txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}')
-    rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}')
+    conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
+    txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
+    rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
+    txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
+    rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
-    clientip=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | grep $clientmac | awk '{print $1}')
-    paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+    clientip=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | grep $clientmac | awk '{print $1}') 2>/dev/null
+    paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
     if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
     local found=0
@@ -4247,7 +4247,7 @@ attachedvlanclients () {
 attachedlanclients ()
 {
 maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt 
+rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt
 dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
 #find matchine client name
 local clients=$(nvram get custom_clientlist)
@@ -4270,10 +4270,10 @@ while [ $clientcount -ne $maxclientcount ]
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
         #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
-        clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}')
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//')
+        clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}') 2>/dev/null
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
         if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
-        	
+
         if [ -z "$clientextract" ]; then
             break
         fi
@@ -4298,7 +4298,7 @@ while [ $clientcount -ne $maxclientcount ]
   done
 
   if [ $maxclientcount -ge 1 ]; then
-  	sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
+    sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
     column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
   else
     echo -e "  No Devices Connected"
@@ -4463,14 +4463,14 @@ _VPN_GetClientState_()
       echo -e "${CClear}"
       exit 0
   fi
-  
+
   # Check to see if the -now parameter is being called to bypass the screen timer
   if [ "$2" == "-now" ]
     then
       bypassscreentimer=1
   elif [ "$3" == "-now" ]
     then
-    	bypassscreentimer2=1
+      bypassscreentimer2=1
   fi
 
   # Check to see if the screen option is being called and run operations normally using the screen utility
@@ -4480,57 +4480,57 @@ _VPN_GetClientState_()
       sleep 1
       ScreenSess=$(screen -ls | grep "rtrmon" | awk '{print $1}' | cut -d . -f 1)
       if [ -z $ScreenSess ]; then
-      	if [ "$bypassscreentimer" == "1" ]; then
-      		screen -dmS "rtrmon" $APPPATH -monitor
+        if [ "$bypassscreentimer" == "1" ]; then
+          screen -dmS "rtrmon" $APPPATH -monitor
           sleep 1
           screen -r rtrmon
         elif [ "$bypassscreentimer2" == "1" ]; then
- 	        if [ -z $2 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor $2
-	        else
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        fi
+          if [ -z $2 ]; then
+            screen -dmS "rtrmon" $APPPATH -monitor
+          elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+            screen -dmS "rtrmon" $APPPATH -monitor $2
+          else
+            screen -dmS "rtrmon" $APPPATH -monitor
+          fi
           sleep 1
           screen -r rtrmon
         else
-          clear        
-	        echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
-	        echo ""
-	        echo -e "${CCyan}IMPORTANT:${CClear}"
-	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-	        echo ""
-	        if [ -z $2 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
-	          screen -dmS "rtrmon" $APPPATH -monitor $2
-	        else
-	          screen -dmS "rtrmon" $APPPATH -monitor
-	        fi
-	        sleep 2
-	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-	        echo -e "${CClear}"
-	        spinner 5
-	        screen -r rtrmon
-	        exit 0
-	      fi
+          clear
+          echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
+          echo ""
+          echo -e "${CCyan}IMPORTANT:${CClear}"
+          echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+          echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+          echo ""
+          if [ -z $2 ]; then
+            screen -dmS "rtrmon" $APPPATH -monitor
+          elif [ $2 -ge 1 ] && [ $2 -le 6 ]; then
+            screen -dmS "rtrmon" $APPPATH -monitor $2
+          else
+            screen -dmS "rtrmon" $APPPATH -monitor
+          fi
+          sleep 2
+          echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+          echo -e "${CClear}"
+          spinner 5
+          screen -r rtrmon
+          exit 0
+        fi
       else
         if [ "$bypassscreentimer" == "1" ]; then
           sleep 1
         else
-	        clear
-	        echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
-	        echo ""
-	        echo -e "${CCyan}IMPORTANT:${CClear}"
-	        echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-	        echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
-	        echo ""
-	        echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
-	        echo -e "${CClear}"
-	        spinner 5
-	      fi
+          clear
+          echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
+          echo ""
+          echo -e "${CCyan}IMPORTANT:${CClear}"
+          echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
+          echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+          echo ""
+          echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+          echo -e "${CClear}"
+          spinner 5
+        fi
       fi
       screen -dr $ScreenSess
       exit 0
@@ -4674,7 +4674,7 @@ _VPN_GetClientState_()
 # -------------------------------------------------------------------------------------------------------------------------
 
 # Display the logo and indicator that stats are being gathered.
-  
+
   clear
   logoNM
   echo -e "\r${CGreen}              [Initiating Boot Sequence - Gathering Initial Stats...]"
@@ -4957,7 +4957,7 @@ _VPN_GetClientState_()
 # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
-  
+
   i=0
   while [ $i -ne $Interval ]
     do
@@ -5265,7 +5265,7 @@ while true; do
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
   i=0
-  
+
   while [ $i -ne $Interval ]
     do
       i=$(($i+1))
@@ -5274,12 +5274,12 @@ while true; do
       progressbaroverride $i $Interval "" "s" "Standard"
       if [ "$timerreset" == "1" ]; then i=$Interval; fi
   done
-  
+
   # Do a fresh round of stats and save them to the old stats for display purposes
   calculatestats
   oldstats
   clear
-  
+
   if [ "$autorotate" == "1" ] && [ $Interval -eq $i ]; then
     if [ "$NextPage" == "1" ]; then clear; NextPage=2 #DisplayPage2
     elif [ "$NextPage" == "2" ]; then clear; NextPage=3 #DisplayPage3
