@@ -1,4 +1,4 @@
-v2.1.0b9  - (TBA)
+v2.1.0b12 - (TBA)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
             connected time, it seemed like a great idea to provide a view of which connected clients are
             currently attached to your router, and on what interface. This new view (page #7) shows the client
@@ -22,6 +22,11 @@ v2.1.0b9  - (TBA)
             until 3006 arrives for my router, I will need to put a pin in it, and will just combine LAN and VLAN
             devices under the same section.
           - PATCH: Added a blank IP for clients that come up as UNKNOWN to help with spacing.
+          - PATCH: With many huge thanks to @ExtremeFiretop, he had some very productive time to help debug and
+            develop some workarounds while testing it against his live GT-BE98U! He singlehandedly was able to 
+            figure out the methodology needed to report which clients fell into which VLANs, along with other
+            great code optimization, including falling back to pulling device names from dnsmasq when the
+            custom client name entry is non-existent in NVRAM! THANK YOU!:)
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
