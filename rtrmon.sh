@@ -4204,7 +4204,6 @@ while [ $clientcount -ne $maxclientcount ]
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
     local clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
     local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
-    local maclower=$(echo "$clientmac" | awk '{print tolower($0)}')
 
     local counter=0
     local found=0
@@ -4278,7 +4277,7 @@ while [ $clientcount -ne $maxclientcount ]
 
         # Fallback to using dnsmasq.leases if no match found
         if [ $found -ne 1 ]; then
-            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+            clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
             if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
                 clientname="UNKNOWN"
             fi
