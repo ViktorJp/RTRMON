@@ -3958,7 +3958,7 @@ DisplayPage7 () {
       echo ""
     done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN/VLAN   ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN        ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
   #Remove non-LAN records
   sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
   sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
