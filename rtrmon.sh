@@ -3942,19 +3942,19 @@ DisplayPage7 () {
       echo ""
     fi
   fi
-
+  
+  for vlanlabels in $(nvram get apg_ifnames)
+    do
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
+      attachedvlanclients "$vlanlabels"
+      echo ""
+    done
+    
   # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
   for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Guest Wi-Fi${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface    ${CClear}"
       attachedguestclients "$guestiface"
-      echo ""
-    done
-
-  for vlanlabels in $(nvram get apg_ifnames)
-    do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
-      attachedvlanclients "$vlanlabels"
       echo ""
     done
 
