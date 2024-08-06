@@ -1,4 +1,4 @@
-v2.1.0b12 - (TBA)
+v2.1.0b13 - (TBA)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
             connected time, it seemed like a great idea to provide a view of which connected clients are
             currently attached to your router, and on what interface. This new view (page #7) shows the client
