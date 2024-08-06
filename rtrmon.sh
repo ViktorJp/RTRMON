@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b12"
+Version="2.1.0b13"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3730,7 +3730,9 @@ DisplayPage6 () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-
+##------------------------------------------##
+## Modified by ExtremeFiretop [2024-Aug-06] ##
+##------------------------------------------##
 # This function displays the stats UI for page 3
 DisplayPage7 () {
   clear
@@ -3738,9 +3740,13 @@ DisplayPage7 () {
     echo -e "$UpdateNotify${CClear}"
   fi
   showheader
-
   # Create a temp arp table of connected wifi/lan clients
   cat /proc/net/arp > /jffs/addons/rtrmon.d/temparp.txt
+
+  # Force create the processed clients list file
+  touch /jffs/addons/rtrmon.d/processed_clients.txt
+  # Force create the processed clients list file for VLAN
+  touch /jffs/addons/rtrmon.d/processed_vlanclients.txt
 
   # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
   if [ "$FourBandCustom55624" == "True" ]; then
@@ -3860,14 +3866,14 @@ DisplayPage7 () {
 
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
     else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
     fi
     attachedwificlients "$ifname24"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite} 2.4GHz     ${CDkGray}[ ${CRed}Disabled                                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 2.4GHz               ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -3875,14 +3881,14 @@ DisplayPage7 () {
   #w5updown="UP" #testing
   if [ "$MaxSpeed5GhzNow" != "0" ]; then
     if [ "$w5updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
     else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
     fi
     attachedwificlients "$ifname5"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite} 5.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz               ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -3892,15 +3898,15 @@ DisplayPage7 () {
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
       if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
       fi
       attachedwificlients "$ifname52"
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite} 5.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CRed}Disabled                                                                            ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -3911,15 +3917,15 @@ DisplayPage7 () {
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed6GhzNow" != "0" ]; then
       if [ "$w6updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
       fi
       attachedwificlients "$ifname6"
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite} 6.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz               ${CDkGray}[ ${CRed}Disabled                                                                            ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -3930,41 +3936,44 @@ DisplayPage7 () {
   if [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed62GhzNow" != "0" ]; then
       if [ "$w62updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
       fi
       attachedwificlients "$ifname62"
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite} 6.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
-  
-  for vlanlabels in $(nvram get apg_ifnames)
-    do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}VLAN       ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
-      attachedvlanclients "$vlanlabels"
-      echo ""
-    done
-    
+
   # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
+  cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt     
   for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Guest Wi-Fi${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local Guest Wi-Fi          ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"       
       attachedguestclients "$guestiface"
       echo ""
     done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}LAN        ${CDkGray}[ ${CWhite}Enabled                                                                       ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0      ${CClear}"
+  for vlanlabels in $(nvram get apg_ifnames)
+    do
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
+      attachedvlanclients "$vlanlabels"
+      echo ""
+    done
+
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0    ${CClear}"
   #Remove non-LAN records
-  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
-  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
-  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt 
+  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt 
+  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt 
   sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
   attachedlanclients
+  rm -f /jffs/addons/rtrmon.d/processed_clients.txt
+  rm -f /jffs/addons/rtrmon.d/processed_vlanclients.txt
   rm -f /jffs/addons/rtrmon.d/temparp.txt
 
   #Testing
@@ -3980,165 +3989,286 @@ DisplayPage7 () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
+# multiple DHCP lists can exist. Read through all lists and compile into a single list.
+
+read_all_dhcp_leases() {
+  local lease_files="/var/lib/misc/dnsmasq-*.leases /var/lib/misc/dnsmasq.leases"
+  local all_leases
+
+  all_leases=$(cat $lease_files 2>/dev/null)
+  echo "$all_leases"
+}
+
 # attachedwificlients pulls connected client info from wl, arp and nvram
 
 attachedwificlients ()
 {
+    iface="$1"
+    rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
+    wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+    maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
+    rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
+    dhcpleases="$(read_all_dhcp_leases)"
+    local clients=$(nvram get custom_clientlist)
+    local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
-iface="$1"
-rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
-maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
-dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
-local clients=$(nvram get custom_clientlist)
-local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+    local clientcount=0
+    while [ $clientcount -le $maxclientcount ]
+    do
+        clientname=""
+        conntime=""
+        clientip=""
+        paddedclientip=""
+        MLOSupport=""
+        clientcount=$((clientcount+1))
+        local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
-local clientcount=0
-while [ $clientcount -ne $maxclientcount ]
-  do
-    clientname=""
-    paddedclientip=""
-    local clientcount=$(($clientcount+1))
-    local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+        if [ -z "$clientmac" ]; then
+            continue
+        fi
 
-    local counter=0
-    local found=0
-    while [ $counter -ne $maxextractcount ]
-      do
-        counter=$(($counter+1))
-        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
-
+        MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
         txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
         rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
         txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}') 2>/dev/null
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
-        #delete entry from temparp table
-        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
+        # Find IPs for the given MAC address in the ARP table
+        ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
+
+        # Iterate over the IPs to find the reachable one
+        for ip in $ips; do
+            # Check the status of the IP in the neighbor table
+            arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+    
+            # Check if the current IP is reachable
+            if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
+                if [ -z "$sigstrength" ]; then 
+                    conntime="STALE"
+                fi
+                continue
+            else
+                # Set the clientip to the current IP if it is reachable or delay
+                clientip="$ip"
+                break
+            fi
+        done
+
+        # Fallback to using the ARP table if no reachable IP was found
+        if [ -z "$clientip" ]; then
+            clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
+        fi
+
+        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+        if [ -n "$MLOSupport" ]; then
+            paddedclientip="MLO Device"	
+        elif [ -z "$paddedclientip" ]; then	
+            paddedclientip="000.000.000.000"	
+        fi
 
         #calcs
-        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
         txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
         rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
         txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
         rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
-        if [ -z "$clientextract" ]; then
-            break
-        fi
+        local found=0
+        local counter=0
+        while [ $counter -le $maxextractcount ]
+        do
+            counter=$((counter+1))
+            local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+            if [ -z "$clientextract" ]; then
+                break
+            fi
 
-        if [ "$mac" == "$clientmac" ]; then
-            clientname=$client
-            found=1
-            break
-        fi
-      done
+            local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+            local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-    # Fallback to using dnsmasq.leases if no match found
-    if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
-        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-            clientname="UNKNOWN"
+            if [ "$mac" == "$clientmac" ]; then
+                clientname=$client
+                found=1
+                break
+            fi
+        done
+        # Fallback to using dnsmasq.leases if no match found
+        if [ $found -ne 1 ]; then
+            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/null
+            if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+                clientname="UNKNOWN"
+            fi
         fi
+        if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
+            # Add the check for already processed clients
+            if grep -qi "$clientmac" /jffs/addons/rtrmon.d/processed_clients.txt; then
+                # Skip processing if the device was already handled
+                continue
+            else
+                echo "$clientmac" >> /jffs/addons/rtrmon.d/processed_clients.txt
+            fi
+            #delete entry from temparp table
+            sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
+            echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+        fi
+    done
+
+    if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
+      if [ $maxclientcount -ge 1 ]; then
+          sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+      else
+          echo -e "  No Devices Connected"
+      fi
+    else
+      echo -e "  No Devices Connected"
     fi
-    echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
-
-  done
-
-  if [ $maxclientcount -ge 1 ]; then
-    sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
-  else
-    echo -e "  No Devices Connected"
-  fi
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedguestclients pulls connected client info from wl, arp and nvram
+##------------------------------------------##
+## Modified by ExtremeFiretop [2024-Aug-06] ##
+##------------------------------------------##
+attachedguestclients() {
+  iface="$1"
+  rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
+  wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+  maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
+  rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
+  dhcpleases="$(read_all_dhcp_leases)"
+  local clients=$(nvram get custom_clientlist)
+  local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
-attachedguestclients ()
-{
-
-iface="$1"
-rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
-maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
-dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
-local clients=$(nvram get custom_clientlist)
-local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
-
-local clientcount=0
-while [ $clientcount -ne $maxclientcount ]
+  local clientcount=0
+  while [ $clientcount -le $maxclientcount ]
   do
     clientname=""
+    conntime=""
+    clientip=""
     paddedclientip=""
-    local clientcount=$(($clientcount+1))
-    local clientmac=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | awk 'NR=='$clientcount' {print $2}')
+    MLOSupport=""
+    clientcount=$((clientcount+1))
+    local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
-    local counter=0
+    if [ -z "$clientmac" ]; then
+      continue
+    fi
+
+    MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
+    networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+    conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
+    txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
+    rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
+    txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
+    rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
+    sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+    maclowerprefix=$(echo "$maclower" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
+
+    # Find IPs for the given MAC address in the ARP table
+    ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
+
+    # Iterate over the IPs to find the reachable one
+    for ip in $ips; do
+        # Check the status of the IP in the neighbor table
+        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+    
+        # Check if the current IP is reachable
+        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
+            if [ -z "$sigstrength" ]; then 
+                conntime="STALE"
+            fi
+            continue
+        else
+            # Set the clientip to the current IP if it is reachable or delay
+            clientip="$ip"
+            break
+        fi
+    done
+
+    # Fallback to using the ARP table or DHCP leases if no reachable IP was found
+    if [ -z "$clientip" ]; then
+        # Try to get the last IP from the ARP table
+        clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
+
+        # If still no IP, fallback to using the DHCP leases
+        if [ -z "$clientip" ]; then
+            clientip=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $3}') 2>/dev/null
+        fi
+    fi
+
+    paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+    if [ -n "$MLOSupport" ]; then
+        paddedclientip="MLO Device"	
+    elif [ -z "$paddedclientip" ]; then	
+        paddedclientip="000.000.000.000"	
+    fi
+
+    #calcs
+    txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
+    rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
+    txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
+    rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
+
     local found=0
-    while [ $counter -ne $maxextractcount ]
-      do
-        counter=$(($counter+1))
+    local counter=0
+    while [ $counter -le $maxextractcount ]
+    do
+        counter=$((counter+1))
         local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
-
-        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
-        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
-        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
-        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
-        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
-        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
-        maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-        clientip=$(cat /proc/net/arp | grep $maclower | awk '{print $1}') 2>/dev/null
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
-
-        #calcs
-        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
-        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
-        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
-        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
-        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
         if [ -z "$clientextract" ]; then
             break
         fi
 
-        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+        local client=$(echo $clientextract | awk -F ">" '{print $1}')
+        local mac=$(echo $clientextract | awk -F ">" '{print $2}')
+        local macextractprefix=$(echo "$mac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
+        local macprefix=$(echo "$clientmac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
 
-        if [ "$mac" == "$macupper" ]; then
+        if [ "$macextractprefix" == "$macprefix" ]; then
             clientname=$client
             found=1
             break
         fi
-      done
-
+    done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}')
+        if [ -n "$MLOSupport" ]; then 
+            clientname=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $4}') 2>/dev/nul
+        else
+            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/nul
+        fi
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
     fi
-    echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
-
+    if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
+        # Add the check for already processed clients
+        if grep -qi "$clientmac" /jffs/addons/rtrmon.d/processed_clients.txt; then
+            # Skip processing if the device was already handled
+            continue
+        else
+            echo "$clientmac" >> /jffs/addons/rtrmon.d/processed_clients.txt
+        fi
+        #delete entry from temparp table
+        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
+        echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt 
+    fi
   done
 
-  if [ $maxclientcount -ge 1 ]; then
-    sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+  if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
+    if [ $maxclientcount -ge 1 ]; then
+      sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+    else
+      echo -e "  No Devices Connected"
+    fi
   else
     echo -e "  No Devices Connected"
   fi
@@ -4147,70 +4277,113 @@ while [ $clientcount -ne $maxclientcount ]
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedvlanclients pulls connected client info from wl, arp and nvram
 
-attachedvlanclients () {
+attachedvlanclients() {
   iface="$1"
   vlansfound=1
-  cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
-  # Remove the first line which is causing formatting issues
-  sed -i '1d' /jffs/addons/rtrmon.d/temparpvlan.txt
   maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
   rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
-  dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
-  # Find matching client name
+  dhcpleases="$(read_all_dhcp_leases)"
   local clients=$(nvram get custom_clientlist)
   local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
   local clientcount=0
-  while [ $clientcount -lt $maxclientcount ]; do
-    clientcount=$(($clientcount + 1))
+  while [ $clientcount -le $maxclientcount ]
+  do
     clientname=""
+    conntime=""
+    clientip=""
     paddedclientip=""
+    interface_name=""
+    MLOSupport=""
+    clientcount=$((clientcount+1))
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
-    local clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
-    local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
 
+    if [ -z "$clientmac" ]; then
+      continue
+    fi
+
+    # Convert the MAC address to uppercase and store it in a new variable
+    macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
+    macprefix=$(echo "$macupper" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
+    clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
     if [ -z "$clientbridgeid" ] || [ "$clientbridgeid" != "$iface" ]; then
       continue
     else
       vlansfound=0
     fi
 
-    local port_id=$(brctl showmacs "$iface" | grep -i "$clientmac" | awk '{print $1}')
-    if [ -z "$port_id" ]; then
-      continue
-    fi
+    interfaces=$(ip link show | grep -E 'wl|wlan' | awk -F: '{print $2}' | tr -d ' ')
+    for wirelessface in $interfaces; do
+        # Suppress both standard output and error from the wl command and check for the MAC
+        if wl -i "$wirelessface" assoclist 2>/dev/null | grep -iq "$macprefix"; then
+            # Save the interface name into the variable
+            interface_name="$wirelessface"
+            continue
+        fi
+    done
 
-    local interface_name=$(brctl showstp "$iface" | grep -i "($port_id)" | awk '{print $1}')
-    if [ -z "$interface_name" ]; then
-      continue
-    fi
-
+    MLOSupport=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
     networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
+    # Set conntime to "OFFLINE" if networktime is empty
+    if [ -z "$networktime" ]; then
+        conntime="AiMesh"
+    else
+        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
+    fi
     txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
     rxtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
     txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+    # Find IPs for the given MAC address in the ARP table
+    ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
 
-    # Delete entry from temparp table
-    sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
+    # Iterate over the IPs to find the reachable one
+    for ip in $ips; do
+        # Check the status of the IP in the neighbor table
+        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+    
+        # Check if the current IP is reachable
+        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
+            if [ -z "$sigstrength" ]; then 
+                conntime="STALE"
+            fi
+            continue
+        else
+            # Set the clientip to the current IP if it is reachable or delay
+            clientip="$ip"
+            break
+        fi
+    done
 
-    # Calculations
-    conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
-    txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
-    rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
-    txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
-    rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
+    # Fallback to using the ARP table if no reachable IP was found
+    if [ -z "$clientip" ]; then
+        clientip=$(cat /proc/net/arp | grep "$clientmac" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
+    fi
 
-    clientip=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | grep $clientmac | awk '{print $1}') 2>/dev/null
-    paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-    if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+    paddedclientip=$(echo "$clientip" | awk -F '.' '{printf "%03d.%03d.%03d.%03d\n", $1, $2, $3, $4}') 2>/dev/null
+    if [ -n "$MLOSupport" ]; then
+        paddedclientip="MLO Device"	
+    elif [ -z "$paddedclientip" ]; then	
+         paddedclientip="000.000.000.000"	
+    fi
+
+    #calcs
+    txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
+    rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
+    txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
+    rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
 
     local found=0
     local counter=0
-    while [ $counter -lt $maxextractcount ]; do
-      counter=$(($counter + 1))
+    while [ $counter -le $maxextractcount ]
+    do
+      counter=$((counter+1))
       local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+
+      if [ -z "$clientextract" ]; then
+          break
+      fi
 
       local client="$(echo $clientextract | awk -F ">" '{print $1}')"
       local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
@@ -4220,22 +4393,44 @@ attachedvlanclients () {
         found=1
         break
       fi
-    done
 
+    done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-      clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
-      if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-        clientname="UNKNOWN"
-      fi
+        clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}') 2>/dev/null
+        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+            clientname="UNKNOWN"
+        fi
     fi
-
-    echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
+    if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
+        # Check if this MAC address has already been processed
+        if grep -q "$macupper" /jffs/addons/rtrmon.d/processed_vlanclients.txt && [ "$conntime" = "STALE" ]; then
+            continue  # Skip processing this MAC address
+        else
+            # Mark this MAC as processed by adding it to the processed_macs_file
+            echo "$macupper" >> /jffs/addons/rtrmon.d/processed_vlanclients.txt
+        fi
+        #delete entry from temparp table
+        sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
+        if [ "$conntime" = "AiMesh" ]; then
+            echo "$clientname,$paddedclientip,$macupper,$conntime" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
+        else
+            echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
+        fi
+    fi
   done
 
-  if [ $vlansfound -eq 0 ]; then
-    sort -f -d -o /jffs/addons/rtrmon.d/vlanclients$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
+  if [ -f "/jffs/addons/rtrmon.d/vlanclients$iface.txt" ]; then
+    if [ $vlansfound -eq 0 ]; then
+      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
+      awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
+
+      # Move sorted file back to original
+      mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
+    else
+      echo -e "  No Devices Connected"
+    fi
   else
     echo -e "  No Devices Connected"
   fi
@@ -4246,60 +4441,79 @@ attachedvlanclients () {
 
 attachedlanclients ()
 {
-maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
-rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt
-dhcpleases="$(cat /var/lib/misc/dnsmasq.leases)"
-#find matchine client name
-local clients=$(nvram get custom_clientlist)
-local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+  maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
+  rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt
+  dhcpleases="$(read_all_dhcp_leases)"
+  #find matchine client name
+  local clients=$(nvram get custom_clientlist)
+  local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
 
-local clientcount=0
-while [ $clientcount -ne $maxclientcount ]
+  local clientcount=0
+  while [ $clientcount -le $maxclientcount ]
   do
-    clientname=""
-    paddedclientip=""
-    local clientcount=$(($clientcount+1))
-    local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}')
-    local macupper=$(echo "$clientmac" | awk '{print toupper($0)}')
+      clientname=""
+      paddedclientip=""
+      clientcount=$((clientcount+1))
+      local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}') 2>/dev/null
 
-    local counter=0
-    local found=0
-    while [ $counter -ne $maxextractcount ]
+      if [ -z "$clientmac" ]; then
+          continue
+      fi
+
+      local macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
+
+      # Add the check for already processed clients
+      if grep -qi "$clients" /jffs/addons/rtrmon.d/processed_clients.txt; then
+          # Skip processing if the device was already handled
+          continue
+      else
+          echo "$macupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
+      fi
+
+      local counter=0
+      local found=0
+      while [ $counter -le $maxextractcount ]
       do
-        counter=$(($counter+1))
-        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+          counter=$((counter+1))
+          local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
 
-        #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
-        clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1}') 2>/dev/null
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-        if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+          if [ -z "$clientextract" ]; then
+              continue
+          fi
 
-        if [ -z "$clientextract" ]; then
-            break
-        fi
+          #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
+          clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1; exit}') 2>/dev/null
+          paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+          if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
 
-        local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-        local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+          local client="$(echo $clientextract | awk -F ">" '{print $1}')"
+          local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$macupper" ]; then
-            clientname=$client
-            found=1
-            break
-        fi
+          if [ "$mac" == "$macupper" ]; then
+              clientname=$client
+              found=1
+              break
+          fi
       done
       # Fallback to using dnsmasq.leases if no match found
       if [ $found -ne 1 ]; then
-          clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
-          if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-              clientname="UNKNOWN"
-          fi
+            clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
+            if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+                clientname="UNKNOWN"
+            fi
       fi
-      echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
+      if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
+          echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
+      fi
   done
 
-  if [ $maxclientcount -ge 1 ]; then
-    sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
-    column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
+  if [ -f "/jffs/addons/rtrmon.d/clientlistbr0.txt" ]; then
+    if [ $maxclientcount -ge 1 ]; then
+      sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
+      column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
+    else
+      echo -e "  No Devices Connected"
+    fi
   else
     echo -e "  No Devices Connected"
   fi
