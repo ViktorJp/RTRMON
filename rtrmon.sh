@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0b12"
+Version="2.1.0b13"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3730,7 +3730,9 @@ DisplayPage6 () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-
+##------------------------------------------##
+## Modified by ExtremeFiretop [2024-Aug-06] ##
+##------------------------------------------##
 # This function displays the stats UI for page 3
 DisplayPage7 () {
   clear
@@ -4129,7 +4131,9 @@ attachedwificlients ()
 
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedguestclients pulls connected client info from wl, arp and nvram
-
+##------------------------------------------##
+## Modified by ExtremeFiretop [2024-Aug-06] ##
+##------------------------------------------##
 attachedguestclients() {
   iface="$1"
   rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
