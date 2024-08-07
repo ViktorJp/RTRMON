@@ -27,6 +27,9 @@ v2.1.0b13 - (TBA)
             figure out the methodology needed to report which clients fell into which VLANs, along with other
             great code optimization, including falling back to pulling device names from dnsmasq when the
             custom client name entry is non-existent in NVRAM! THANK YOU!:)
+          - PATCH: @ExtremeFiretop and @visortgw have been busy working together in the background and putting
+            the final finishing touches on the network client listing screen! Thanks so much for your help and
+            expertise and putting a nice bow on top! :)
 
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
