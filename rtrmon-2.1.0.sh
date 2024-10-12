@@ -3866,9 +3866,9 @@ DisplayPage7 () {
 
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
     else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
     fi
     attachedwificlients "$ifname24"
     echo ""
@@ -3881,9 +3881,9 @@ DisplayPage7 () {
   #w5updown="UP" #testing
   if [ "$MaxSpeed5GhzNow" != "0" ]; then
     if [ "$w5updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
     else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
     fi
     attachedwificlients "$ifname5"
     echo ""
@@ -3898,9 +3898,9 @@ DisplayPage7 () {
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
       if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
       fi
       attachedwificlients "$ifname52"
       #attachedwificlients "$ifname5" #testing
@@ -3917,9 +3917,9 @@ DisplayPage7 () {
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed6GhzNow" != "0" ]; then
       if [ "$w6updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
       fi
       attachedwificlients "$ifname6"
       #attachedwificlients "$ifname5" #testing
@@ -3936,9 +3936,9 @@ DisplayPage7 () {
   if [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed62GhzNow" != "0" ]; then
       if [ "$w62updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
       else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
       fi
       attachedwificlients "$ifname62"
       #attachedwificlients "$ifname5" #testing
@@ -3960,12 +3960,12 @@ DisplayPage7 () {
 
   for vlanlabels in $(nvram get apg_ifnames)
     do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                         ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
       attachedvlanclients "$vlanlabels"
       echo ""
     done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0    ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                         ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0    ${CClear}"
   #Remove non-LAN records
   sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt 
   sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt 
