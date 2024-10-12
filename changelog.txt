@@ -1,3 +1,36 @@
+v2.1.0    - (October 12, 2024)
+          - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
+            connected time, it seemed like a great idea to provide a view of which connected clients are
+            currently attached to your router, and on what interface. This new view (page #7) shows the client
+            name, IP, MAC, Uptime, TX/RX Totals (in GB), TX/RX Speeds (in Mbps) for each wireless interface, and
+            also shows the name, IP and MAC for everything else connected to the LAN (br0). Still a bit
+            experimental as I'm refining this, and would definitely appreciate your feedback!
+          - PATCH: Some further debugging to eliminate dupes caused by shoddy coding, and will now just display 
+            an "UNKNOWN" entry if a device shows up that is not defined using a custom name.
+          - PATCH: Introduced the option to sort your connected client lists by Name, IP or MAC address! Columns
+            will sort by alpha or numerical order... in the case of MAC, it seems to go alpha then numeric. Huge
+            thanks to @visortgw for suggesting this feature!
+          - PATCH: Some additional work was done on the connected clients to account for guest wi-fi clients per
+            feedback by both @visortgw and @CaptainSTX. Thanks also to @ColinTaylor and @DJones for narrowing
+            down what interface guest wi-fi clients reside on, and providing script samples of pulling legit
+            guest wi-fi interface names. RTRMON will now display enabled guest wi-fi ranges along with their
+            associated connections.
+          - PATCH: Based on a suggestion from @DJones, the client signal strength value has been added to the
+            column layout!
+          - PATCH: After much back and forth with @visortgw, sleuthing through NVRAM, I have not been able to
+            get past the VLAN brick wall, in order to show which devices are on which VLAN. So for the moment,
+            until 3006 arrives for my router, I will need to put a pin in it, and will just combine LAN and VLAN
+            devices under the same section.
+          - PATCH: Added a blank IP for clients that come up as UNKNOWN to help with spacing.
+          - PATCH: With many huge thanks to @ExtremeFiretop, he had some very productive time to help debug and
+            develop some workarounds while testing it against his live GT-BE98U! He singlehandedly was able to 
+            figure out the methodology needed to report which clients fell into which VLANs, along with other
+            great code optimization, including falling back to pulling device names from dnsmasq when the
+            custom client name entry is non-existent in NVRAM! THANK YOU!:)
+          - PATCH: @ExtremeFiretop and @visortgw have been busy working together in the background and putting
+            the final finishing touches on the network client listing screen! Thanks so much for your help and
+            expertise and putting a nice bow on top! :)
+
 v2.0.17   - (June 8, 2024)
           - PATCH: Fixed compatibility issues with the GT-AX11000_Pro. Apparently, I was searching for an
             incorrect model name... Thanks to @Kingp1n for noticing that his 2nd 5GHz band was not showing up.
