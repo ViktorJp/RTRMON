@@ -1,15 +1,16 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
-* Sorting of attached clients, name/ip/mac, etc.
 * Possible integration with ModMon NVRAM checker (JGrana)
 
 To-Do:
 -----
+* 'update [y/n] not waiting for an enter keypress causing the Enter to go into the buffer and skipping the next prompt'
 * AMTM Email notifications on certain events (like 80% disk usage)
 * add a success event for when the script starts up, and perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 
 Completed:
 ----------
+* Sorting of attached clients, name/ip/mac, etc.
 * Find way to exclude VPN from Connection test due to private site-to-site private IPs causing delays (visortgw)
 * Implement -now switch
 * Instead of just showing up-to-2 VPN connections, show all of them
