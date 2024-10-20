@@ -18,8 +18,8 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.0"
-Beta=0
+Version="2.1.3"
+Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -258,8 +258,8 @@ logoNMexit () {
 
 promptyn () {   # No defaults, just y or n
   while true; do
-    read -p "[y/n]? " -n 1 -r yn
-      case "${yn}" in
+    read -p '[y/n]? ' YESNO
+      case "$YESNO" in
         [Yy]* ) return 0 ;;
         [Nn]* ) return 1 ;;
         * ) echo -e "\nPlease answer y or n.";;
@@ -1729,7 +1729,11 @@ calculatestats () {
           vpncity="Private Network"
         else
           lastvpnip=$oldvpnip
-          vpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          if [ "$VPNSite2Site" == "1" ]; then
+            vpnip=$NVRAMVPNIP
+          else
+            vpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+          fi
           if [ -z $vpnip ]; then vpnip=$NVRAMVPNIP; fi
           if [ "$lastvpnip" != "$vpnip" ]; then
             vpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpnip | jq --raw-output .city"
@@ -2832,7 +2836,7 @@ DisplaySpdtst () {
     #run VPN speedtest and save Results
     selectedslot="vpn${1}on"
     eval selectedslot="\$${selectedslot}"
-    if [ "$selectedslot" == "True" ]; then
+    if [ "$selectedslot" == "True" ] && [ "$VPNSite2Site" == "0" ]; then
       printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing VPN$1 Speedtest]"
       if [ $spdtestsvrID == "0" ]; then
         speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=tun1$1 --accept-license --accept-gdpr 2>&1)"
@@ -3272,7 +3276,7 @@ DisplayPage6 () {
         slot=$(($slot+1))
         selectedslot="vpn${slot}on"
         eval selectedslot="\$${selectedslot}"
-        if [ "$selectedslot" == "True" ]; then
+        if [ "$selectedslot" == "True" ] && [ "$VPNSite2Site" == "0" ]; then
           NVRAMVPNSLOTADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$slot"_addr)
           NVRAMVPNSLOTIP=$(ping -c 1 -w 1 $NVRAMVPNSLOTADDR | awk -F '[()]' '/PING/ { print $2}')
           if [ "$(echo $NVRAMVPNSLOTIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
@@ -3596,7 +3600,7 @@ DisplayPage6 () {
       slot=$(($slot+1))
       selectedslot="vpn${slot}on"
       eval selectedslot="\$${selectedslot}"
-      if [ "$selectedslot" == "True" ]; then
+      if [ "$selectedslot" == "True" ] && [ "$VPNSite2Site" == "0" ]; then
 
         echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} VPN$slot                                                                                                         ${CClear}"
 
@@ -3873,7 +3877,7 @@ DisplayPage7 () {
     attachedwificlients "$ifname24"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 2.4GHz               ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 2.4GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -3888,7 +3892,7 @@ DisplayPage7 () {
     attachedwificlients "$ifname5"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz               ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -3906,7 +3910,7 @@ DisplayPage7 () {
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CRed}Disabled                                                                            ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -3925,7 +3929,7 @@ DisplayPage7 () {
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz               ${CDkGray}[ ${CRed}Disabled                                                                            ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -3944,7 +3948,7 @@ DisplayPage7 () {
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CRed}Disabled                                                                             ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -3953,19 +3957,19 @@ DisplayPage7 () {
   cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt     
   for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local Guest Wi-Fi          ${CDkGray}[ ${CWhite}Enabled                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"       
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local Guest Wi-Fi          ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"       
       attachedguestclients "$guestiface"
       echo ""
     done
 
   for vlanlabels in $(nvram get apg_ifnames)
     do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                         ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
       attachedvlanclients "$vlanlabels"
       echo ""
     done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                         ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0    ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
   #Remove non-LAN records
   sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt 
   sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt 
@@ -4961,7 +4965,11 @@ _VPN_GetClientState_()
         oldvpncity="Private Network"
       else
         lastvpnip=$oldvpnip
-        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ "$VPNSite2Site" == "1" ]; then
+          oldvpnip=$NVRAMVPNIP
+        else
+          oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        fi
         if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
         if [ "$lastvpnip" != "$oldvpnip" ]; then
           oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
@@ -5276,7 +5284,11 @@ while true; do
       oldvpncity="Private Network"
     else
       lastvpnip=$oldvpnip
-      oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ "$VPNSite2Site" == "1" ]; then
+        oldvpnip=$NVRAMVPNIP
+      else
+        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      fi
       if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
       if [ "$lastvpnip" != "$oldvpnip" ]; then
         oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
