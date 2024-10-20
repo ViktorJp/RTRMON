@@ -1,8 +1,11 @@
-v2.1.2    - (October 19, 2024)
+v2.1.3    - (October 19, 2024)
           - PATCH: Minor spacing issues fixed for screen #6 (wired/wireless clients page)
           - PATCH: Fixed some logic due to the $VPNSite2Site variable not being considered, though it is set
             in the config. Thanks to @Visortgw for his sleuthing and seeing what worked for him, and implemented
             these changes across the script as it pertains to site-to-site VPN configurations.
+          - PATCH: Fixed the Y/N prompts so they now require you to hit <enter> after typing either y or n. This
+            changes its behavior from automatically moving on and possibly causing issues from people also using
+            the enter key accidentally.
 
 v2.1.0    - (October 12, 2024)
           - MINOR: Based on some samples that @RMerlin provided @JGrana when looking at connected WiFi client
