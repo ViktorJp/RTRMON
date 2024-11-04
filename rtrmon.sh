@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-# Last Modified: 2024-Nov-03
+# Last Modified: 2024-Nov-04
 ###########################################################################################################################
 
 Version="2.1.4"
@@ -215,7 +215,7 @@ displayopsmenu()
     echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     echo -e "${InvGreen} ${CClear} Refresh ${CGreen}(C)${CClear}urrent Network Statistics                 ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/7)${CClear}"
     echo -e "${InvGreen} ${CClear} View ${CGreen}(W)${CClear}AN / ${CGreen}(L)${CClear}AN / ${CGreen}(V)${CClear}PN Stats                     ${InvGreen} ${CClear} Auto ${CGreen}(R)${CClear}otate Pages Option: ${CGreen}$autorotateindicator${CClear}"
-    echo -e "${InvGreen} ${CClear} ${CDkGray}(A)MTM Email Notifications: $amtmdisp${CClear}            ${InvGreen} ${CClear} Router Model/FW: ${CGreen}$RouterModel | $FWBUILD${CClear}"
+    echo -e "${InvGreen} ${CClear} ${CDkGray}(A)MTM Email Notifications: $amtmdisp${CClear}            ${InvGreen} ${CClear} Router Model/FW: ${CGreen}${RouterModel} | ${FWBUILD}${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
 }
@@ -1340,7 +1340,7 @@ vupdate () {
 ##----------------------------------------##
 ## Modified by Martinski W. [2024-Nov-02] ##
 ##----------------------------------------##
-# vsetup is a function that sets up, configures and allows you to launch RTRMON on your router...
+# Function that sets up, configures and allows you to launch RTRMON on your router...
 vsetup()
 {
   _SetUpTimeoutCmdVars_
@@ -1416,8 +1416,7 @@ vsetup()
               echo ""
               echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
               echo ""
-              [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-              echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
+              echo -e "Your router model is: ${CGreen}${RouterModel}${CClear}"
               echo ""
               echo -e "Ready to install?"
               if promptyn "[y/n]: "
@@ -1504,8 +1503,7 @@ vsetup()
             echo ""
             echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
             echo ""
-            [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
-            echo -e "Your router model is: ${CGreen}$RouterModel${CClear}"
+            echo -e "Your router model is: ${CGreen}${RouterModel}${CClear}"
             echo ""
             echo -e "Force Re-install?"
             if promptyn "[y/n]: "
@@ -4870,12 +4868,21 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   # Check for Updates
   updatecheck
 
+  RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)"
+  [ -z "$RouterModel" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)"
+
+  FWVER="$($timeoutcmd$timeoutsec nvram get firmver | tr -d '.')"
+  BUILDNO="$($timeoutcmd$timeoutsec nvram get buildno)"
+  EXTENDNO="$($timeoutcmd$timeoutsec nvram get extendno)"
+  if [ -z "$EXTENDNO" ]; then EXTENDNO=0; fi
+  FWBUILD="${FWVER}.${BUILDNO}_${EXTENDNO}"
+
   # Check for advanced router Features
   FourBandCustom55624="False"
   FourBandCustom56624="False"
   ThreeBand2456="False"
   ThreeBand2455="False"
-  [ -z "$($timeoutcmd$timeoutsec nvram get odmpid)" ] && RouterModel="$($timeoutcmd$timeoutsec nvram get productid)" || RouterModel="$($timeoutcmd$timeoutsec nvram get odmpid)" # Thanks @thelonelycoder for this logic
+
   if [ "$RouterModel" = "GT-AXE16000" ] || [ "$RouterModel" = "GT-BE98" ]; then
      FourBandCustom55624="True"
   fi
@@ -5487,13 +5494,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
 
   fi
 
-  FWVER="$($timeoutcmd$timeoutsec nvram get firmver | tr -d '.')"
-  BUILDNO="$($timeoutcmd$timeoutsec nvram get buildno)"
-  EXTENDNO="$($timeoutcmd$timeoutsec nvram get extendno)"
-  if [ -z "$EXTENDNO" ]; then EXTENDNO=0; fi
-  FWBUILD="${FWVER}.${BUILDNO}_${EXTENDNO}"
-
-# Get initial TOP stats to average across the interval period
+  # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME=$(date +%s)
 
