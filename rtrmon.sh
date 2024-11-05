@@ -124,14 +124,16 @@ w62updown="UP"
 SortbyOpt="Name"
 
 ##-------------------------------------##
-## Added by Martinski W. [2024-Nov-02] ##
+## Added by Martinski W. [2024-Nov-04] ##
 ##-------------------------------------##
+timerReset=0
 timeoutcmd=""       # For "timeout" cmd for "nvram" calls #
 timeoutsec=""       # For "timeout" cmd for "nvram" calls #
 timeoutlng=""       # For "timeout" cmd for "nvram" calls #
 hideoptions=1       # Hide/Show menu options flag #
 prevHideOpts=X      # Avoid redisplaying the options menu unnecessarily too often #
 prevSortByOpt=X     # Avoid resetting the timer loop unnecessarily too often #
+bootInterval=10     # For "Boot Sequence" loop #
 LAN_HostName=""
 gSavedSTTY="$(stty -g)"
 
@@ -162,21 +164,16 @@ CClear="\e[0m"
 
 #Shows the version bar formatted for build and date/time with TZ spacing#
 ##----------------------------------------##
-## Modified by Martinski W. [2024-Nov-03] ##
+## Modified by Martinski W. [2024-Nov-04] ##
 ##----------------------------------------##
 showheader()
 {
   _IgnoreKeypresses_ ON
 
-  #clear#
   if [ "$hideoptions" = "0" ] && [ "$hideoptions" != "$prevHideOpts" ]
-  then
-     timerreset=0
-     displayopsmenu
-  else
-     timerreset=0
-  fi
+  then displayopsmenu ; fi
 
+  timerReset=0
   prevHideOpts="$hideoptions"
   prevSortByOpt="$SortbyOpt"
 
@@ -439,9 +436,9 @@ progressbar()
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# progressbaroverride shows a more minimalistic progress bar that indicates seconds/%
+# Shows a more minimalistic progress bar that indicates seconds/%
 ##----------------------------------------##
-## Modified by Martinski W. [2024-Nov-03] ##
+## Modified by Martinski W. [2024-Nov-04] ##
 ##----------------------------------------##
 progressbaroverride()
 {
@@ -493,79 +490,87 @@ progressbaroverride()
            case "$key_press" in
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
-                     sleep 1; clear; NextPage=6; DisplayPage6; echo ""
+                     sleep 1; NextPage=6; timerReset=1
                      ;;
                [Dd]) QueueNetworkDiag=1
                      echo -e "${CClear}[Queuing Network Diagnostics]                                            ";
-                     sleep 1; clear; NextPage=5; DisplayPage5; echo ""
+                     sleep 1; NextPage=5; timerReset=1
                      ;;
                [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0
                      ;;
-               [Hh]) hideoptions=1 ; [ "$hideoptions" != "$prevHideOpts" ] && timerreset=1
+               [Hh]) hideoptions=1 ; [ "$hideoptions" != "$prevHideOpts" ] && timerReset=1
                      ;;
                [Ii]) QueueSpdTest=1
                      echo -e "${CClear}[Queuing WAN Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
-               [Ll]) NCView="LAN"; clear; NextPage=6; DisplayPage6; echo ""
+               [Ll]) NCView="LAN"; NextPage=6; timerReset=1
                      ;;
                [Mm]) FromUI=1; vsetup; source "$CFGPATH"
                      echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   ";
-                     sleep 1; FromUI=0; clear; DisplayPage$NextPage; echo -e "\n"
+                     sleep 1; FromUI=0; timerReset=1
                      ;;
-               [Nn]) if   [ "$NextPage" = "1" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"
-                     elif [ "$NextPage" = "2" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"
-                     elif [ "$NextPage" = "3" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"
-                     elif [ "$NextPage" = "4" ]; then NextPage=5; clear; DisplayPage5; echo ""
-                     elif [ "$NextPage" = "5" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"
-                     elif [ "$NextPage" = "6" ]; then NextPage=7; clear; DisplayPage7; echo -e "\n"
-                     elif [ "$NextPage" = "7" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"
-                     fi;;
+               [Nn]) timerReset=1
+                     if   [ "$NextPage" = "1" ]; then NextPage=2
+                     elif [ "$NextPage" = "2" ]; then NextPage=3
+                     elif [ "$NextPage" = "3" ]; then NextPage=4
+                     elif [ "$NextPage" = "4" ]; then NextPage=5
+                     elif [ "$NextPage" = "5" ]; then NextPage=6
+                     elif [ "$NextPage" = "6" ]; then NextPage=7
+                     elif [ "$NextPage" = "7" ]; then NextPage=1
+                     fi
+                     ;;
                [Oo]) vlogs;;
-               [Pp]) if   [ "$NextPage" = "1" ]; then NextPage=7; clear; DisplayPage7; echo ""
-                     elif [ "$NextPage" = "2" ]; then NextPage=1; clear; DisplayPage1; echo -e "\n"
-                     elif [ "$NextPage" = "3" ]; then NextPage=2; clear; DisplayPage2; echo -e "\n"
-                     elif [ "$NextPage" = "4" ]; then NextPage=3; clear; DisplayPage3; echo -e "\n"
-                     elif [ "$NextPage" = "5" ]; then NextPage=4; clear; DisplayPage4; echo -e "\n"
-                     elif [ "$NextPage" = "6" ]; then NextPage=5; clear; DisplayPage5; echo -e "\n"
-                     elif [ "$NextPage" = "7" ]; then NextPage=6; clear; DisplayPage6; echo -e "\n"
-                     fi;;
-               [Rr]) if   [ "$autorotate" = 0 ]; then autorotate=1; autorotateindicator="ON"; clear; DisplayPage$NextPage; echo -e "\n"
-                     elif [ "$autorotate" = "1" ]; then autorotate=0; autorotateindicator="OFF"; clear; DisplayPage$NextPage; echo -e "\n"
-                     fi;;
-               [Ss]) hideoptions=0 ; [ "$hideoptions" != "$prevHideOpts" ] && timerreset=1
+               [Pp]) timerReset=1
+                     if   [ "$NextPage" = "1" ]; then NextPage=7
+                     elif [ "$NextPage" = "2" ]; then NextPage=1
+                     elif [ "$NextPage" = "3" ]; then NextPage=2
+                     elif [ "$NextPage" = "4" ]; then NextPage=3
+                     elif [ "$NextPage" = "5" ]; then NextPage=4
+                     elif [ "$NextPage" = "6" ]; then NextPage=5
+                     elif [ "$NextPage" = "7" ]; then NextPage=6
+                     fi
                      ;;
-               [Tt]) PSView="TCP"; clear; NextPage=5; DisplayPage5; echo ""
+               [Rr]) if   [ "$autorotate" = 0 ]
+                     then autorotate=1; autorotateindicator="ON"
+                     elif [ "$autorotate" = "1" ]
+                     then autorotate=0; autorotateindicator="OFF"
+                     fi
+                     timerReset=1
                      ;;
-               [Uu]) PSView="UDP"; clear; NextPage=5; DisplayPage5; echo ""
+               [Ss]) hideoptions=0 ; [ "$hideoptions" != "$prevHideOpts" ] && timerReset=1
                      ;;
-               [Vv]) NCView="VPN"; clear; NextPage=6; DisplayPage6; echo ""
+               [Tt]) PSView="TCP"; NextPage=5; timerReset=1
                      ;;
-               [Ww]) NCView="WAN"; clear; NextPage=6; DisplayPage6; echo ""
+               [Uu]) PSView="UDP"; NextPage=5; timerReset=1
+                     ;;
+               [Vv]) NCView="VPN"; NextPage=6; timerReset=1
+                     ;;
+               [Ww]) NCView="WAN"; NextPage=6; timerReset=1
                      ;;
                   1) QueueVPNSlot1=1
                      echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
                   2) QueueVPNSlot2=1
                      echo -e "${CClear}[Queuing VPN2 Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
                   3) QueueVPNSlot3=1
                      echo -e "${CClear}[Queuing VPN3 Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
                   4) QueueVPNSlot4=1
                      echo -e "${CClear}[Queuing VPN4 Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
                   5) QueueVPNSlot5=1
                      echo -e "${CClear}[Queuing VPN5 Speedtest]                                                  ";
-                     sleep 1; clear; NextPage=4; DisplayPage4; echo -e "\n"
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
-               [\!]) SortbyOpt="Name"; [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerreset=1 ;;
-               [\@]) SortbyOpt="IP";   [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerreset=1 ;;
-               [\#]) SortbyOpt="MAC";  [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerreset=1 ;;
+               [\!]) SortbyOpt="Name"; [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerReset=1 ;;
+               [\@]) SortbyOpt="IP";   [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerReset=1 ;;
+               [\#]) SortbyOpt="MAC";  [ "$SortbyOpt" != "$prevSortByOpt" ] && [ "$NextPage" = "7" ] && timerReset=1 ;;
                   *) ;; ##IGNORE INVALID key presses ##
            esac
            _IgnoreKeypresses_ ON
@@ -635,7 +640,7 @@ vlogs() {
 
 export TERM=linux
 nano +999999 --linenumbers $LOGFILE
-timerreset=1
+timerReset=1
 
 }
 
@@ -1815,13 +1820,14 @@ oldstats()
 
 # -------------------------------------------------------------------------------------------------------------------------
 ##----------------------------------------##
-## Modified by Martinski W. [2024-Nov-02] ##
+## Modified by Martinski W. [2024-Nov-04] ##
 ##----------------------------------------##
-# calculatestats calculates and captures, well, all the current stats from their sources  ;)
+# Calculates and captures, well, all the current stats from their sources  ;)
 calculatestats()
 {
-   RM_END_TIME=$(date +%s)
-   RM_ELAPSED_TIME=$(( RM_END_TIME - RM_START_TIME ))
+   RM_END_TIME="$(date +%s)"
+   RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
+   [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
 
    # CPU - Usage
    if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / Interval)); else cpuusr1=0; fi
@@ -5091,21 +5097,24 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       clear
       if [ -f "$CFGPATH" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
       then
+          printf "\r\033[0K${InvYellow} ${CClear} Please wait..." ; _ConsumeKeypressBuffer_
           source "$CFGPATH"
 
-          if [ ! -f "/jffs/addons/rtrmon.d/speedtest-cli.json" ]; then
-              cp /root/.config/ookla/speedtest-cli.json /jffs/addons/rtrmon.d/speedtest-cli.json 2>/dev/null
+          if [ -f /root/.config/ookla/speedtest-cli.json ] && \
+             [ ! -f /jffs/addons/rtrmon.d/speedtest-cli.json ]
+          then
+              cp -fp /root/.config/ookla/speedtest-cli.json /jffs/addons/rtrmon.d/speedtest-cli.json 2>/dev/null
           fi
 
-          if [ ! -d "/root/.config/ookla" ]; then
-            mkdir -p "/root/.config/ookla"
-            cp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
+          if [ ! -d "/root/.config/ookla" ]
+          then
+              mkdir -p "/root/.config/ookla"
+              [ -f /jffs/addons/rtrmon.d/speedtest-cli.json ] && \
+              cp -fp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
           fi
 
-          NextPage="$([ $# -gt 1 ] && echo "$2" | tr -d -c 1-6 || echo)"
-          if [ -z "$NextPage" ]; then
-             NextPage=1
-          fi
+          NextPage="$([ $# -gt 1 ] && echo "$2" | tr -d -c 1-7 || echo)"
+          if [ -z "$NextPage" ]; then NextPage=1 ; fi
 
           # Per @Stephen Harrington's suggestion, check NVRAM to see if WiFi is turned on, else mark them as disabled
           if [ "$FourBandCustom55624" == "True" ]; then
@@ -5225,7 +5234,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   trimlogs
   echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: RTRMON is initializing for the first time..." >> $LOGFILE
 
-# Capture initial traffic and store current WAN/WiFi bytes stats
+  # Capture initial traffic and store current WAN/WiFi bytes stats
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
     if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
@@ -5496,16 +5505,18 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
 
   # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
-  RM_START_TIME=$(date +%s)
+  RM_START_TIME="$(date +%s)"
 
   ##----------------------------------------##
-  ## Modified by Martinski W. [2024-Nov-02] ##
+  ## Modified by Martinski W. [2024-Nov-04] ##
   ##----------------------------------------##
   timer=0
   lastTimerSec=0
   updateTimer=true
+  savedInterval="$Interval"
+  Interval="$bootInterval"
 
-  ## Initial Boot Sequence Loop ##
+  # Initial Boot Sequence Loop #
   while [ "$timer" -lt "$Interval" ]
   do
       if "$updateTimer"
@@ -5525,9 +5536,11 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   calculatestats
   oldstats
 
-clear
-INITIALBOOT=0
-_IgnoreKeypresses_ OFF
+  clear
+  INITIALBOOT=0
+  Interval="$savedInterval"
+
+  _IgnoreKeypresses_ OFF
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Main loop that calls functions to perform all necessary calculations across the interval period
@@ -5829,7 +5842,7 @@ do
 
   # Run through the stats gathering loop based on the current interval
   RM_ELAPSED_TIME=0
-  RM_START_TIME=$(date +%s)
+  RM_START_TIME="$(date +%s)"
 
   ##----------------------------------------##
   ## Modified by Martinski W. [2024-Nov-02] ##
@@ -5850,7 +5863,7 @@ do
       fi
       preparebar 46 "|"
       progressbaroverride "$timer" "$Interval" "" "s" "Standard"
-      if [ "$timerreset" = "1" ] ; then timer="$Interval" ; fi
+      if [ "$timerReset" = "1" ] ; then timer="$Interval" ; fi
 
       ## Prevent repeatedly fast key presses from updating the timer ##
       [ "$(date +%s)" -gt "$lastTimerSec" ] && updateTimer=true
@@ -5863,13 +5876,13 @@ do
 
   if [ "$autorotate" = "1" ] && [ "$timer" -ge "$Interval" ]
   then
-       if [ "$NextPage" = "1" ]; then clear; NextPage=2 #DisplayPage2#
-     elif [ "$NextPage" = "2" ]; then clear; NextPage=3 #DisplayPage3#
-     elif [ "$NextPage" = "3" ]; then clear; NextPage=4 #DisplayPage4#
-     elif [ "$NextPage" = "4" ]; then clear; NextPage=5 #DisplayPage5#
-     elif [ "$NextPage" = "5" ]; then clear; NextPage=6 #DisplayPage6#
-     elif [ "$NextPage" = "6" ]; then clear; NextPage=7 #DisplayPage7#
-     elif [ "$NextPage" = "7" ]; then clear; NextPage=1 #DisplayPage1#
+       if [ "$NextPage" = "1" ]; then NextPage=2 #DisplayPage2#
+     elif [ "$NextPage" = "2" ]; then NextPage=3 #DisplayPage3#
+     elif [ "$NextPage" = "3" ]; then NextPage=4 #DisplayPage4#
+     elif [ "$NextPage" = "4" ]; then NextPage=5 #DisplayPage5#
+     elif [ "$NextPage" = "5" ]; then NextPage=6 #DisplayPage6#
+     elif [ "$NextPage" = "6" ]; then NextPage=7 #DisplayPage7#
+     elif [ "$NextPage" = "7" ]; then NextPage=1 #DisplayPage1#
      fi
   fi
 
