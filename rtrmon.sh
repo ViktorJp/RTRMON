@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-# Last Modified: 2024-Nov-04
+# Last Modified: 2024-Nov-05
 ###########################################################################################################################
 
 Version="2.1.4"
@@ -135,7 +135,15 @@ prevHideOpts=X      # Avoid redisplaying the options menu unnecessarily too ofte
 prevSortByOpt=X     # Avoid resetting the timer loop unnecessarily too often #
 bootInterval=10     # For "Boot Sequence" loop #
 LAN_HostName=""
-gSavedSTTY="$(stty -g)"
+readonly gSavedSTTY="$(stty -g)"
+
+##-------------------------------------##
+## Added by Martinski W. [2024-Nov-05] ##
+##-------------------------------------##
+pausedTimerEnabled=false  # To pause/resume main loop timer cycle #
+pausedTimerDispStr=""
+readonly pausedTimerMsgStr=" [** PAUSED **] "
+readonly pausedTimerMsgLen="${#pausedTimerMsgStr}"
 
 # Color variables
 CBlack="\e[1;30m"
@@ -438,7 +446,7 @@ progressbar()
 # -------------------------------------------------------------------------------------------------------------------------
 # Shows a more minimalistic progress bar that indicates seconds/%
 ##----------------------------------------##
-## Modified by Martinski W. [2024-Nov-04] ##
+## Modified by Martinski W. [2024-Nov-05] ##
 ##----------------------------------------##
 progressbaroverride()
 {
@@ -450,9 +458,41 @@ progressbaroverride()
   # $6 - alternate display values
   # $7 - alternate value for progressbar exceeding 100%
 
+  local barch  barsp  percnt  altNum
   insertspc=" "
 
   _GetPercent_() { printf "%.1f" "$(echo "$1" | awk "{print $1}")" ; }
+
+  _UpdateProgressBar_()
+  {
+     if [ "$2" = "Standard" ] && [ "$INITIALBOOT" -eq 0 ]
+     then
+        printf "  ${CWhite}${InvDkGray}%3d${1} /%5.1f%%${CClear} [${CGreen}e${CClear}=Exit] [Selection? ${InvGreen} ${CClear}${CGreen}]  ${pausedTimerDispStr} \r${CClear}" "$altNum" "$percnt"
+     elif [ "$2" = "Standard" ] && [ "$INITIALBOOT" -eq 1 ]
+     then
+        printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]  \r${CClear}" "$barchars" "$barspaces"
+     fi
+  }
+
+  _PausedTimerHandler_()
+  {
+     local keyPress  readTimeSec
+     _IgnoreKeypresses_ ON
+     while "$pausedTimerEnabled"
+     do
+        keyPress=''
+        readTimeSec="$(date +%s)"
+        read -rsn1 -t 1 keyPress < "$(tty 0>&2)"
+        if [ "$keyPress" = "X" ]
+        then
+            pausedTimerEnabled=false
+            pausedTimerDispStr="$(printf "%*s" "$pausedTimerMsgLen" ' ')"
+            break
+        fi
+        if [ "$(date +%s)" -lt "$((readTimeSec + 1))" ]
+        then usleep 333000 ; fi
+     done
+  }
 
   if [ "$1" -eq -1 ]
   then
@@ -469,15 +509,9 @@ progressbaroverride()
         percnt="$(_GetPercent_ "(100*$1/$2)")"
      fi
 
-     if [ $# -gt 5 ] && [ -n "$6" ]; then AltNum="$6" ; else AltNum="$1" ; fi
+     if [ $# -gt 5 ] && [ -n "$6" ]; then altNum="$6" ; else altNum="$1" ; fi
 
-     if [ "$5" = "Standard" ] && [ "$INITIALBOOT" -eq 0 ]
-     then
-        printf "  ${CWhite}${InvDkGray}%3d${4} /%5.1f%%${CClear} [${CGreen}e${CClear}=Exit] [Selection? ${InvGreen} ${CClear}${CGreen}]  \r${CClear}" "$AltNum" "$percnt"
-     elif [ "$5" = "Standard" ] && [ "$INITIALBOOT" -eq 1 ]
-     then
-        printf "${CDkGray}              [${CGreen}%.${barch}s%.${barsp}s${CDkGray}]  \r${CClear}" "$barchars" "$barspaces"
-     fi
+     _UpdateProgressBar_ "$4" "$5"
 
      if [ "$INITIALBOOT" = "0" ]
      then
@@ -547,6 +581,17 @@ progressbaroverride()
                [Vv]) NCView="VPN"; NextPage=6; timerReset=1
                      ;;
                [Ww]) NCView="WAN"; NextPage=6; timerReset=1
+                     ;;
+                  X) if "$pausedTimerEnabled"
+                     then
+                         pausedTimerEnabled=false
+                         pausedTimerDispStr="$(printf "%*s" "$pausedTimerMsgLen" ' ')"
+                     else
+                         pausedTimerEnabled=true
+                         pausedTimerDispStr="${CWhite}${InvRed}${pausedTimerMsgStr}${CClear}"
+                         _UpdateProgressBar_ "$4" "$5"
+                         _PausedTimerHandler_
+                     fi
                      ;;
                   1) QueueVPNSlot1=1
                      echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  ";
@@ -634,7 +679,7 @@ updatecheck () {
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# vlogs calls the nano text editor to view the RTRMON log file
+# calls the nano text editor to view the RTRMON log file
 
 vlogs() {
 
@@ -5845,11 +5890,13 @@ do
   RM_START_TIME="$(date +%s)"
 
   ##----------------------------------------##
-  ## Modified by Martinski W. [2024-Nov-02] ##
+  ## Modified by Martinski W. [2024-Nov-05] ##
   ##----------------------------------------##
   timer=0
   lastTimerSec=0
   updateTimer=true
+  pausedTimerEnabled=false
+  pausedTimerDispStr=""
 
   # Main Loop #
   while [ "$timer" -lt "$Interval" ]
