@@ -18,7 +18,7 @@
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-# Last Modified: 2024-Nov-05
+# Last Modified: 2024-Nov-06
 ###########################################################################################################################
 
 Version="2.1.4"
@@ -176,8 +176,6 @@ CClear="\e[0m"
 ##----------------------------------------##
 showheader()
 {
-  _IgnoreKeypresses_ ON
-
   if [ "$hideoptions" = "0" ] && [ "$hideoptions" != "$prevHideOpts" ]
   then displayopsmenu ; fi
 
@@ -231,10 +229,10 @@ displayopsmenu()
 _ConsumeKeypressBuffer_()
 {
    local savedSettings
-   local key_press=''  prevTimeSec
+   local keyPress=''  prevTimeSec
    savedSettings="$(stty -g)"
    prevTimeSec="$(date +%s)"
-   read -rs -n1000 -t 1 key_press < "$(tty 0>&2)"
+   read -rs -n1000 -t 1 keyPress < "$(tty 0>&2)"
    while [ "$(date +%s)" -lt "$((prevTimeSec + 1))" ]
    do
       stty -echo -icanon min 0 time 1
@@ -446,7 +444,7 @@ progressbar()
 # -------------------------------------------------------------------------------------------------------------------------
 # Shows a more minimalistic progress bar that indicates seconds/%
 ##----------------------------------------##
-## Modified by Martinski W. [2024-Nov-05] ##
+## Modified by Martinski W. [2024-Nov-06] ##
 ##----------------------------------------##
 progressbaroverride()
 {
@@ -458,7 +456,7 @@ progressbaroverride()
   # $6 - alternate display values
   # $7 - alternate value for progressbar exceeding 100%
 
-  local barch  barsp  percnt  altNum
+  local barch  barsp  percnt  altNum  readTimeSec
   insertspc=" "
 
   _GetPercent_() { printf "%.1f" "$(echo "$1" | awk "{print $1}")" ; }
@@ -477,7 +475,6 @@ progressbaroverride()
   _PausedTimerHandler_()
   {
      local keyPress  readTimeSec
-     _IgnoreKeypresses_ ON
      while "$pausedTimerEnabled"
      do
         keyPress=''
@@ -490,7 +487,10 @@ progressbaroverride()
             break
         fi
         if [ "$(date +%s)" -lt "$((readTimeSec + 1))" ]
-        then usleep 333000 ; fi
+        then
+            stty -icanon min 0 time 5
+            cat - > /dev/null
+        fi
      done
   }
 
@@ -516,11 +516,11 @@ progressbaroverride()
      if [ "$INITIALBOOT" = "0" ]
      then
         # Borrowed this wonderful keypress capturing mechanism from @Eibgrad... thank you! :)
+        readTimeSec="$(date +%s)"
         key_press=''; read -rsn1 -t 1 key_press < "$(tty 0>&2)"
 
         if [ "$key_press" ]
         then
-           _IgnoreKeypresses_ OFF
            case "$key_press" in
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
@@ -540,7 +540,8 @@ progressbaroverride()
                      ;;
                [Ll]) NCView="LAN"; NextPage=6; timerReset=1
                      ;;
-               [Mm]) FromUI=1; vsetup; source "$CFGPATH"
+               [Mm]) _IgnoreKeypresses_ OFF
+                     FromUI=1; vsetup; source "$CFGPATH"
                      echo -e "\n${CClear}[Returning to the Main UI momentarily]                                   ";
                      sleep 1; FromUI=0; timerReset=1
                      ;;
@@ -554,7 +555,7 @@ progressbaroverride()
                      elif [ "$NextPage" = "7" ]; then NextPage=1
                      fi
                      ;;
-               [Oo]) vlogs;;
+               [Oo]) _IgnoreKeypresses_ OFF ; vlogs ;;
                [Pp]) timerReset=1
                      if   [ "$NextPage" = "1" ]; then NextPage=7
                      elif [ "$NextPage" = "2" ]; then NextPage=1
@@ -619,6 +620,11 @@ progressbaroverride()
                   *) ;; ##IGNORE INVALID key presses ##
            esac
            _IgnoreKeypresses_ ON
+           if [ "$(date +%s)" -lt "$((readTimeSec + 1))" ]
+           then
+               stty -icanon min 0 time 1
+               cat - > /dev/null
+           fi
         fi
      else
         ## Initial Boot Sequence Loop ##
@@ -5584,8 +5590,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   clear
   INITIALBOOT=0
   Interval="$savedInterval"
-
-  _IgnoreKeypresses_ OFF
 
 # -------------------------------------------------------------------------------------------------------------------------
 # Main loop that calls functions to perform all necessary calculations across the interval period
