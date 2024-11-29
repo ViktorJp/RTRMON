@@ -1,3 +1,25 @@
+v2.1.4    - (November 28, 2024)
+          - PATCH: Modified code to ignore ALL character key presses during the initial "Boot Sequence" loop.
+          - PATCH: Modified code to ignore all INVALID character key presses within the main loop.
+          - PATCH: Added code to avoid updating the timer prematurely within the initial & main loops due to
+            repeatedly fast key presses.
+          - PATCH: Modified code to avoid redisplaying the top "Options Menu" unnecessarily too often and
+            resetting the timer loop due to repeatedly fast key presses.
+          - PATCH: Modified code to get elapsed time percentage values with 1 decimal place (e.g. 0.5%). This
+            allows non-integer values to be displayed for percentages of the elapsed time.
+          - PATCH: Modified the top "Operations Menu" section with the title for the "Setup Configuration Menu"
+            to highlight "M" as the key press to launch the Setup Menu instead of the "S" key press which was
+            in conflict with the "S" required to show the "Operations Menu" section.
+          - PATCH: Fixed menu option to set "Timer Interval (seconds)" values because it was accepting any user
+            input (e.g. "0", "X") with very little validation and there was no lower-bound & upper-bound value
+            checking. For example, inputs like "0" && "X" were accepted leading to runtime errors being
+            generated.
+          - PATCH: Added a toggle switch to pause/resume the timer cycle within the main loop. Pressing the
+            character 'X' key (upper-case X only) will toggle the timer to pause/resume. While in the paused
+            state, all character key presses are ignored except for the toggle 'X' key to resume the timer.
+          - PATCH: Various other coding improvements & fine-tuning.
+          - HUGE thanks to @Martinski for helping improve RTRMON with all the above fixes!! :)
+
 v2.1.3    - (October 19, 2024)
           - PATCH: Minor spacing issues fixed for screen #6 (wired/wireless clients page)
           - PATCH: Fixed some logic due to the $VPNSite2Site variable not being considered, though it is set
