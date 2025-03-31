@@ -4334,9 +4334,12 @@ DisplayPage7()
 # multiple DHCP lists can exist. Read through all lists and compile into a single list.
 
 read_all_dhcp_leases() {
+  # Include the merged lease file if it exists
   local lease_files="/var/lib/misc/dnsmasq-*.leases /var/lib/misc/dnsmasq.leases"
+  if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+    lease_files="$lease_files /tmp/dnsmasq-merged.leases"
+  fi
   local all_leases
-
   all_leases=$(cat $lease_files 2>/dev/null)
   echo "$all_leases"
 }
@@ -4378,6 +4381,22 @@ attachedwificlients ()
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+
+        # --- New MLD MAC retrieval logic ---
+        # By default use the association MAC for lookups
+        lookup_mac="$maclower"
+        if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+          mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
+          if [ -n "$mld_line" ]; then
+            # Assume the merged lease file format:
+            # expiry assoc_mac ip hostname mld_mac
+            mld_mac=$(echo "$mld_line" | awk '{print $5}')
+            if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
+              lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
+            fi
+          fi
+        fi
+        # --- End new logic ---
 
         # Find IPs for the given MAC address in the ARP table
         ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4440,7 +4459,7 @@ attachedwificlients ()
         done
         # Fallback to using dnsmasq.leases if no match found
         if [ $found -ne 1 ]; then
-            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/null
+            clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
             if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
                 clientname="UNKNOWN"
             fi
@@ -4510,7 +4529,19 @@ attachedguestclients() {
     rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    maclowerprefix=$(echo "$maclower" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
+        # --- MLD MAC lookup for VLAN clients ---
+    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+    lookup_mac="$maclower"
+    if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+      mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
+      if [ -n "$mld_line" ]; then
+        mld_mac=$(echo "$mld_line" | awk '{print $5}')
+        if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
+          lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
+        fi
+      fi
+    fi
+    # --- End MLD logic for VLAN ---
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4570,8 +4601,6 @@ attachedguestclients() {
 
         local client=$(echo $clientextract | awk -F ">" '{print $1}')
         local mac=$(echo $clientextract | awk -F ">" '{print $2}')
-        local macextractprefix=$(echo "$mac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
-        local macprefix=$(echo "$clientmac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
 
         if [ "$macextractprefix" == "$macprefix" ]; then
             clientname=$client
@@ -4581,11 +4610,7 @@ attachedguestclients() {
     done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-        if [ -n "$MLOSupport" ]; then 
-            clientname=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $4}') 2>/dev/nul
-        else
-            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/nul
-        fi
+        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
@@ -4677,6 +4702,21 @@ attachedvlanclients() {
     txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+
+    # --- MLD MAC lookup for VLAN clients ---
+    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+    lookup_mac="$maclower"
+    if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+      mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
+      if [ -n "$mld_line" ]; then
+        mld_mac=$(echo "$mld_line" | awk '{print $5}')
+        if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
+          lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
+        fi
+      fi
+    fi
+    # --- End MLD logic for VLAN ---
+
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
 
@@ -4739,7 +4779,7 @@ attachedvlanclients() {
     done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}') 2>/dev/null
+        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
