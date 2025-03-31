@@ -4403,7 +4403,6 @@ attachedwificlients ()
 
         # --- Unified MLD MAC retrieval logic ---
         lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
-        # --- End unified logic ---
 
         # Find IPs for the given MAC address in the ARP table
         ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4538,7 +4537,6 @@ attachedguestclients() {
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
     # --- Unified MLD MAC retrieval logic ---
     lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
-    # --- End unified logic ---
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4698,7 +4696,6 @@ attachedvlanclients() {
     # --- Unified MLD MAC lookup for VLAN clients ---
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
     lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
-    # --- End unified logic for VLAN ---
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
