@@ -4344,8 +4344,27 @@ read_all_dhcp_leases() {
   echo "$all_leases"
 }
 
-# attachedwificlients pulls connected client info from wl, arp and nvram
+# Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
+# determine the lookup MAC (which may be the MLD MAC if present).
+get_lookup_mac() {
+  local maclower="$1"
+  local leases="$2"
+  local lookup_mac="$maclower"
+  local mld_line field_count mld_mac
+  mld_line=$(echo "$leases" | grep -i "$maclower" | head -n1)
+  if [ -n "$mld_line" ]; then
+    field_count=$(echo "$mld_line" | awk '{print NF; exit}')
+    if [ "$field_count" -ge 5 ]; then
+      mld_mac=$(echo "$mld_line" | awk '{print $5; exit}')
+      if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
+        lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
+      fi
+    fi
+  fi
+  echo "$lookup_mac"
+}
 
+# attachedwificlients pulls connected client info from wl, arp and nvram
 attachedwificlients ()
 {
     iface="$1"
@@ -4382,21 +4401,9 @@ attachedwificlients ()
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
 
-        # --- New MLD MAC retrieval logic ---
-        # By default use the association MAC for lookups
-        lookup_mac="$maclower"
-        if [ -f "/tmp/dnsmasq-merged.leases" ]; then
-          mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
-          if [ -n "$mld_line" ]; then
-            # Assume the merged lease file format:
-            # expiry assoc_mac ip hostname mld_mac
-            mld_mac=$(echo "$mld_line" | awk '{print $5}')
-            if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
-              lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
-            fi
-          fi
-        fi
-        # --- End new logic ---
+        # --- Unified MLD MAC retrieval logic ---
+        lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
+        # --- End unified logic ---
 
         # Find IPs for the given MAC address in the ARP table
         ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4529,19 +4536,9 @@ attachedguestclients() {
     rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-        # --- MLD MAC lookup for VLAN clients ---
-    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    lookup_mac="$maclower"
-    if [ -f "/tmp/dnsmasq-merged.leases" ]; then
-      mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
-      if [ -n "$mld_line" ]; then
-        mld_mac=$(echo "$mld_line" | awk '{print $5}')
-        if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
-          lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
-        fi
-      fi
-    fi
-    # --- End MLD logic for VLAN ---
+    # --- Unified MLD MAC retrieval logic ---
+    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
+    # --- End unified logic ---
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4568,11 +4565,6 @@ attachedguestclients() {
     if [ -z "$clientip" ]; then
         # Try to get the last IP from the ARP table
         clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
-
-        # If still no IP, fallback to using the DHCP leases
-        if [ -z "$clientip" ]; then
-            clientip=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $3}') 2>/dev/null
-        fi
     fi
 
     paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
@@ -4602,7 +4594,7 @@ attachedguestclients() {
         local client=$(echo $clientextract | awk -F ">" '{print $1}')
         local mac=$(echo $clientextract | awk -F ">" '{print $2}')
 
-        if [ "$macextractprefix" == "$macprefix" ]; then
+        if [ "$mac" == "$clientmac" ]; then
             clientname=$client
             found=1
             break
@@ -4703,19 +4695,10 @@ attachedvlanclients() {
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
 
-    # --- MLD MAC lookup for VLAN clients ---
+    # --- Unified MLD MAC lookup for VLAN clients ---
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    lookup_mac="$maclower"
-    if [ -f "/tmp/dnsmasq-merged.leases" ]; then
-      mld_line=$(grep -i "$maclower" /tmp/dnsmasq-merged.leases)
-      if [ -n "$mld_line" ]; then
-        mld_mac=$(echo "$mld_line" | awk '{print $5}')
-        if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
-          lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
-        fi
-      fi
-    fi
-    # --- End MLD logic for VLAN ---
+    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
+    # --- End unified logic for VLAN ---
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
