@@ -4383,7 +4383,6 @@ attachedwificlients ()
         conntime=""
         clientip=""
         paddedclientip=""
-        MLOSupport=""
         clientcount=$((clientcount+1))
         local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
@@ -4391,7 +4390,6 @@ attachedwificlients ()
             continue
         fi
 
-        MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
         conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
         txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
@@ -4431,11 +4429,6 @@ attachedwificlients ()
         fi
 
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-        if [ -n "$MLOSupport" ]; then
-            paddedclientip="MLO Device"	
-        elif [ -z "$paddedclientip" ]; then	
-            paddedclientip="000.000.000.000"	
-        fi
 
         #calcs
         txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
@@ -4518,7 +4511,6 @@ attachedguestclients() {
     conntime=""
     clientip=""
     paddedclientip=""
-    MLOSupport=""
     clientcount=$((clientcount+1))
     local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
@@ -4526,7 +4518,6 @@ attachedguestclients() {
       continue
     fi
 
-    MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
     networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
     conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
     txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
@@ -4566,11 +4557,6 @@ attachedguestclients() {
     fi
 
     paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-    if [ -n "$MLOSupport" ]; then
-        paddedclientip="MLO Device"	
-    elif [ -z "$paddedclientip" ]; then	
-        paddedclientip="000.000.000.000"	
-    fi
 
     #calcs
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
@@ -4651,7 +4637,6 @@ attachedvlanclients() {
     clientip=""
     paddedclientip=""
     interface_name=""
-    MLOSupport=""
     clientcount=$((clientcount+1))
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
 
@@ -4679,7 +4664,6 @@ attachedvlanclients() {
         fi
     done
 
-    MLOSupport=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
     networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
     # Set conntime to "OFFLINE" if networktime is empty
     if [ -z "$networktime" ]; then
@@ -4724,11 +4708,6 @@ attachedvlanclients() {
     fi
 
     paddedclientip=$(echo "$clientip" | awk -F '.' '{printf "%03d.%03d.%03d.%03d\n", $1, $2, $3, $4}') 2>/dev/null
-    if [ -n "$MLOSupport" ]; then
-        paddedclientip="MLO Device"	
-    elif [ -z "$paddedclientip" ]; then	
-         paddedclientip="000.000.000.000"	
-    fi
 
     #calcs
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
