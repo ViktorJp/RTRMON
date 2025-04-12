@@ -1,7 +1,7 @@
 v2.1.5    - (April 12, 2025)
-          - PATCH: Thanks to @ExtremeFiretop he provided a fix for the way RTRMON looks up client names based
-            on the MAC address used for association, as it might not find the correct hostname if the DHCP
-            lease is associated with the MLD MAC. This was based on RMerlin's note here:
+          - PATCH: Thanks to @ExtremeFiretop for providing a fix for the way RTRMON looks up client name
+            based on the MAC address used for association, as it might not find the correct hostname if the 
+            DHCP lease is associated with the MLD MAC. This was based on RMerlin's note here:
             https://www.snbforums.com/threads/even-when-not-using-mlo-it-still-changes-some-stuff.94070/
 
 v2.1.4    - (November 28, 2024)
