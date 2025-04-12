@@ -21,7 +21,7 @@
 # Last Modified: 2024-Nov-28
 ###########################################################################################################################
 
-Version="2.1.4"
+Version="2.1.5"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
