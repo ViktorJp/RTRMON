@@ -4334,15 +4334,37 @@ DisplayPage7()
 # multiple DHCP lists can exist. Read through all lists and compile into a single list.
 
 read_all_dhcp_leases() {
+  # Include the merged lease file if it exists
   local lease_files="/var/lib/misc/dnsmasq-*.leases /var/lib/misc/dnsmasq.leases"
+  if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+    lease_files="$lease_files /tmp/dnsmasq-merged.leases"
+  fi
   local all_leases
-
   all_leases=$(cat $lease_files 2>/dev/null)
   echo "$all_leases"
 }
 
-# attachedwificlients pulls connected client info from wl, arp and nvram
+# Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
+# determine the lookup MAC (which may be the MLD MAC if present).
+get_lookup_mac() {
+  local maclower="$1"
+  local leases="$2"
+  local lookup_mac="$maclower"
+  local mld_line field_count mld_mac
+  mld_line=$(echo "$leases" | grep -i "$maclower" | head -n1)
+  if [ -n "$mld_line" ]; then
+    field_count=$(echo "$mld_line" | awk '{print NF; exit}')
+    if [ "$field_count" -ge 5 ]; then
+      mld_mac=$(echo "$mld_line" | awk '{print $5; exit}')
+      if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
+        lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
+      fi
+    fi
+  fi
+  echo "$lookup_mac"
+}
 
+# attachedwificlients pulls connected client info from wl, arp and nvram
 attachedwificlients ()
 {
     iface="$1"
@@ -4361,7 +4383,6 @@ attachedwificlients ()
         conntime=""
         clientip=""
         paddedclientip=""
-        MLOSupport=""
         clientcount=$((clientcount+1))
         local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
@@ -4369,7 +4390,6 @@ attachedwificlients ()
             continue
         fi
 
-        MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
         conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
         txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
@@ -4378,6 +4398,9 @@ attachedwificlients ()
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+
+        # --- Unified MLD MAC retrieval logic ---
+        lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
 
         # Find IPs for the given MAC address in the ARP table
         ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4406,11 +4429,6 @@ attachedwificlients ()
         fi
 
         paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-        if [ -n "$MLOSupport" ]; then
-            paddedclientip="MLO Device"	
-        elif [ -z "$paddedclientip" ]; then	
-            paddedclientip="000.000.000.000"	
-        fi
 
         #calcs
         txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
@@ -4440,7 +4458,7 @@ attachedwificlients ()
         done
         # Fallback to using dnsmasq.leases if no match found
         if [ $found -ne 1 ]; then
-            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/null
+            clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
             if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
                 clientname="UNKNOWN"
             fi
@@ -4493,7 +4511,6 @@ attachedguestclients() {
     conntime=""
     clientip=""
     paddedclientip=""
-    MLOSupport=""
     clientcount=$((clientcount+1))
     local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
@@ -4501,7 +4518,6 @@ attachedguestclients() {
       continue
     fi
 
-    MLOSupport=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
     networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
     conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
     txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
@@ -4510,7 +4526,8 @@ attachedguestclients() {
     rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    maclowerprefix=$(echo "$maclower" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
+    # --- Unified MLD MAC retrieval logic ---
+    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
 
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
@@ -4537,19 +4554,9 @@ attachedguestclients() {
     if [ -z "$clientip" ]; then
         # Try to get the last IP from the ARP table
         clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
-
-        # If still no IP, fallback to using the DHCP leases
-        if [ -z "$clientip" ]; then
-            clientip=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $3}') 2>/dev/null
-        fi
     fi
 
     paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-    if [ -n "$MLOSupport" ]; then
-        paddedclientip="MLO Device"	
-    elif [ -z "$paddedclientip" ]; then	
-        paddedclientip="000.000.000.000"	
-    fi
 
     #calcs
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
@@ -4570,10 +4577,8 @@ attachedguestclients() {
 
         local client=$(echo $clientextract | awk -F ">" '{print $1}')
         local mac=$(echo $clientextract | awk -F ">" '{print $2}')
-        local macextractprefix=$(echo "$mac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
-        local macprefix=$(echo "$clientmac" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}')
 
-        if [ "$macextractprefix" == "$macprefix" ]; then
+        if [ "$mac" == "$clientmac" ]; then
             clientname=$client
             found=1
             break
@@ -4581,11 +4586,7 @@ attachedguestclients() {
     done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-        if [ -n "$MLOSupport" ]; then 
-            clientname=$(echo "$dhcpleases" | grep -i "$maclowerprefix" | awk '{print $4}') 2>/dev/nul
-        else
-            clientname=$(echo "$dhcpleases" | grep -i "$maclower" | awk '{print $4}') 2>/dev/nul
-        fi
+        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
@@ -4636,7 +4637,6 @@ attachedvlanclients() {
     clientip=""
     paddedclientip=""
     interface_name=""
-    MLOSupport=""
     clientcount=$((clientcount+1))
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
 
@@ -4664,7 +4664,6 @@ attachedvlanclients() {
         fi
     done
 
-    MLOSupport=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/MLO/ {print $3}') 2>/dev/null
     networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
     # Set conntime to "OFFLINE" if networktime is empty
     if [ -z "$networktime" ]; then
@@ -4677,6 +4676,11 @@ attachedvlanclients() {
     txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+
+    # --- Unified MLD MAC lookup for VLAN clients ---
+    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
+    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
+
     # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
 
@@ -4704,11 +4708,6 @@ attachedvlanclients() {
     fi
 
     paddedclientip=$(echo "$clientip" | awk -F '.' '{printf "%03d.%03d.%03d.%03d\n", $1, $2, $3, $4}') 2>/dev/null
-    if [ -n "$MLOSupport" ]; then
-        paddedclientip="MLO Device"	
-    elif [ -z "$paddedclientip" ]; then	
-         paddedclientip="000.000.000.000"	
-    fi
 
     #calcs
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
@@ -4739,7 +4738,7 @@ attachedvlanclients() {
     done
     # Fallback to using dnsmasq.leases if no match found
     if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}') 2>/dev/null
+        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
