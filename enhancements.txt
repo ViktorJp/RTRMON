@@ -6,7 +6,7 @@ Future Enhancements (Possible/Planned)
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
-
+* opkg install column -- RTRMON!
 
 Completed:
 ----------
