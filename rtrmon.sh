@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2024
+# RTRMON - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2025
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -15,14 +15,17 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
+# Last Modified: 2025-Jun-29
+###########################################################################################################################
+
+#Preferred standard router binaries path
+export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-# Last Modified: 2024-Nov-28
-###########################################################################################################################
-
-Version="2.1.5"
-Beta=0
+Version="2.1.6"
+Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -204,7 +207,7 @@ showheader()
 ##----------------------------------------##
 ## Modified by Martinski W. [2024-Nov-02] ##
 ##----------------------------------------##
-displayopsmenu() 
+displayopsmenu()
 {
     amtmdisp="${CDkGray}[n/a]        "
 
@@ -1441,7 +1444,7 @@ vsetup()
 
           1) # Check for existence of entware, and if so proceed and install the timeout package, then run RTRMON -config
             clear
-            if [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
+            if [ -f "/opt/bin/column" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
             then
               vconfig
             else
@@ -1471,6 +1474,8 @@ vsetup()
               echo -e "the selected country."
               echo ""
               echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
+              echo ""
+              echo -e "${CGreen}Column${CClear} is a utility used to neatly arrange data on screen."
               echo ""
               echo -e "Your router model is: ${CGreen}${RouterModel}${CClear}"
               echo ""
@@ -1502,6 +1507,10 @@ vsetup()
                     echo -e "Installing Entware ${CGreen}iftop${CClear} Package..."
                     echo ""
                     opkg install iftop
+                    echo ""
+                    echo -e "Installing Entware ${CGreen}Column${CClear} Package..."
+                    echo ""
+                    opkg install column
                     echo ""
                     echo -e "Install completed..."
                     echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Entware dependencies were successfully installed." >> $LOGFILE
@@ -1559,6 +1568,8 @@ vsetup()
             echo ""
             echo -e "${CGreen}iftop${CClear} is a utility for querying connection and bandwidth data."
             echo ""
+            echo -e "${CGreen}Column${CClear} is a utility used to neatly arrange data on screen."
+            echo ""
             echo -e "Your router model is: ${CGreen}${RouterModel}${CClear}"
             echo ""
             echo -e "Force Re-install?"
@@ -1589,6 +1600,10 @@ vsetup()
                   echo -e "Force Re-installing Entware ${CGreen}iftop${CClear} Package..."
                   echo ""
                   opkg install --force-reinstall iftop
+                  echo ""
+                  echo -e "Force Re-installing Entware ${CGreen}Column${CClear} Package..."
+                  echo ""
+                  opkg install --force-reinstall column
                   echo ""
                   echo -e "Re-install completed..."
                   echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Entware dependencies were successfully re-installed." >> $LOGFILE
@@ -4292,7 +4307,7 @@ DisplayPage7()
   fi
 
   # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
-  cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt     
+  cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
   for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
     do
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local Guest Wi-Fi          ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"
@@ -4309,9 +4324,9 @@ DisplayPage7()
 
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
   #Remove non-LAN records
-  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt 
-  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt 
-  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt 
+  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
+  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
   sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
   attachedlanclients
   rm -f /jffs/addons/rtrmon.d/processed_clients.txt
@@ -4409,10 +4424,10 @@ attachedwificlients ()
         for ip in $ips; do
             # Check the status of the IP in the neighbor table
             arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-    
+
             # Check if the current IP is reachable
             if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-                if [ -z "$sigstrength" ]; then 
+                if [ -z "$sigstrength" ]; then
                     conntime="STALE"
                 fi
                 continue
@@ -4536,10 +4551,10 @@ attachedguestclients() {
     for ip in $ips; do
         # Check the status of the IP in the neighbor table
         arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-    
+
         # Check if the current IP is reachable
         if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-            if [ -z "$sigstrength" ]; then 
+            if [ -z "$sigstrength" ]; then
                 conntime="STALE"
             fi
             continue
@@ -4601,7 +4616,7 @@ attachedguestclients() {
         fi
         #delete entry from temparp table
         sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
-        echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt 
+        echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
     fi
   done
 
@@ -4688,10 +4703,10 @@ attachedvlanclients() {
     for ip in $ips; do
         # Check the status of the IP in the neighbor table
         arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-    
+
         # Check if the current IP is reachable
         if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-            if [ -z "$sigstrength" ]; then 
+            if [ -z "$sigstrength" ]; then
                 conntime="STALE"
             fi
             continue
@@ -4765,7 +4780,6 @@ attachedvlanclients() {
     if [ $vlansfound -eq 0 ]; then
       sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
       awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
-
       # Move sorted file back to original
       mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
       column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
@@ -5101,11 +5115,11 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
           screen -r rtrmon
         else
           clear
-          echo -e "${CGreen}Executing RTRMON v$Version using the SCREEN utility...${CClear}"
+          echo -e "${CClear}Executing ${CGreen}RTRMON v$Version ${CClear}using the SCREEN utility...${CClear}"
           echo ""
-          echo -e "${CCyan}IMPORTANT:${CClear}"
-          echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-          echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+          echo -e "${CClear}IMPORTANT:${CClear}"
+          echo -e "${CClear}In order to keep RTRMON running in the background,${CClear}"
+          echo -e "${CClear}properly exit the SCREEN session by using: ${CGreen}CTRL-A + D${CClear}"
           echo ""
           if [ $# -lt 2 ] || [ -z "$2" ]; then
             screen -dmS "rtrmon" $APPPATH -monitor
@@ -5115,7 +5129,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
             screen -dmS "rtrmon" $APPPATH -monitor
           fi
           sleep 2
-          echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+          echo -e "${CClear}Switching to the SCREEN session in T-5 sec...${CClear}"
           echo -e "${CClear}"
           spinner 5
           screen -r rtrmon
@@ -5126,13 +5140,13 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
           sleep 1
         else
           clear
-          echo -e "${CGreen}Connecting to existing RTRMON v$Version SCREEN session...${CClear}"
+          echo -e "${CClear}Connecting to existing ${CGreen}RTRMON v$Version ${CClear}SCREEN session...${CClear}"
           echo ""
-          echo -e "${CCyan}IMPORTANT:${CClear}"
-          echo -e "${CCyan}In order to keep RTRMON running in the background,${CClear}"
-          echo -e "${CCyan}properly exit the SCREEN session by using: CTRL-A + D${CClear}"
+          echo -e "${CClear}IMPORTANT:${CClear}"
+          echo -e "${CClear}In order to keep RTRMON running in the background,${CClear}"
+          echo -e "${CClear}properly exit the SCREEN session by using: ${CGreen}CTRL-A + D${CClear}"
           echo ""
-          echo -e "${CGreen}Switching to the SCREEN session in T-5 sec...${CClear}"
+          echo -e "${CClear}Switching to the SCREEN session in T-5 sec...${CClear}"
           echo -e "${CClear}"
           spinner 5
         fi
