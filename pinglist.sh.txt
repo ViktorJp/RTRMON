@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Check if a file is provided as an argument
+if [ -z "$1" ]; then
+  echo "Usage: $0 <csv_file> <csv_pinged_file>"
+  exit 1
+fi
+
+CSV_FILE="$1"
+CSV_PINGED_FILE="$2"
+
+# Set Internal Field Separator to comma to parse CSV
+IFS=','
+
+# Read each line of the CSV file
+while read -r field1 ip_address field2; do
+  # Ensure the second field (IP address) is not empty
+  if [ -n "$ip_address" ]; then
+    cleaned_ip=$(echo "$ip_address" | sed -E 's/\.0*([0-9])/\.\1/g; s/^0*([0-9])/\1/')
+    echo "Pinging: $cleaned_ip"           > /dev/null 2>&1
+    ping -c 1 -W 1 -q "$cleaned_ip"       > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      echo "$cleaned_ip is reachable."    > /dev/null 2>&1 
+      echo "$field1,$ip_address,$field2" >> "$CSV_PINGED_FILE"
+    else
+      echo "$cleaned_ip is unreachable."  > /dev/null 2>&1
+    fi
+  fi
+done < "$CSV_FILE"

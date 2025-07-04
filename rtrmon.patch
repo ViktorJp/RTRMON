@@ -1,0 +1,75 @@
+--- rtrmon-2.1.5.sh	2025-04-12 07:58:02.000000000 -0400
++++ rtrmon.sh	2025-07-03 19:44:57.974241439 -0400
+@@ -21,6 +21,7 @@
+ # Last Modified: 2024-Nov-28
+ ###########################################################################################################################
+ 
++export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+ Version="2.1.5"
+ Beta=0
+ ScreenshotMode=0
+@@ -4478,9 +4479,12 @@
+     done
+ 
+     if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
++      PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
++      echo "" > "$PingedList"
++      /jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList" 
+       if [ $maxclientcount -ge 1 ]; then
+-          sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+-          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
++          sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList"  2>/dev/null
++          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+       else
+           echo -e "  No Devices Connected"
+       fi
+@@ -4606,9 +4610,12 @@
+   done
+ 
+   if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
++    PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
++    echo "" > "$PingedList"
++    /jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList"
+     if [ $maxclientcount -ge 1 ]; then
+-      sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
++      sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList" 2>/dev/null
++      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+     else
+       echo -e "  No Devices Connected"
+     fi
+@@ -4762,13 +4769,16 @@
+   done
+ 
+   if [ -f "/jffs/addons/rtrmon.d/vlanclients$iface.txt" ]; then
++    PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
++    echo "" > "$PingedList" 
++    /jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/vlanclients$iface.txt" "$PingedList"
+     if [ $vlansfound -eq 0 ]; then
+-      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
++      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 "$PingedList" 2>/dev/null | \
+       awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
+ 
+       # Move sorted file back to original
+-      mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
+-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
++      mv /tmp/vlanclients_sorted.txt "$PingedList"
++      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+     else
+       echo -e "  No Devices Connected"
+     fi
+@@ -4849,9 +4859,12 @@
+   done
+ 
+   if [ -f "/jffs/addons/rtrmon.d/clientlistbr0.txt" ]; then
++    PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
++    echo "" > "$PingedList"
++    /jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlistbr0.txt" "$PingedList"
+     if [ $maxclientcount -ge 1 ]; then
+-      sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
+-      column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
++      sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList" 2>/dev/null
++      column -t -s',' -o' | ' -N Name,IP,MAC "$PingedList" | sed 's/^/  /'
+     else
+       echo -e "  No Devices Connected"
+     fi
