@@ -7,10 +7,10 @@ Future Enhancements (Possible/Planned)
 To-Do:
 -----
 * AMTM Email notifications on certain events (like 80% disk usage)
-* opkg install column -- RTRMON!
 
 Completed:
 ----------
+* opkg install column -- RTRMON!
 * FIX the VPN-site-to-site option and exclude any private VPNs from needing ping tests or city lookups. (visortgw)
 * 'update [y/n] not waiting for an enter keypress causing the Enter to go into the buffer and skipping the next prompt'
 * Sorting of attached clients, name/ip/mac, etc.
