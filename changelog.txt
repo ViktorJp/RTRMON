@@ -1,7 +1,7 @@
-v2.1.6    - (TBA)
+v2.1.6    - (July 5, 2025)
           - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
             for commonly installed entware tools. Not having this could cause confusion, as the script might
-            use an similar tool installed in a different location on the router.
+            use a similar older or newer tool installed in a different location on the router.
           - PATCH: Included a check for the "column" entware tool. This tool is necessary for the display of
             data on page #7 (wireless/wired devices), and originally thought it was included with our FW by
             default. Apparently not the case, and will now get installed on a new RTRMON install, or will
