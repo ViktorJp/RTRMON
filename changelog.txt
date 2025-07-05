@@ -1,3 +1,14 @@
+v2.1.6    - (July 5, 2025)
+          - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
+            for commonly installed entware tools. Not having this could cause confusion, as the script might
+            use a similar older or newer tool installed in a different location on the router.
+          - PATCH: Included a check for the "column" entware tool. This tool is necessary for the display of
+            data on page #7 (wireless/wired devices), and originally thought it was included with our FW by
+            default. Apparently not the case, and will now get installed on a new RTRMON install, or will
+            complain its missing and ask you to reinstall through the "Force Reinstall Entware Dependencies"
+            menu item.
+          - PATCH: General bugfixes and UI cleanup items.
+
 v2.1.5    - (April 12, 2025)
           - PATCH: Thanks to @ExtremeFiretop for providing a fix for the way RTRMON looks up client name
             based on the MAC address used for association, as it might not find the correct hostname if the 

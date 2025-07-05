@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.1.6"
-Beta=0
+Version="2.1.6b1"
+Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -4230,7 +4230,7 @@ DisplayPage7()
     attachedwificlients "$ifname24"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 2.4GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -4245,7 +4245,7 @@ DisplayPage7()
     attachedwificlients "$ifname5"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -4263,7 +4263,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4282,7 +4282,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4301,7 +4301,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4493,9 +4493,21 @@ attachedwificlients ()
     done
 
     if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
+    	# Modified by DrDog
+      PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
+      rm -f $PingedList
+      touch "$PingedList"
+      #echo "" > "$PingedList"
+      #/jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList" -- created a function for this
+      pinglist "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList"
+      #------------------ 
       if [ $maxclientcount -ge 1 ]; then
-          sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+          #sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+          #column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+          # Modified by DrDog
+          sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList" 2>/dev/null
+          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+          #------------------
       else
           echo -e "  No Devices Connected"
       fi
@@ -4621,9 +4633,21 @@ attachedguestclients() {
   done
 
   if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
+  	# Modified by DrDog
+  	PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
+  	rm -f $PingedList
+  	touch "$PingedList"
+    #echo "" > "$PingedList"
+    #/jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList" -- created a function for this
+    pinglist "/jffs/addons/rtrmon.d/clientlist$iface.txt" "$PingedList"
+    #------------------
     if [ $maxclientcount -ge 1 ]; then
-      sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+      #sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
+      #column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+      # Modified by DrDog
+      sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList"  2>/dev/null
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+      #------------------
     else
       echo -e "  No Devices Connected"
     fi
@@ -4777,12 +4801,28 @@ attachedvlanclients() {
   done
 
   if [ -f "/jffs/addons/rtrmon.d/vlanclients$iface.txt" ]; then
+  	# Modified by DrDog
+  	PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
+  	rm -f $PingedList
+  	touch "$PingedList"
+    #echo "" > "$PingedList" 
+    #/jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/vlanclients$iface.txt" "$PingedList" -- created a function for this
+    pinglist "/jffs/addons/rtrmon.d/vlanclients$iface.txt" "$PingedList"
+    #------------------
     if [ $vlansfound -eq 0 ]; then
-      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
+      #sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
+      # Modified by DrDog
+      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 "$PingedList" 2>/dev/null | \
+      #------------------
       awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
+
       # Move sorted file back to original
-      mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
+      #mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
+      #column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
+      # Modified by DrDog
+      mv /tmp/vlanclients_sorted.txt "$PingedList"
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" "$PingedList" | sed 's/^/  /'
+      #------------------
     else
       echo -e "  No Devices Connected"
     fi
@@ -4863,9 +4903,21 @@ attachedlanclients ()
   done
 
   if [ -f "/jffs/addons/rtrmon.d/clientlistbr0.txt" ]; then
+  	# Modified by DrDog
+  	PingedList="/jffs/addons/rtrmon.d/pingedlist.txt"
+  	rm -f $PingedList
+  	touch "$PingedList"
+    #echo "" > "$PingedList"
+    #/jffs/scripts/pinglist.sh "/jffs/addons/rtrmon.d/clientlistbr0.txt" "$PingedList" -- created a function for this
+    pinglist "/jffs/addons/rtrmon.d/clientlistbr0.txt" "$PingedList"
+    #------------------
     if [ $maxclientcount -ge 1 ]; then
-      sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
-      column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
+      #sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
+      #column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
+      # Modified by DrDog
+      sort -f -d -o "$PingedList" -k "$SortbyNum" -t , "$PingedList" 2>/dev/null
+      column -t -s',' -o' | ' -N Name,IP,MAC "$PingedList" | sed 's/^/  /'
+      #------------------
     else
       echo -e "  No Devices Connected"
     fi
@@ -4873,6 +4925,47 @@ attachedlanclients ()
     echo -e "  No Devices Connected"
   fi
 }
+
+# -------------------------------------------------------------------------------------------------------------------------
+# pinglist is a function created by DrDog to ping a list of clients in order to weed out stragglers that might still find
+# themselves on the list. It was found that pinging them causes them to eliminate themselves and creates more accuracy.
+# Modified by ViktorJp for compatibility
+
+pinglist()
+{
+
+# Check if a file is provided as an argument
+if [ -z "$1" ]; then
+  #echo "Usage: $0 <csv_file> <csv_pinged_file>"
+  exit 1
+fi
+
+CSV_FILE="$1"
+CSV_PINGED_FILE="$2"
+
+# Set Internal Field Separator to comma to parse CSV
+#IFS=','
+
+# Read each line of the CSV file
+while read -r machineline; do
+  # Ensure the second field (IP address) is not empty
+  ip_address=$(echo "$machineline" | cut -d',' -f2)
+  if [ -n "$ip_address" ]; then
+    cleaned_ip=$(echo "$ip_address" | sed -E 's/\.0*([0-9])/\.\1/g; s/^0*([0-9])/\1/')
+    #echo "Pinging: $cleaned_ip"           > /dev/null 2>&1
+    ping -c 1 -W 1 -q "$cleaned_ip" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      #echo "$cleaned_ip is reachable."    > /dev/null 2>&1 
+      #echo "$field1,$ip_address,$field2" >> "$CSV_PINGED_FILE"
+      echo "$machineline" >> "$CSV_PINGED_FILE"
+    else
+      echo "$cleaned_ip is unreachable." > /dev/null 2>&1
+    fi
+  fi
+done < "$CSV_FILE"
+
+}
+
 
 # -------------------------------------------------------------------------------------------------------------------------
 # VPN_GetClientState was created by @Martinski in many thanks to trying to eliminate unknown operand errors due to null
@@ -5159,7 +5252,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   if [ "$1" = "-monitor" ]
   then
       clear
-      if [ -f "$CFGPATH" ] && [ -f "/opt/bin/column" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
+      if [ -f "$CFGPATH" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
       then
           printf "\r\033[0K${InvYellow} ${CClear} Please wait..." ; _ConsumeKeypressBuffer_
           source "$CFGPATH"
