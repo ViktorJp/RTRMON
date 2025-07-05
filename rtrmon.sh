@@ -25,7 +25,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
 Version="2.1.6"
-Beta=1
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -4230,7 +4230,7 @@ DisplayPage7()
     attachedwificlients "$ifname24"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 2.4GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -4245,7 +4245,7 @@ DisplayPage7()
     attachedwificlients "$ifname5"
     echo ""
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
   #Testing
@@ -4263,7 +4263,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4282,7 +4282,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz               ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4301,7 +4301,7 @@ DisplayPage7()
       #attachedwificlients "$ifname5" #testing
       echo ""
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray}${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -5159,7 +5159,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   if [ "$1" = "-monitor" ]
   then
       clear
-      if [ -f "$CFGPATH" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
+      if [ -f "$CFGPATH" ] && [ -f "/opt/bin/column" ] && [ -f "/opt/bin/timeout" ] && [ -f "/opt/sbin/screen" ] && [ -f "/opt/bin/nmap" ] && [ -f "/opt/bin/jq" ] && [ -f "/opt/bin/iftop" ]
       then
           printf "\r\033[0K${InvYellow} ${CClear} Please wait..." ; _ConsumeKeypressBuffer_
           source "$CFGPATH"
