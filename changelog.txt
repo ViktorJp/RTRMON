@@ -5,7 +5,8 @@ v2.2.01b  - (TBA)
             connections. Page 6 - Top 10 Network/Bandwidth connections, now showing established connections
             running across your Wireguard tunnels. Operations Menu, now showing additional keyboard options
             to allow you to quickly jump to a Wireguard speed test.
-          - PATCH: Many, many behind the scenes optimizations and fixes, but could probably use a lot more!
+          - PATCH: Many, many behind the scenes additions, optimizations and fixes, but could probably use
+            a lot more! But hey it works! :)
 
 v2.1.6    - (July 5, 2025)
           - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
