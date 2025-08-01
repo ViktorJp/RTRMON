@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Jul-28
+# Last Modified: 2025-Jul-31
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.01b"
+Version="2.2.02b"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -2191,7 +2191,7 @@ calculatestats()
       WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
 
       icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg1ip="$(eval $icanhazwg1ip)"
@@ -2203,7 +2203,7 @@ calculatestats()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         wg1ip="$NVRAMWG1IP"
@@ -2234,7 +2234,7 @@ calculatestats()
       WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
 
       icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg2ip="$(eval $icanhazwg2ip)"
@@ -2246,7 +2246,7 @@ calculatestats()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         wg2ip="$NVRAMWG2IP"
@@ -2276,7 +2276,7 @@ calculatestats()
       WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
 
       icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg3ip="$(eval $icanhazwg3ip)"
@@ -2288,7 +2288,7 @@ calculatestats()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         wg3ip="$NVRAMWG3IP"
@@ -2318,7 +2318,7 @@ calculatestats()
       WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
 
       icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg4ip="$(eval $icanhazwg4ip)"
@@ -2330,7 +2330,7 @@ calculatestats()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         wg4ip="$NVRAMWG4IP"
@@ -2360,7 +2360,7 @@ calculatestats()
       WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
 
       icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg5ip="$(eval $icanhazwg5ip)"
@@ -2372,7 +2372,7 @@ calculatestats()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         wg5ip="$NVRAMWG5IP"
@@ -4328,7 +4328,7 @@ DisplayPage6()
           NVRAMWGSLOTADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN"_addr | cut -d '/' -f1)
 
           # Added based on suggestion from @ZebMcKayhan
-          ip rule add from $NVRAMWGSLOTADDR lookup $WGTUN prio 10
+          ip rule add from $NVRAMWGSLOTADDR lookup $WGTUN prio 10 >/dev/null 2>&1
 
           icanhazwgip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN" --request GET --url https://ipv4.icanhazip.com"
           icanhazwgip="$(eval $icanhazwgip)"
@@ -4341,7 +4341,7 @@ DisplayPage6()
           fi
 
           # Added based on suggestion from @ZebMcKayhan
-          ip rule del prio 10
+          ip rule del prio 10 >/dev/null 2>&1
 
           if [ "$(echo "$NVRAMWGIP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
             { echo 'Private Tunnel'
@@ -6389,7 +6389,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
 
       icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg1ip="$(eval $icanhazwg1ip)"
@@ -6401,7 +6401,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg1ip="$NVRAMWG1IP"
@@ -6430,7 +6430,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
 
       icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg2ip="$(eval $icanhazwg2ip)"
@@ -6442,7 +6442,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg2ip="$NVRAMWG2IP"
@@ -6470,7 +6470,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
 
       icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg3ip="$(eval $icanhazwg3ip)"
@@ -6482,7 +6482,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg3ip="$NVRAMWG3IP"
@@ -6510,7 +6510,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
 
       icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg4ip="$(eval $icanhazwg4ip)"
@@ -6522,7 +6522,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg4ip="$NVRAMWG4IP"
@@ -6550,7 +6550,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
 
       icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg5ip="$(eval $icanhazwg5ip)"
@@ -6562,7 +6562,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg5ip="$NVRAMWG5IP"
@@ -6969,7 +6969,7 @@ do
       printf "${CGreen}\r[Refreshing WG1 Stats...]"
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
 
       icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg1ip="$(eval $icanhazwg1ip)"
@@ -6981,7 +6981,7 @@ do
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg1ip="$NVRAMWG1IP"
@@ -7011,7 +7011,7 @@ do
       printf "${CGreen}\r[Refreshing WG2 Stats...]"
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
 
       icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg2ip="$(eval $icanhazwg2ip)"
@@ -7023,7 +7023,7 @@ do
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg2ip="$NVRAMWG2IP"
@@ -7052,7 +7052,7 @@ do
       printf "${CGreen}\r[Refreshing WG3 Stats...]"
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
 
       icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg3ip="$(eval $icanhazwg3ip)"
@@ -7064,7 +7064,7 @@ do
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg3ip="$NVRAMWG3IP"
@@ -7093,7 +7093,7 @@ do
       printf "${CGreen}\r[Refreshing WG4 Stats...]"
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
 
       icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg4ip="$(eval $icanhazwg4ip)"
@@ -7105,7 +7105,7 @@ do
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg4ip="$NVRAMWG4IP"
@@ -7134,7 +7134,7 @@ do
       printf "${CGreen}\r[Refreshing WG5 Stats...]"
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
 
       icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
       icanhazwg5ip="$(eval $icanhazwg5ip)"
@@ -7146,7 +7146,7 @@ do
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10
+      ip rule del prio 10 >/dev/null 2>&1
 
       if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
         oldwg5ip="$NVRAMWG5IP"
