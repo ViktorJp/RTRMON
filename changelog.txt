@@ -1,4 +1,4 @@
-v2.2.02b  - (TBA)
+v2.2.03b  - (TBA)
           - MINOR: This release adds compatibility with Wireguard connections! New functionality has been
             added under: Page 2 - Network connections, now adding any Wireguard connections to the bottom
             of the list. Page 4 - Speed Test, now allowing you to speed test your WAN, VPN and Wireguard
@@ -9,6 +9,11 @@ v2.2.02b  - (TBA)
             a lot more! But hey it works! :)
           - PATCH: Minor fixes and adding some more dev/nulls around certain commands to keep occasional
             messages from popping up in the main UI.
+          - PATCH: Added the rp_filter compatibility statements per @ZebMcKayhan for during use of the
+            speedtest. IMPORTANT NOTE: If you're running IPv6 across your Wireguard tunnels, you may
+            encounter (what I call) some incompatibilities uncovered in the Ookla Speedtest CLI binary. It
+            will complain and throw errors. The only known fix at the moment is to specify your own custom
+            server that only uses IPv4, and force it to speedtest against that.
 
 v2.1.6    - (July 5, 2025)
           - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
