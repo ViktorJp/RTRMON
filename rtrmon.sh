@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Jul-31
+# Last Modified: 2025-Aug-2
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.02b"
+Version="2.2.03b"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3855,12 +3855,23 @@ DisplaySpdtst()
     eval selectedwgslot="\$${selectedwgslot}"
     if [ "$selectedwgslot" = "True" ] && [ "$VPNSite2Site" = "0" ]
     then
+
+      SPDWGTUN="wgc$selectedslotnum"
+      SPDNVRAMWGSLOTADDR=$($timeoutcmd$timeoutsec nvram get "$SPDWGTUN"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
+
       printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WG${selectedslotnum} Speedtest]"
       if [ $spdtestsvrID == "0" ]; then
         speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=wgc${selectedslotnum} --accept-license --accept-gdpr 2>&1)"
       else
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=wgc${selectedslotnum} --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
       fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
       SpdDate=$(date)
       SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
       SpdLatency=$(echo $speed | awk -F '","' 'NR==1 {print $3}' | sed -e 's/^"//' -e 's/"$//')
