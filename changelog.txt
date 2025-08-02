@@ -11,9 +11,9 @@ v2.2.03b  - (TBA)
             messages from popping up in the main UI.
           - PATCH: Added the rp_filter compatibility statements per @ZebMcKayhan for during use of the
             speedtest. IMPORTANT NOTE: If you're running IPv6 across your Wireguard tunnels, you may
-            encounter (what I call) some incompatibilities uncovered in the Ookla Speedtest CLI binary. It
-            will complain and throw errors. The only known fix at the moment is to specify your own custom
-            server that only uses IPv4, and force it to speedtest against that.
+            encounter some "incompatibilities" uncovered in the Ookla Speedtest CLI binary by @ZebMcKayhan.
+            It will complain and throw errors. The only known fix at the moment is to specify your own
+            custom server that only uses IPv4, and force it to speedtest against that.
 
 v2.1.6    - (July 5, 2025)
           - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
