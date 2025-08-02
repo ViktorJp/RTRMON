@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.03b"
+Version="2.2.04b"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -3860,8 +3860,8 @@ DisplaySpdtst()
       SPDNVRAMWGSLOTADDR=$($timeoutcmd$timeoutsec nvram get "$SPDWGTUN"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      #ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
-      ip -6 rule add from all oif $SPDWGTUN lookup $SPDWGTUN prio 10 >/dev/null 2>&1 #Mod to handle limiting it to IPv4
+      ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
+      ip -6 rule add from all oif $SPDWGTUN lookup $SPDWGTUN prio 10 >/dev/null 2>&1 #Mod to handle IPv6
 
       printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WG${selectedslotnum} Speedtest]"
 
@@ -3872,10 +3872,11 @@ DisplaySpdtst()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
       ip -6 rule del prio 10 >/dev/null 2>&1
 
-      # Clean up any garbage before the actual data per @ZebMcKayhan
-      #speed=$(echo $speed | sed 's/^[^"]*//')
+      # Clean up any garbage data per @ZebMcKayhan
+      speed=$(echo $speed | sed 's/^[^"]*//')
 
       SpdDate=$(date)
       SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
