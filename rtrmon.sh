@@ -3863,16 +3863,18 @@ DisplaySpdtst()
       ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
 
       printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WG${selectedslotnum} Speedtest]"
-      
+
       if [ $spdtestsvrID == "0" ]; then
         speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=wgc${selectedslotnum} --accept-license --accept-gdpr 2>&1)"
       else
         speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=wgc${selectedslotnum} --server-id=$spdtestsvrID --accept-license --accept-gdpr 2>&1)"
       fi
-      speed=$(echo $speed | sed 's/^[^"]*//')
-      
+
       # Added based on suggestion from @ZebMcKayhan
       ip rule del prio 10 >/dev/null 2>&1
+
+      # Clean up any garbage before the actual data per @ZebMcKayhan
+      speed=$(echo $speed | sed 's/^[^"]*//')
 
       SpdDate=$(date)
       SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
