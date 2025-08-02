@@ -3860,7 +3860,8 @@ DisplaySpdtst()
       SPDNVRAMWGSLOTADDR=$($timeoutcmd$timeoutsec nvram get "$SPDWGTUN"_addr | cut -d '/' -f1)
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
+      #ip rule add from $SPDNVRAMWGSLOTADDR lookup $SPDWGTUN prio 10 >/dev/null 2>&1
+      ip -6 rule add from all oif $SPDWGTUN lookup $SPDWGTUN prio 10 >/dev/null 2>&1 #Mod to handle limiting it to IPv4
 
       printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WG${selectedslotnum} Speedtest]"
 
@@ -3871,10 +3872,10 @@ DisplaySpdtst()
       fi
 
       # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
+      ip -6 rule del prio 10 >/dev/null 2>&1
 
       # Clean up any garbage before the actual data per @ZebMcKayhan
-      speed=$(echo $speed | sed 's/^[^"]*//')
+      #speed=$(echo $speed | sed 's/^[^"]*//')
 
       SpdDate=$(date)
       SpdServer=$(echo $speed | awk -F '","' 'NR==1 {print $1}' | sed -e 's/^"//' -e 's/"$//' -e 's/[^a-zA-Z0-9 -]//g')
