@@ -11,7 +11,7 @@ v2.2.04b  - (TBA)
             messages from popping up in the main UI.
           - PATCH: Added the rp_filter compatibility statements per @ZebMcKayhan for during use of the
             speedtest. Added additional ip rule filters to handle IPv6 as it the output was displaying 
-            errors and causing some display issues.
+            errors and causing some display issues. Thanks so much for your help with this, Zeb!
 
 v2.1.6    - (July 5, 2025)
           - PATCH: Included a much needed "export PATH" statement to ensure the script knows where to look
