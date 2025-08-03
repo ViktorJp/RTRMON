@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Aug-2
+# Last Modified: 2025-Aug-03
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.04b"
-Beta=1
+Version="2.2.0"
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -823,7 +823,7 @@ vconfig()
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}---------------------------------------------------------------------------------------${CClear}"
       echo ""
-      read -p "Please select? (1-13, s=Save, e=Exit): " ConfigSelection
+      read -p "Please select? (1-14, s=Save, e=Exit): " ConfigSelection
       CHANGES=1
       # Execute chosen selections
           case "$ConfigSelection" in
@@ -3069,15 +3069,25 @@ DisplayPage2()
       oldwan0ip="1.2.3.4" #demo
       oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
       oldvpnip="2.3.4.5" #demo
-      oldvpnip2="3.4.5.6" #demo
-      oldvpnip3="4.5.6.7" #demo
-      oldvpnip4="5.6.7.8" #demo
-      oldvpnip5="6.7.8.9" #demo
+      oldvpn2ip="3.4.5.6" #demo
+      oldvpn3ip="4.5.6.7" #demo
+      oldvpn4ip="5.6.7.8" #demo
+      oldvpn5ip="6.7.8.9" #demo
+      oldwg1ip="2.3.4.5" #demo
+      oldwg2ip="3.4.5.6" #demo
+      oldwg3ip="4.5.6.7" #demo
+      oldwg4ip="5.6.7.8" #demo
+      oldwg5ip="6.7.8.9" #demo
       oldvpncity="Rivendell" #demo
       oldvpn2city="Mordor" #demo
       oldvpn3city="Minas Tirith" #demo
       oldvpn4city="Edoras" #demo
       oldvpn5city="Aglarond" #demo
+      oldwg1city="Rivendell" #demo
+      oldwg2city="Mordor" #demo
+      oldwg3city="Minas Tirith" #demo
+      oldwg4city="Edoras" #demo
+      oldwg5city="Aglarond" #demo
     fi
     echo -en "${InvGreen} ${CClear} ${CWhite}WAN 0/1 IP ${CDkGray}[ ${CWhite}"
     printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
