@@ -1,5 +1,6 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Include Wireguard Slots + Stats
 * Possible integration with ModMon NVRAM checker (JGrana)
 * add a success event for when the script starts up, and perhaps check the amount of uptime of the router, and if it's less 
   than 5 minutes, send a notification that the router just rebooted
