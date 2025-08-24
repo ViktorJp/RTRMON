@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Aug-24
+# Last Modified: 2025-Aug-03
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.1"
+Version="2.2.0"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -973,7 +973,7 @@ vconfig()
                 echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: A new 6GHz Bandwidth speed ($MaxSpeed6Ghz Mbps) has been selected." >> $LOGFILE
               else
                 echo -e "${CRed}This item is currently only available for router models:"
-                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U, RT-BE92U and GT-BE98_Pro"
+                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U and GT-BE98_Pro"
                 echo ""
                 sleep 3
               fi
@@ -5874,7 +5874,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   if [ "$RouterModel" = "GT-BE98_Pro" ]; then
      FourBandCustom56624="True"
   fi
-  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ] || [ "$RouterModel" = "RT-BE92U" ]; then
+  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ]; then
      ThreeBand2456="True"
   fi
   if [ "$RouterModel" = "GT-AX11000_Pro" ] || [ "$RouterModel" = "GT-AX11000" ] || [ "$RouterModel" = "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" = "ZenWiFi_XT8" ]; then
