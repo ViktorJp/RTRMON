@@ -1,5 +1,5 @@
-v2.2.x    - (TBA)
-          - PATCH: Added compatibility for the RT-BE92U routers
+v2.2.1    - (August 24, 2025)
+          - PATCH: Added compatibility for the RT-BE92U line of routers
 
 v2.2.0    - (August 3, 2025)
           - MINOR: This release adds compatibility with Wireguard connections! New functionality has been
