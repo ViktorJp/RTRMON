@@ -1,3 +1,6 @@
+v2.2.x    - (TBA)
+          - PATCH: Added compatibility for the RT-BE92U
+
 v2.2.0    - (August 3, 2025)
           - MINOR: This release adds compatibility with Wireguard connections! New functionality has been
             added under: Page 2 - Network connections, now adding any Wireguard connections to the bottom
