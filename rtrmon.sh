@@ -225,9 +225,13 @@ displayopsmenu()
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]
     then
        echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN / VPN 1:${CGreen}(1)${CClear} 2:${CGreen}(2)${CClear} 3:${CGreen}(3)${CClear} 4:${CGreen}(4)${CClear} 5:${CGreen}(5)${CClear} ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
-       echo -e "${InvGreen} ${CClear} Speedtest Wireguard 1:${CGreen}(6)${CClear} 2:${CGreen}(7)${CClear} 3:${CGreen}(8)${CClear} 4:${CGreen}(9)${CClear} 5:${CGreen}(0)${CClear}     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     else
        echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN ${CDkGray}/ VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)${CClear} ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
+    fi
+    if [ "$wg1on" == "True" ] || [ "$wg2on" == "True" ] || [ "$wg3on" == "True" ] || [ "$wg4on" == "True" ] || [ "$wg5on" == "True" ]
+    then
+       echo -e "${InvGreen} ${CClear} Speedtest Wireguard 1:${CGreen}(6)${CClear} 2:${CGreen}(7)${CClear} 3:${CGreen}(8)${CClear} 4:${CGreen}(9)${CClear} 5:${CGreen}(0)${CClear}     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
+    else
        echo -e "${InvGreen} ${CClear} ${CDkGray}Speedtest Wireguard 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     fi
     echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                      ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/7)${CClear}"
