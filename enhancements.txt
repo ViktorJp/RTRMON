@@ -5,6 +5,7 @@ Future Enhancements (Possible/Planned)
   than 5 minutes, send a notification that the router just rebooted
 * check for certain events like wan down that might require forcing a router reboot
 * AMTM Email notifications on certain events (like 80% disk usage)
+* Fix VPN/WG Speedtest availability in UI if one or the other isn't being used
 
 Completed:
 ----------
