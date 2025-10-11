@@ -1,3 +1,7 @@
+v2.2.2    - (TBA)
+          - PATCH: Tweaked how the elapsed time starts and stops to get a more precise calculation of the
+            amount of throughput in Mbps.
+
 v2.2.1    - (August 24, 2025)
           - PATCH: Added compatibility for the RT-BE92U line of routers
           - PATCH: Fixed Operations Menu display problem presented itself when no VPN slots were active,
