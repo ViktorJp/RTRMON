@@ -1,6 +1,7 @@
 v2.2.2    - (TBA)
-          - PATCH: Tweaked how the elapsed time starts and stops to get a more precise calculation of the
-            amount of throughput in Mbps.
+          - PATCH: Fixed some of the logic to cut down on the VPN/WG slot calls for external public IP
+            address validation, and re-use the same values if they have not changed. This would help bring 
+            down the amount of regular network noise that the script generates while running.
           - PATCH: Fixed the banner menu showing whether VPN or WG or both VPN/WG are available for speed
             tests on page #4 depending on what slots are active.
 
