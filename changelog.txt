@@ -1,6 +1,6 @@
 v2.2.2    - (TBA)
           - PATCH: Fixed some of the logic to cut down on the VPN/WG slot calls for external public IP
-            address/city validation, and re-use the same values if they have not changed. This would help
+            address/city validation, and re-use those same values if they have not changed. This would help
             bring down the amount of regular network noise that the script generates while running.
           - PATCH: In the process of cutting down these IP address/location calls, a lot of duplicate code 
             around these functions was cleaned up so that RTRMON runs faster and leaner.
