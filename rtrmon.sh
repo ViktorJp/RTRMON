@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.2b1"
+Version="2.2.2b2"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -82,12 +82,12 @@ VPN2State=0
 VPN3State=0
 VPN4State=0
 VPN5State=0
-vpncity="Unknown"
+vpn1city="Unknown"
 vpn2city="Unknown"
 vpn3city="Unknown"
 vpn4city="Unknown"
 vpn5city="Unknown"
-vpnip="0.0.0.0"
+vpn1ip="0.0.0.0"
 vpn2ip="0.0.0.0"
 vpn3ip="0.0.0.0"
 vpn4ip="0.0.0.0"
@@ -1879,8 +1879,8 @@ oldstats()
   oldvpn4txmbrate=$vpn4txmbrate
   oldvpn5rxmbrate=$vpn5rxmbrate
   oldvpn5txmbrate=$vpn5txmbrate
-  oldvpnip=$vpnip
-  oldvpncity=$vpncity
+  oldvpn1ip=$vpn1ip
+  oldvpn1city=$vpn1city
   oldvpn2ip=$vpn2ip
   oldvpn2city=$vpn2city
   oldvpn3ip=$vpn3ip
@@ -2058,7 +2058,7 @@ calculatestats()
   if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
   if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
   if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
-  if [ "$vpn1on" == "False" ]; then vpnip="0.0.0.0"; fi
+  if [ "$vpn1on" == "False" ]; then vpn1ip="0.0.0.0"; fi
   if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
   if [ "$vpn3on" == "False" ]; then vpn3ip="0.0.0.0"; fi
   if [ "$vpn4on" == "False" ]; then vpn4ip="0.0.0.0"; fi
@@ -2724,7 +2724,7 @@ DisplayPage2()
     if [ "$ScreenshotMode" == "1" ]; then
       oldwan0ip="1.2.3.4" #demo
       oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
-      oldvpnip="2.3.4.5" #demo
+      oldvpn1ip="2.3.4.5" #demo
       oldvpn2ip="3.4.5.6" #demo
       oldvpn3ip="4.5.6.7" #demo
       oldvpn4ip="5.6.7.8" #demo
@@ -2734,7 +2734,7 @@ DisplayPage2()
       oldwg3ip="4.5.6.7" #demo
       oldwg4ip="5.6.7.8" #demo
       oldwg5ip="6.7.8.9" #demo
-      oldvpncity="Rivendell" #demo
+      oldvpn1city="Rivendell" #demo
       oldvpn2city="Mordor" #demo
       oldvpn3city="Minas Tirith" #demo
       oldvpn4city="Edoras" #demo
@@ -2782,20 +2782,20 @@ DisplayPage2()
     echo ""
     echo -e "${InvDkGray}${CWhite} OVPN$vpn1slot                                                                                                         ${CClear}"
     echo ""
-    if [ "$oldvpncity" == "Private Network" ]; then
+    if [ "$oldvpn1city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
       echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
-      printf "%-33s" "$oldvpncity"
+      printf "%-33s" "$oldvpn1city"
 
       echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
+      printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
       echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
-      printf "%-33s" "$oldvpncity"
+      printf "%-33s" "$oldvpn1city"
 
       echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     fi
@@ -3972,10 +3972,10 @@ DisplayPage6()
     #run network diags and save Results
     printf "${InvGreen} ${CClear} ${CWhite}[Updating WAN( ) LAN( ) VPN( ) WG( ) Statistics ... Please stand by...]"
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
+      timeout 15 iftop -t -s 10 -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
     fi
     printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN( ) VPN( ) WG( ) Statistics ... Please stand by...]"
-    iftop -t -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
+      timeout 15 iftop -t -s 10 -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
     printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN(${CGreen}X${CWhite}) VPN( ) WG( ) Statistics ... Please stand by...]"
 
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]
@@ -3994,7 +3994,7 @@ DisplayPage6()
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
           else
-            iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+            timeout 15 iftop -t -s 10 -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
           fi
         fi
       done
@@ -4035,7 +4035,7 @@ DisplayPage6()
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/wgc${slot}result.txt
           else
-            iftop -t -i wgc$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wgc${slot}result.txt
+            timeout 15 iftop -t -s 10 -i wgc$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wgc${slot}result.txt
           fi
         fi
       done
@@ -5434,34 +5434,34 @@ GetVPNWGIPCITY()
 
   vpn1slot=1
   VPN1State="$(_VPN_GetClientState_ ${vpn1slot})"
-  if [ -z "$VPNState" ]; then VPNState=0; fi # to catch possible wireguard interference
-  if [ "$VPNState" -eq 2 ]; then
+  if [ -z "$VPN1State" ]; then VPN1State=0; fi # to catch possible wireguard interference
+  if [ "$VPN1State" -eq 2 ]; then
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN1 Stats...]"; fi
     TUN1="tun1"$vpn1slot
-    NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-    NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+    NVRAMVPN1ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
+    NVRAMVPN1IP=$(ping -c 1 -w 1 $NVRAMVPN1ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPNADDR" != "$oldvpnADDR" ]; then
-      oldvpnip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
-      oldvpnADDR=$NVRAMVPNADDR
+    if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ]; then
+      oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
+      if [ -z $oldvpn1ip ]; then oldvpn1ip=$NVRAMVPN1IP; fi
+      oldvpn1ADDR=$NVRAMVPN1ADDR
     fi
 
-    if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpnip=$NVRAMVPNIP
-      oldvpncity="Private Network"
-    elif [ "$vpnip" != "$oldvpnip" ]; then
-      oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
-      oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpnslot: $oldvpnip ($oldvpncity)" >> $LOGFILE
+    if [ "$(echo $NVRAMVPN1IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn1ip=$NVRAMVPN1IP
+      oldvpn1city="Private Network"
+    elif [ "$vpn1ip" != "$oldvpn1ip" ]; then
+      oldvpn1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
+      oldvpn1city="$(eval $oldvpn1city)"; if echo $oldvpn1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn1city="Undetermined"; fi
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpn1ip ($oldvpn1city)" >> $LOGFILE
     fi
     
-    vpnip=$oldvpnip
-    vpncity=$oldvpncity
-    vpnon="True"
+    vpn1ip=$oldvpn1ip
+    vpn1city=$oldvpn1city
+    vpn1on="True"
   
   else
-    vpnon="False"
+    vpn1on="False"
   fi
 
   #Check to see if there's a secondary VPN connection
