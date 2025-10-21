@@ -1,3 +1,22 @@
+v2.2.2    - (October 21, 2025)
+          - PATCH: Fixed some of the logic to cut down on the VPN/WG slot calls for external public IP
+            address/city validation, and re-use those same values if they have not changed. This would help
+            bring down the amount of regular network noise that the script generates while running.
+          - PATCH: In the process of cutting down these IP address/location calls, a lot of duplicate code 
+            around these functions was cleaned up so that RTRMON runs faster and leaner, and provides 
+            slightly more accuracy around stats.
+          - PATCH: Fixed the banner menu showing whether VPN or WG or both VPN/WG are available for speed
+            tests on page #4 depending on what slots are active.
+          - PATCH: Fixed OVPN1 stats not showing due to some incorrect variable naming. Thanks to
+            @scootertramp for reporting!
+          - PATCH: Fixed the timing issue around the iftop command on the Top 10 Network Connections and
+            Bandwidth Stats page #6. What was happening was that iftop would be waiting for any kind of
+            network traffic, and on a low or unused VPN/WG slot, would just sit there until something
+            came through. Now, the timeout command will kill iftop after 15 seconds of use, while iftop
+            is now given the command to do its thing within 10 seconds, which still gives you a decent
+            snapshot of what kind of traffic is happening during that time. Thanks to @CaptainSTX for
+            reporting this!
+
 v2.2.1    - (August 24, 2025)
           - PATCH: Added compatibility for the RT-BE92U line of routers
           - PATCH: Fixed Operations Menu display problem presented itself when no VPN slots were active,

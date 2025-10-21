@@ -1,13 +1,11 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
-* Possible integration with ModMon NVRAM checker (JGrana)
-* add a success event for when the script starts up, and perhaps check the amount of uptime of the router, and if it's less 
-  than 5 minutes, send a notification that the router just rebooted
-* check for certain events like wan down that might require forcing a router reboot
 * AMTM Email notifications on certain events (like 80% disk usage)
+* Perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 
 Completed:
 ----------
+* Fix VPN/WG Speedtest availability in UI if one or the other isn't being used
 * Include Wireguard Slots + Stats
 * opkg install column -- RTRMON!
 * FIX the VPN-site-to-site option and exclude any private VPNs from needing ping tests or city lookups. (visortgw)

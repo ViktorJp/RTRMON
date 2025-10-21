@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Oct-21
+# Last Modified: 2025-Aug-24
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.2"
+Version="2.2.1"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -82,12 +82,12 @@ VPN2State=0
 VPN3State=0
 VPN4State=0
 VPN5State=0
-vpn1city="Unknown"
+vpncity="Unknown"
 vpn2city="Unknown"
 vpn3city="Unknown"
 vpn4city="Unknown"
 vpn5city="Unknown"
-vpn1ip="0.0.0.0"
+vpnip="0.0.0.0"
 vpn2ip="0.0.0.0"
 vpn3ip="0.0.0.0"
 vpn4ip="0.0.0.0"
@@ -1879,8 +1879,8 @@ oldstats()
   oldvpn4txmbrate=$vpn4txmbrate
   oldvpn5rxmbrate=$vpn5rxmbrate
   oldvpn5txmbrate=$vpn5txmbrate
-  oldvpn1ip=$vpn1ip
-  oldvpn1city=$vpn1city
+  oldvpnip=$vpnip
+  oldvpncity=$vpncity
   oldvpn2ip=$vpn2ip
   oldvpn2city=$vpn2city
   oldvpn3ip=$vpn3ip
@@ -1964,143 +1964,492 @@ oldstats()
 # Calculates and captures, well, all the current stats from their sources  ;)
 calculatestats()
 {
+   RM_END_TIME="$(date +%s)"
+   RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
+   [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
 
-  RM_END_TIME="$(date +%s)"
-  RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
-  [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
+   # CPU - Usage
+   if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / Interval)); else cpuusr1=0; fi
+   if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / Interval)); else cpusys1=0; fi
+   if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / Interval)); else cpunice1=0; fi
+   if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / Interval)); else cpuidle1=0; fi
+   if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / Interval)); else cpuirq1=0; fi
+   if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
+   if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
+   if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
+   if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
+   if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
 
-  # CPU - Usage
-  if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / Interval)); else cpuusr1=0; fi
-  if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / Interval)); else cpusys1=0; fi
-  if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / Interval)); else cpunice1=0; fi
-  if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / Interval)); else cpuidle1=0; fi
-  if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / Interval)); else cpuirq1=0; fi
-  if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
-  if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
-  if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
-  if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
-  if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
+   # CPU - Temp - borrowed from @Maverickcdn - thank you!
+   if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+      F_cputemp=$($timeoutcmd$timeoutsec cat /sys/class/thermal/thermal_zone0/temp | cut -c -2)
+   elif [ -f /proc/dmu/temperature ]; then # Thanks to PeterR for the bug report on AC68U's - hopefully this will fix that
+      F_cputemp=$($timeoutcmd$timeoutsec cat /proc/dmu/temperature | cut -c19-20)
+   fi
 
-  # CPU - Temp - borrowed from @Maverickcdn - thank you!
-  if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
-     F_cputemp=$($timeoutcmd$timeoutsec cat /sys/class/thermal/thermal_zone0/temp | cut -c -2)
-  elif [ -f /proc/dmu/temperature ]; then # Thanks to PeterR for the bug report on AC68U's - hopefully this will fix that
-     F_cputemp=$($timeoutcmd$timeoutsec cat /proc/dmu/temperature | cut -c19-20)
-  fi
+    # Memory - Usage
+    if [ -n "$memused1" ]; then memused1=$((memused1 / Interval)); else memused1=0; fi
+    if [ -n "$memfree1" ]; then memfree1=$((memfree1 / Interval)); else memfree1=0; fi
+    if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / Interval)); else memshrd1=0; fi
+    if [ -n "$membuff1" ]; then membuff1=$((membuff1 / Interval)); else membuff1=0; fi
+    if [ -n "$memcach1" ]; then memcach1=$((memcach1 / Interval)); else memcach1=0; fi
 
-  # Memory - Usage
-  if [ -n "$memused1" ]; then memused1=$((memused1 / Interval)); else memused1=0; fi
-  if [ -n "$memfree1" ]; then memfree1=$((memfree1 / Interval)); else memfree1=0; fi
-  if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / Interval)); else memshrd1=0; fi
-  if [ -n "$membuff1" ]; then membuff1=$((membuff1 / Interval)); else membuff1=0; fi
-  if [ -n "$memcach1" ]; then memcach1=$((memcach1 / Interval)); else memcach1=0; fi
+    memused2="$((memused1 / 1000))"
+    memfree2="$((memfree1 / 1000))"
+    memshrd2="$((memshrd1 / 1000))"
+    membuff2="$((membuff1 / 1000))"
+    memcach2="$((memcach1 / 1000))"
+    totalmemory="$(((memused1 + memfree1) / 1000))"
 
-  memused2="$((memused1 / 1000))"
-  memfree2="$((memfree1 / 1000))"
-  memshrd2="$((memshrd1 / 1000))"
-  membuff2="$((membuff1 / 1000))"
-  memcach2="$((memcach1 / 1000))"
-  totalmemory="$(((memused1 + memfree1) / 1000))"
+    totalphysmem=$(/usr/bin/free | awk 'NR==2 {print $2}' 2>/dev/null)
+    totalphysmem="$((totalphysmem / 1000))"
 
-  totalphysmem=$(/usr/bin/free | awk 'NR==2 {print $2}' 2>/dev/null)
-  totalphysmem="$((totalphysmem / 1000))"
+    # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
+    eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
+    chmod 755 /tmp/size.txt
+    nvramtotals=$(cat /tmp/size.txt | grep size: | awk '{print $2, $4}' 2>/dev/null)
+    nvramused="$(echo $nvramtotals | awk '{print $1}')"
+    nvramfree="$(echo $nvramtotals | awk '{print $2}' | sed 's/[)(]//g')"
+    if [ -z $nvramused ] || [ -z $nvramfree ]; then
+       nvramused=10000 # incase the values coming back from this file are blank, use temporary fillers
+       totalnvram=20000
+    else
+       totalnvram="$((nvramused + nvramfree))"
+    fi
 
-  # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
-  eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
-  chmod 755 /tmp/size.txt
-  nvramtotals=$(cat /tmp/size.txt | grep size: | awk '{print $2, $4}' 2>/dev/null)
-  nvramused="$(echo $nvramtotals | awk '{print $1}')"
-  nvramfree="$(echo $nvramtotals | awk '{print $2}' | sed 's/[)(]//g')"
-  if [ -z $nvramused ] || [ -z $nvramfree ]; then
-     nvramused=10000 # incase the values coming back from this file are blank, use temporary fillers
-     totalnvram=20000
-  else
-     totalnvram="$((nvramused + nvramfree))"
-  fi
+    # Disk - JFFS
+    disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
+    jffstotal="$(echo $disk_use | awk '{print $1}')"
+    jffsused="$(echo $disk_use | awk '{print $2}')"
+    jffstotal="$(($jffstotal / 1000))"
+    jffsused="$(($jffsused / 1000))"
 
-  # Disk - JFFS
-  disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
-  jffstotal="$(echo $disk_use | awk '{print $1}')"
-  jffsused="$(echo $disk_use | awk '{print $2}')"
-  jffstotal="$(($jffstotal / 1000))"
-  jffsused="$(($jffsused / 1000))"
+    # Disk - Swap file
+    swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
+    swaptotal="$(echo $swap_use | awk '{print $1}')"
+    swapused="$(echo $swap_use | awk '{print $2}')"
+    swaptotal="$(($swaptotal / 1000))"
+    swapused="$(($swapused / 1000))"
+    if [ $swaptotal == "0" ]; then swaptotal=100; fi
 
-  # Disk - Swap file
-  swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
-  swaptotal="$(echo $swap_use | awk '{print $1}')"
-  swapused="$(echo $swap_use | awk '{print $2}')"
-  swaptotal="$(($swaptotal / 1000))"
-  swapused="$(($swapused / 1000))"
-  if [ $swaptotal == "0" ]; then swaptotal=100; fi
+    # Disk - SD devices
+    df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
 
-  # Disk - SD devices
-  df | grep /dev/sd > /jffs/addons/rtrmon.d/sdresult.txt 2>/dev/null
+    # Network - WAN/LAN/DNS IP Addresses
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
+    then
+       wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
+       wan1ip=$($timeoutcmd$timeoutsec nvram get wan1_ipaddr)
+    fi
+    lanip=$($timeoutcmd$timeoutsec nvram get lan_ipaddr)
+    dns1ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $1}')"
+    dns2ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $2}')"
+    dns3ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $1}')"
+    dns4ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $2}')"
 
-  # Network - WAN/LAN/DNS IP Addresses
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
-  then
-     wan0ip=$($timeoutcmd$timeoutsec nvram get wan0_ipaddr)
-     wan1ip=$($timeoutcmd$timeoutsec nvram get wan1_ipaddr)
-  fi
-  lanip=$($timeoutcmd$timeoutsec nvram get lan_ipaddr)
-  dns1ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $1}')"
-  dns2ip="$($timeoutcmd$timeoutsec nvram get wan0_dns | awk '{print $2}')"
-  dns3ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $1}')"
-  dns4ip="$($timeoutcmd$timeoutsec nvram get wan1_dns | awk '{print $2}')"
+    # Network - VPN Client Ports and IP Addresses
+    vpn1slot=1
+    VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
+    if [ -z "$VPNState" ]; then VPNState=0; fi # to catch possible wireguard interference
+    if [ "$VPNState" -eq 2 ]; then
+      TUN="tun1"$vpn1slot
+      NVRAMVPNADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)"
+      NVRAMVPNIP="$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')"
 
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
-  then
-     if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
-     if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
-  fi
-  if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
-  if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
-  if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
-  if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
-  if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
-  if [ "$vpn1on" == "False" ]; then vpn1ip="0.0.0.0"; fi
-  if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
-  if [ "$vpn3on" == "False" ]; then vpn3ip="0.0.0.0"; fi
-  if [ "$vpn4on" == "False" ]; then vpn4ip="0.0.0.0"; fi
-  if [ "$vpn5on" == "False" ]; then vpn5ip="0.0.0.0"; fi
-  if [ "$wg1on" == "False" ]; then wg1ip="0.0.0.0"; fi
-  if [ "$wg2on" == "False" ]; then wg2ip="0.0.0.0"; fi
-  if [ "$wg3on" == "False" ]; then wg3ip="0.0.0.0"; fi
-  if [ "$wg4on" == "False" ]; then wg4ip="0.0.0.0"; fi
-  if [ "$wg5on" == "False" ]; then wg5ip="0.0.0.0"; fi
+      if [ "$(echo "$NVRAMVPNIP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        vpnip="$NVRAMVPNIP"
+        vpncity="Private Network"
+      else
+        lastvpnip="$oldvpnip"
+        if [ "$VPNSite2Site" == "1" ]; then
+          vpnip="$NVRAMVPNIP"
+        else
+          vpnip="$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com)" # Grab the public IP of the VPN Connection
+        fi
+        if [ -z "$vpnip" ]; then vpnip="$NVRAMVPNIP" ; fi
+        if [ "$lastvpnip" != "$vpnip" ]; then
+          vpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpnip | jq --raw-output .city"
+          vpncity="$(eval $vpncity)"; if echo $vpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpncity="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of VPN$vpn1slot: $vpnip ($vpncity)" >> $LOGFILE
+        fi
+      fi
+      vpn1on="True"
+    else
+      vpn1on="False"
+    fi
 
-  # Many thanks to @SomewhereOverTheRainbow for his help and suggestions on getting IP6 info!
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-     wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
-  fi
-  lanip6="$(ip -o -6 addr list br0 scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
+    #Check to see if there's a 2nd VPN connection
+    vpn2slot=2
+    VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+    if [ -z "$VPN2State" ]; then VPN2State=0; fi # to catch possible wireguard interference
+    if [ "$VPN2State" -eq 2 ]; then
+      TUN2="tun1"$vpn2slot
+      NVRAMVPN2ADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)"
+      NVRAMVPN2IP="$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')"
+
+      if [ "$(echo "$NVRAMVPN2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        vpn2ip="$NVRAMVPN2IP"
+        vpn2city="Private Network"
+      else
+        lastvpn2ip="$oldvpn2ip"
+        vpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z "$vpn2ip" ]; then vpn2ip=$NVRAMVPN2IP; fi
+        if [ "$lastvpn2ip" != "$vpn2ip" ]; then
+          vpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn2ip | jq --raw-output .city"
+          vpn2city="$(eval $vpn2city)"; if echo $vpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn2city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of VPN$vpn2slot: $vpn2ip ($vpn2city)" >> $LOGFILE
+        fi
+      fi
+      vpn2on="True"
+    else
+      vpn2on="False"
+    fi
+
+    #Check to see if there's a 3rd VPN connection
+    vpn3slot=3
+    VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+    if [ -z "$VPN3State" ]; then VPN3State=0; fi # to catch possible wireguard interference
+    if [ "$VPN3State" -eq 2 ]; then
+      TUN3="tun1"$vpn3slot
+      NVRAMVPN3ADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)"
+      NVRAMVPN3IP="$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')"
+
+      if [ "$(echo "$NVRAMVPN3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        vpn3ip="$NVRAMVPN3IP"
+        vpn3city="Private Network"
+      else
+        lastvpn3ip="$oldvpn3ip"
+        vpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z "$vpn3ip" ]; then vpn3ip=$NVRAMVPN3IP; fi
+        if [ "$lastvpn3ip" != "$vpn3ip" ]; then
+          vpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn3ip | jq --raw-output .city"
+          vpn3city="$(eval $vpn3city)"; if echo $vpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn3city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of VPN$vpn3slot: $vpn3ip ($vpn3city)" >> $LOGFILE
+        fi
+      fi
+      vpn3on="True"
+    else
+      vpn3on="False"
+    fi
+
+    #Check to see if there's a 4th VPN connection
+    vpn4slot=4
+    VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+    if [ -z "$VPN4State" ]; then VPN4State=0; fi # to catch possible wireguard interference
+    if [ "$VPN4State" -eq 2 ]; then
+      TUN4="tun1"$vpn4slot
+      NVRAMVPN4ADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)"
+      NVRAMVPN4IP="$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')"
+
+      if [ "$(echo "$NVRAMVPN4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        vpn4ip="$NVRAMVPN4IP"
+        vpn4city="Private Network"
+      else
+        lastvpn4ip="$oldvpn4ip"
+        vpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z "$vpn4ip" ]; then vpn4ip=$NVRAMVPN4IP; fi
+        if [ "$lastvpn4ip" != "$vpn4ip" ]; then
+          vpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn4ip | jq --raw-output .city"
+          vpn4city="$(eval $vpn4city)"; if echo $vpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn4city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of VPN$vpn4slot: $vpn4ip ($vpn4city)" >> $LOGFILE
+        fi
+      fi
+      vpn4on="True"
+    else
+      vpn4on="False"
+    fi
+
+    #Check to see if there's a 5th VPN connection
+    vpn5slot=5
+    VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+    if [ -z "$VPN5State" ]; then VPN5State=0; fi # to catch possible wireguard interference
+    if [ "$VPN5State" -eq 2 ]; then
+      TUN5="tun1"$vpn5slot
+      NVRAMVPN5ADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)"
+      NVRAMVPN5IP="$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')"
+
+      if [ "$(echo "$NVRAMVPN5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        vpn5ip="$NVRAMVPN5IP"
+        vpn5city="Private Network"
+      else
+        lastvpn5ip="$oldvpn5ip"
+        vpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z "$vpn5ip" ]; then vpn5ip=$NVRAMVPN5IP; fi
+        if [ "$lastvpn5ip" != "$vpn5ip" ]; then
+          vpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$vpn5ip | jq --raw-output .city"
+          vpn5city="$(eval $vpn5city)"; if echo $vpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then vpn5city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of VPN$vpn5slot: $vpn5ip ($vpn5city)" >> $LOGFILE
+        fi
+      fi
+      vpn5on="True"
+    else
+      vpn5on="False"
+    fi
+
+    #Check to see if there's a WGC1 connection
+    wg1slot=1
+    WG1State="$(_WG_GetClientState_ ${wg1slot})"
+    if [ -z "$WG1State" ]; then WG1State=0; fi
+    if [ "$WG1State" -eq 2 ]; then
+      WGTUN1="wgc$wg1slot"
+      WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
+
+      icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg1ip="$(eval $icanhazwg1ip)"
+      if [ -z "$icanhazwg1ip" ] || echo "$icanhazwg1ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG1IP="000.000.000.000"
+      else
+        NVRAMWG1IP="$icanhazwg1ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        wg1ip="$NVRAMWG1IP"
+        wg1city="Private Network"
+      else
+        lastwg1ip="$oldwg1ip"
+        wg1ip="$NVRAMWG1IP"
+        #if [ -z "$wg1ip" ]; then wg1ip=$WGTUN1_IP; fi
+        if [ "$lastwg1ip" != "$wg1ip" ]; then
+          wg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$wg1ip | jq --raw-output .city"
+          wg1city="$(eval $wg1city)"; if echo $wg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then wg1city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $wg1ip ($wg1city)" >> $LOGFILE
+        else
+          wg1city="$oldwg1city"
+        fi
+      fi
+      wg1on="True"
+    else
+      wg1on="False"
+    fi
+
+    #Check to see if there's a WGC2 connection
+    wg2slot=2
+    WG2State="$(_WG_GetClientState_ ${wg2slot})"
+    if [ -z "$WG2State" ]; then WG2State=0; fi
+    if [ "$WG2State" -eq 2 ]; then
+      WGTUN2="wgc$wg2slot"
+      WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
+
+      icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg2ip="$(eval $icanhazwg2ip)"
+      if [ -z "$icanhazwg2ip" ] || echo "$icanhazwg2ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG2IP="000.000.000.000"
+      else
+        NVRAMWG2IP="$icanhazwg2ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        wg2ip="$NVRAMWG2IP"
+        wg2city="Private Network"
+      else
+        lastwg2ip="$oldwg2ip"
+        wg2ip="$NVRAMWG2IP"
+        if [ "$lastwg2ip" != "$wg2ip" ]; then
+          wg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$wg2ip | jq --raw-output .city"
+          wg2city="$(eval $wg2city)"; if echo $wg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then wg2city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $wg2ip ($wg2city)" >> $LOGFILE
+        else
+          wg2city="$oldwg2city"
+        fi
+      fi
+      wg2on="True"
+    else
+      wg2on="False"
+    fi
+
+    #Check to see if there's a WGC3 connection
+    wg3slot=3
+    WG3State="$(_WG_GetClientState_ ${wg3slot})"
+    if [ -z "$WG3State" ]; then WG3State=0; fi
+    if [ "$WG3State" -eq 2 ]; then
+      WGTUN3="wgc$wg3slot"
+      WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
+
+      icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg3ip="$(eval $icanhazwg3ip)"
+      if [ -z "$icanhazwg3ip" ] || echo "$icanhazwg3ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG3IP="000.000.000.000"
+      else
+        NVRAMWG3IP="$icanhazwg3ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        wg3ip="$NVRAMWG3IP"
+        wg3city="Private Network"
+      else
+        lastwg3ip="$oldwg3ip"
+        wg3ip="$NVRAMWG3IP"
+        if [ "$lastwg3ip" != "$wg3ip" ]; then
+          wg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$wg3ip | jq --raw-output .city"
+          wg3city="$(eval $wg3city)"; if echo $wg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then wg3city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $wg3ip ($wg3city)" >> $LOGFILE
+        else
+          wg3city="$oldwg3city"
+        fi
+      fi
+      wg3on="True"
+    else
+      wg3on="False"
+    fi
+
+    #Check to see if there's a WGC4 connection
+    wg4slot=4
+    WG4State="$(_WG_GetClientState_ ${wg4slot})"
+    if [ -z "$WG4State" ]; then WG4State=0; fi
+    if [ "$WG4State" -eq 2 ]; then
+      WGTUN4="wgc$wg4slot"
+      WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
+
+      icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg4ip="$(eval $icanhazwg4ip)"
+      if [ -z "$icanhazwg4ip" ] || echo "$icanhazwg4ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG4IP="000.000.000.000"
+      else
+        NVRAMWG4IP="$icanhazwg4ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        wg4ip="$NVRAMWG4IP"
+        wg4city="Private Network"
+      else
+        lastwg4ip="$oldwg4ip"
+        wg4ip="$NVRAMWG4IP"
+        if [ "$lastwg4ip" != "$wg4ip" ]; then
+          wg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$wg4ip | jq --raw-output .city"
+          wg4city="$(eval $wg4city)"; if echo $wg4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then wg4city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $wg4ip ($wg4city)" >> $LOGFILE
+        else
+          wg4city="$oldwg4city"
+        fi
+      fi
+      wg4on="True"
+    else
+      wg4on="False"
+    fi
+
+    #Check to see if there's a WGC5 connection
+    wg5slot=5
+    WG5State="$(_WG_GetClientState_ ${wg5slot})"
+    if [ -z "$WG5State" ]; then WG5State=0; fi
+    if [ "$WG5State" -eq 2 ]; then
+      WGTUN5="wgc$wg5slot"
+      WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
+
+      icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg5ip="$(eval $icanhazwg5ip)"
+      if [ -z "$icanhazwg5ip" ] || echo "$icanhazwg5ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG5IP="000.000.000.000"
+      else
+        NVRAMWG5IP="$icanhazwg5ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        wg5ip="$NVRAMWG5IP"
+        wg5city="Private Network"
+      else
+        lastwg5ip="$oldwg5ip"
+        wg5ip="$NVRAMWG5IP"
+        if [ "$lastwg5ip" != "$wg5ip" ]; then
+          wg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$wg5ip | jq --raw-output .city"
+          wg5city="$(eval $wg5city)"; if echo $wg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then wg5city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $wg5ip ($wg5city)" >> $LOGFILE
+        else
+          wg5city="$oldwg5city"
+        fi
+      fi
+      wg5on="True"
+    else
+      wg5on="False"
+    fi
+
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
+    then
+       if [ -z $wan0ip ]; then dns1ip="0.0.0.0"; fi
+       if [ -z $wan1ip ]; then dns1ip="0.0.0.0"; fi
+    fi
+    if [ -z $lanip ]; then dns1ip="0.0.0.0"; fi
+    if [ -z $dns1ip ]; then dns1ip="0.0.0.0"; fi
+    if [ -z $dns2ip ]; then dns2ip="0.0.0.0"; fi
+    if [ $dns1ip == "0.0.0.0" ] && [ ! -z $dns3ip ]; then dns1ip=$dns3ip; fi
+    if [ $dns2ip == "0.0.0.0" ] && [ ! -z $dns4ip ]; then dns2ip=$dns4ip; fi
+    if [ "$vpn1on" == "False" ]; then vpnip="0.0.0.0"; fi
+    if [ "$vpn2on" == "False" ]; then vpn2ip="0.0.0.0"; fi
+    if [ "$vpn3on" == "False" ]; then vpn3ip="0.0.0.0"; fi
+    if [ "$vpn4on" == "False" ]; then vpn4ip="0.0.0.0"; fi
+    if [ "$vpn5on" == "False" ]; then vpn5ip="0.0.0.0"; fi
+    if [ "$wg1on" == "False" ]; then wg1ip="0.0.0.0"; fi
+    if [ "$wg2on" == "False" ]; then wg2ip="0.0.0.0"; fi
+    if [ "$wg3on" == "False" ]; then wg3ip="0.0.0.0"; fi
+    if [ "$wg4on" == "False" ]; then wg4ip="0.0.0.0"; fi
+    if [ "$wg5on" == "False" ]; then wg5ip="0.0.0.0"; fi
+
+    # Many thanks to @SomewhereOverTheRainbow for his help and suggestions on getting IP6 info!
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
+       wanip6="$(ip -o -6 addr list "$WANIFNAME" scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
+    fi
+    lanip6="$(ip -o -6 addr list br0 scope global | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1] }')"
 
   # Network - Wifi - Temp
-  # Standard Dual-Band config
-  w24tempraw=$($timeoutcmd$timeoutsec wl -i $ifname24 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
-  w5tempraw=$($timeoutcmd$timeoutsec wl -i $ifname5 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
-  if [ -z $w24tempraw ] || [ $w24tempraw -eq 0 ]; then w24tempraw=1; fi  #in case it does not return a valid number
-  if [ -z $w5tempraw ] || [ $w5tempraw -eq 0 ]; then w5tempraw=1; fi
-  w24temp=$(awk -v v1=$w24tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
-  w5temp=$(awk -v v1=$w5tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
+    # Standard Dual-Band config
+    w24tempraw=$($timeoutcmd$timeoutsec wl -i $ifname24 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+    w5tempraw=$($timeoutcmd$timeoutsec wl -i $ifname5 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+    if [ -z $w24tempraw ] || [ $w24tempraw -eq 0 ]; then w24tempraw=1; fi  #in case it does not return a valid number
+    if [ -z $w5tempraw ] || [ $w5tempraw -eq 0 ]; then w5tempraw=1; fi
+    w24temp=$(awk -v v1=$w24tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
+    w5temp=$(awk -v v1=$w5tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
 
-  # Tri or Quad Band 5GHz
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-     w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
-     if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=1; fi
-     w52temp=$(awk -v v1=$w52tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
-  fi
-  # Tri or Quad-Band 6GHz
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-     w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
-     if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=1; fi
-     w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
-  fi
-  if [ "$FourBandCustom56624" == "True" ]; then
-     w62tempraw=$($timeoutcmd$timeoutsec wl -i $ifname62 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
-     if [ -z $w62tempraw ] || [ $w62tempraw -eq 0 ]; then w62tempraw=1; fi
-     w62temp=$(awk -v v1=$w62tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
-  fi
+    # Tri or Quad Band 5GHz
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+       w52tempraw=$($timeoutcmd$timeoutsec wl -i $ifname52 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+       if [ -z $w52tempraw ] || [ $w52tempraw -eq 0 ]; then w52tempraw=1; fi
+       w52temp=$(awk -v v1=$w52tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
+    fi
+    # Tri or Quad-Band 6GHz
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
+       w6tempraw=$($timeoutcmd$timeoutsec wl -i $ifname6 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+       if [ -z $w6tempraw ] || [ $w6tempraw -eq 0 ]; then w6tempraw=1; fi
+       w6temp=$(awk -v v1=$w6tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
+    fi
+    if [ "$FourBandCustom56624" == "True" ]; then
+       w62tempraw=$($timeoutcmd$timeoutsec wl -i $ifname62 phy_tempsense | awk '{print $1}' ) >/dev/null 2>&1
+       if [ -z $w62tempraw ] || [ $w62tempraw -eq 0 ]; then w62tempraw=1; fi
+       w62temp=$(awk -v v1=$w62tempraw 'BEGIN{printf "\n" (v1/2)+20}' | cut -d . -f 1)
+    fi
 
   # Network - Wifi - Up/Down via Scheduler
   if [ "$FourBandCustom55624" == "True" ]; then
@@ -2146,461 +2495,461 @@ calculatestats()
      if [ -z $w62updown ]; then w62updown="UP"; fi
   fi
 
-  # Network - Wifi - Traffic
-  # Standard Dual Band
-  new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+    # Network - Wifi - Traffic
+    # Standard Dual Band
+    new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+    new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+    new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+    new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
 
-  # Tri or Quad Band 5GHz
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
-  then
-     new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-     new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
-  fi
-  # Tri or Quad Band 6GHz
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
-  then
-     new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-     new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
-  fi
-  if [ "$FourBandCustom56624" == "True" ]
-  then
-     new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-     new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
-  fi
-
-  # Network - LAN - Traffic
-  newlanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/rx_bytes)"
-  newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
-
-  # Network - WAN - Traffic
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
-  then
-     if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
-     newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
-     newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
-  fi
-
-  # Grab total bytes VPN Traffic Measurement
-  if [ "$vpn1on" == "True" ]; then
-    newvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
-    newvpnrxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f1)"
-    newvpntxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f2)"
-    if [ -z $newvpnrxbytes ]; then newvpnrxbytes=0; fi
-    if [ -z $newvpntxbytes ]; then newvpntxbytes=0; fi
-
-    if [ $newvpnrxbytes -le 0 ]; then
-       newvpnrxbytes=0
-    elif [ $newvpntxbytes -le 0 ]; then
-       newvpntxbytes=0
+    # Tri or Quad Band 5GHz
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
+    then
+       new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+       new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
     fi
-  fi
-
-  if [ "$vpn2on" == "True" ]; then
-    newvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
-    newvpn2rxbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f1)"
-    newvpn2txbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f2)"
-    if [ -z $newvpn2rxbytes ]; then newvpn2rxbytes=0; fi
-    if [ -z $newvpn2txbytes ]; then newvpn2txbytes=0; fi
-
-    if [ $newvpn2rxbytes -le 0 ]; then
-       newvpn2rxbytes=0
-    elif [ $newvpn2txbytes -le 0 ]; then
-       newvpn2txbytes=0
+    # Tri or Quad Band 6GHz
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
+    then
+       new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+       new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
     fi
-  fi
-
-  if [ "$vpn3on" == "True" ]; then
-    newvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
-    newvpn3rxbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f1)"
-    newvpn3txbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f2)"
-    if [ -z $newvpn3rxbytes ]; then newvpn3rxbytes=0; fi
-    if [ -z $newvpn3txbytes ]; then newvpn3txbytes=0; fi
-
-    if [ $newvpn3rxbytes -le 0 ]; then
-       newvpn3rxbytes=0
-    elif [ $newvpn3txbytes -le 0 ]; then
-       newvpn3txbytes=0
+    if [ "$FourBandCustom56624" == "True" ]
+    then
+       new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+       new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
     fi
-  fi
 
-  if [ "$vpn4on" == "True" ]; then
-    newvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
-    newvpn4rxbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f1)"
-    newvpn4txbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f2)"
-    if [ -z $newvpn4rxbytes ]; then newvpn4rxbytes=0; fi
-    if [ -z $newvpn4txbytes ]; then newvpn4txbytes=0; fi
+    # Network - LAN - Traffic
+    newlanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/rx_bytes)"
+    newlantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/br0/statistics/tx_bytes)"
 
-    if [ $newvpn4rxbytes -le 0 ]; then
-       newvpn4rxbytes=0
-    elif [ $newvpn4txbytes -le 0 ]; then
-       newvpn4txbytes=0
+    # Network - WAN - Traffic
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
+    then
+       if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+       newwanrxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
+       newwantxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
     fi
-  fi
 
-  if [ "$vpn5on" == "True" ]; then
-    newvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
-    newvpn5rxbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f1)"
-    newvpn5txbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f2)"
-    if [ -z $newvpn5rxbytes ]; then newvpn5rxbytes=0; fi
-    if [ -z $newvpn5txbytes ]; then newvpn5txbytes=0; fi
+    # Network - VPN - Traffic
+    # Grab total bytes VPN Traffic Measurement
+    if [ "$vpn1on" == "True" ]; then
+      newvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
+      newvpnrxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f1)"
+      newvpntxbytes="$(echo $newvpntxrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpnrxbytes ]; then newvpnrxbytes=0; fi
+      if [ -z $newvpntxbytes ]; then newvpntxbytes=0; fi
 
-    if [ $newvpn5rxbytes -le 0 ]; then
-       newvpn5rxbytes=0
-    elif [ $newvpn5txbytes -le 0 ]; then
-       newvpn5txbytes=0
+      if [ $newvpnrxbytes -le 0 ]; then
+         newvpnrxbytes=0
+      elif [ $newvpntxbytes -le 0 ]; then
+         newvpntxbytes=0
+      fi
     fi
-  fi
 
-  # Check the wireguard connections
-  if [ "$wg1on" == "True" ]; then
-    newwg1txrxbytes=$(wg show wgc1 transfer)
-    newwg1rxbytes="$(echo $newwg1txrxbytes | cut -d' ' -f3)"
-    newwg1txbytes="$(echo $newwg1txrxbytes | cut -d' ' -f2)"
-    if [ -z $newwg1rxbytes ] || [ $newwg1rxbytes -le 0 ]; then newwg1rxbytes=0; fi
-    if [ -z $newwg1txbytes ] || [ $newwg1txbytes -le 0 ]; then newwg1txbytes=0; fi
-  fi
+    if [ "$vpn2on" == "True" ]; then
+      newvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
+      newvpn2rxbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f1)"
+      newvpn2txbytes="$(echo $newvpn2txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn2rxbytes ]; then newvpn2rxbytes=0; fi
+      if [ -z $newvpn2txbytes ]; then newvpn2txbytes=0; fi
 
-  if [ "$wg2on" == "True" ]; then
-    newwg2txrxbytes=$(wg show wgc2 transfer)
-    newwg2rxbytes="$(echo $newwg2txrxbytes | cut -d' ' -f3)"
-    newwg2txbytes="$(echo $newwg2txrxbytes | cut -d' ' -f2)"
-    if [ -z $newwg2rxbytes ] || [ $newwg2rxbytes -le 0 ]; then newwg2rxbytes=0; fi
-    if [ -z $newwg2txbytes ] || [ $newwg2txbytes -le 0 ]; then newwg2txbytes=0; fi
-  fi
+      if [ $newvpn2rxbytes -le 0 ]; then
+         newvpn2rxbytes=0
+      elif [ $newvpn2txbytes -le 0 ]; then
+         newvpn2txbytes=0
+      fi
+    fi
 
-  if [ "$wg3on" == "True" ]; then
-    newwg3txrxbytes=$(wg show wgc3 transfer)
-    newwg3rxbytes="$(echo $newwg3txrxbytes | cut -d' ' -f3)"
-    newwg3txbytes="$(echo $newwg3txrxbytes | cut -d' ' -f2)"
-    if [ -z $newwg3rxbytes ] || [ $newwg3rxbytes -le 0 ]; then newwg3rxbytes=0; fi
-    if [ -z $newwg3txbytes ] || [ $newwg3txbytes -le 0 ]; then newwg3txbytes=0; fi
-  fi
+    if [ "$vpn3on" == "True" ]; then
+      newvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+      newvpn3rxbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f1)"
+      newvpn3txbytes="$(echo $newvpn3txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn3rxbytes ]; then newvpn3rxbytes=0; fi
+      if [ -z $newvpn3txbytes ]; then newvpn3txbytes=0; fi
 
-  if [ "$wg4on" == "True" ]; then
-    newwg4txrxbytes=$(wg show wgc4 transfer)
-    newwg4rxbytes="$(echo $newwg4txrxbytes | cut -d' ' -f3)"
-    newwg4txbytes="$(echo $newwg4txrxbytes | cut -d' ' -f2)"
-    if [ -z $newwg4rxbytes ] || [ $newwg4rxbytes -le 0 ]; then newwg4rxbytes=0; fi
-    if [ -z $newwg4txbytes ] || [ $newwg4txbytes -le 0 ]; then newwg4txbytes=0; fi
-  fi
+      if [ $newvpn3rxbytes -le 0 ]; then
+         newvpn3rxbytes=0
+      elif [ $newvpn3txbytes -le 0 ]; then
+         newvpn3txbytes=0
+      fi
+    fi
 
-  if [ "$wg5on" == "True" ]; then
-    newwg5txrxbytes=$(wg show wgc5 transfer)
-    newwg5rxbytes="$(echo $newwg5txrxbytes | cut -d' ' -f3)"
-    newwg5txbytes="$(echo $newwg5txrxbytes | cut -d' ' -f2)"
-    if [ -z $newwg5rxbytes ] || [ $newwg5rxbytes -le 0 ]; then newwg5rxbytes=0; fi
-    if [ -z $newwg5txbytes ] || [ $newwg5txbytes -le 0 ]; then newwg5txbytes=0; fi
-  fi
+    if [ "$vpn4on" == "True" ]; then
+      newvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+      newvpn4rxbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f1)"
+      newvpn4txbytes="$(echo $newvpn4txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn4rxbytes ]; then newvpn4rxbytes=0; fi
+      if [ -z $newvpn4txbytes ]; then newvpn4txbytes=0; fi
 
-  # Network - Traffic - Calculations to find the difference between old and new total bytes send/received and divided to give Megabits
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-     diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  diff24rxbytes=$(awk -v new=$new24rxbytes -v old=$old24rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  diff24txbytes=$(awk -v new=$new24txbytes -v old=$old24txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  diff5rxbytes=$(awk -v new=$new5rxbytes -v old=$old5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  diff5txbytes=$(awk -v new=$new5txbytes -v old=$old5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  difflanrxbytes=$(awk -v new=$newlanrxbytes -v old=$oldlanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  difflantxbytes=$(awk -v new=$newlantxbytes -v old=$oldlantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-     diff52rxbytes=$(awk -v new=$new52rxbytes -v old=$old52rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diff52txbytes=$(awk -v new=$new52txbytes -v old=$old52txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-     diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$FourBandCustom56624" == "True" ]; then
-     diff62rxbytes=$(awk -v new=$new62rxbytes -v old=$old62rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diff62txbytes=$(awk -v new=$new62txbytes -v old=$old62txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$vpn1on" == "True" ]; then
-     diffvpnrxbytes=$(awk -v new=$newvpnrxbytes -v old=$oldvpnrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffvpntxbytes=$(awk -v new=$newvpntxbytes -v old=$oldvpntxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$vpn2on" == "True" ]; then
-     diffvpn2rxbytes=$(awk -v new=$newvpn2rxbytes -v old=$oldvpn2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffvpn2txbytes=$(awk -v new=$newvpn2txbytes -v old=$oldvpn2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$vpn3on" == "True" ]; then
-     diffvpn3rxbytes=$(awk -v new=$newvpn3rxbytes -v old=$oldvpn3rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffvpn3txbytes=$(awk -v new=$newvpn3txbytes -v old=$oldvpn3txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$vpn4on" == "True" ]; then
-     diffvpn4rxbytes=$(awk -v new=$newvpn4rxbytes -v old=$oldvpn4rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffvpn4txbytes=$(awk -v new=$newvpn4txbytes -v old=$oldvpn4txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$vpn5on" == "True" ]; then
-     diffvpn5rxbytes=$(awk -v new=$newvpn5rxbytes -v old=$oldvpn5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffvpn5txbytes=$(awk -v new=$newvpn5txbytes -v old=$oldvpn5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$wg1on" == "True" ]; then
-     diffwg1rxbytes=$(awk -v new=$newwg1rxbytes -v old=$oldwg1rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwg1txbytes=$(awk -v new=$newwg1txbytes -v old=$oldwg1txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$wg2on" == "True" ]; then
-     diffwg2rxbytes=$(awk -v new=$newwg2rxbytes -v old=$oldwg2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwg2txbytes=$(awk -v new=$newwg2txbytes -v old=$oldwg2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$wg3on" == "True" ]; then
-     diffwg3rxbytes=$(awk -v new=$newwg3rxbytes -v old=$oldwg3rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwg3txbytes=$(awk -v new=$newwg3txbytes -v old=$oldwg3txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$wg4on" == "True" ]; then
-     diffwg4rxbytes=$(awk -v new=$newwg4rxbytes -v old=$oldwg4rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwg4txbytes=$(awk -v new=$newwg4txbytes -v old=$oldwg4txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
-  if [ "$wg5on" == "True" ]; then
-     diffwg5rxbytes=$(awk -v new=$newwg5rxbytes -v old=$oldwg5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-     diffwg5txbytes=$(awk -v new=$newwg5txbytes -v old=$oldwg5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
-  fi
+      if [ $newvpn4rxbytes -le 0 ]; then
+         newvpn4rxbytes=0
+      elif [ $newvpn4txbytes -le 0 ]; then
+         newvpn4txbytes=0
+      fi
+    fi
 
-  # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
-  if [ "$WAN0AltModes" = "0" ] || [ "$OpsMode" = "1" ]
-  then
-     wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wanrxmbrate=0
-     wantxmbrate=0
-  fi
+    if [ "$vpn5on" == "True" ]; then
+      newvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+      newvpn5rxbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f1)"
+      newvpn5txbytes="$(echo $newvpn5txrxbytes | cut -d' ' -f2)"
+      if [ -z $newvpn5rxbytes ]; then newvpn5rxbytes=0; fi
+      if [ -z $newvpn5txbytes ]; then newvpn5txbytes=0; fi
 
-  w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+      if [ $newvpn5rxbytes -le 0 ]; then
+         newvpn5rxbytes=0
+      elif [ $newvpn5txbytes -le 0 ]; then
+         newvpn5txbytes=0
+      fi
+    fi
 
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
-  then
-     w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     w52rxmbrate=0
-     w52txmbrate=0
-  fi
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
-  then
-     w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     w6rxmbrate=0
-     w6txmbrate=0
-  fi
-  if [ "$FourBandCustom56624" == "True" ]
-  then
-     w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     w62rxmbrate=0
-     w62txmbrate=0
-  fi
-  if [ "$vpn1on" == "True" ]
-  then
-     vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     vpnrxmbrate=0
-     vpntxmbrate=0
-  fi
-  if [ "$vpn2on" == "True" ]
-  then
-     vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     vpn2rxmbrate=0
-     vpn2txmbrate=0
-  fi
-  if [ "$vpn3on" == "True" ]
-  then
-     vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     vpn3rxmbrate=0
-     vpn3txmbrate=0
-  fi
-  if [ "$vpn4on" == "True" ]
-  then
-     vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     vpn4rxmbrate=0
-     vpn4txmbrate=0
-  fi
-  if [ "$vpn5on" == "True" ]
-  then
-     vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     vpn5rxmbrate=0
-     vpn5txmbrate=0
-  fi
-  if [ "$wg1on" == "True" ]
-  then
-     wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wg1rxmbrate=0
-     wg1txmbrate=0
-  fi
-  if [ "$wg2on" == "True" ]
-  then
-     wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wg2rxmbrate=0
-     wg2txmbrate=0
-  fi
-  if [ "$wg3on" == "True" ]
-  then
-     wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wg3rxmbrate=0
-     wg3txmbrate=0
-  fi
-  if [ "$wg4on" == "True" ]
-  then
-     wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wg4rxmbrate=0
-     wg4txmbrate=0
-  fi
-  if [ "$wg5on" == "True" ]
-  then
-     wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  else
-     wg5rxmbrate=0
-     wg5txmbrate=0
-  fi
-  if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
-  then
-     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  fi
+    # Check the wireguard connections
+    if [ "$wg1on" == "True" ]; then
+      newwg1txrxbytes=$(wg show wgc1 transfer)
+      newwg1rxbytes="$(echo $newwg1txrxbytes | cut -d' ' -f3)"
+      newwg1txbytes="$(echo $newwg1txrxbytes | cut -d' ' -f2)"
+      if [ -z $newwg1rxbytes ] || [ $newwg1rxbytes -le 0 ]; then newwg1rxbytes=0; fi
+      if [ -z $newwg1txbytes ] || [ $newwg1txbytes -le 0 ]; then newwg1txbytes=0; fi
+    fi
 
-  w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    if [ "$wg2on" == "True" ]; then
+      newwg2txrxbytes=$(wg show wgc2 transfer)
+      newwg2rxbytes="$(echo $newwg2txrxbytes | cut -d' ' -f3)"
+      newwg2txbytes="$(echo $newwg2txrxbytes | cut -d' ' -f2)"
+      if [ -z $newwg2rxbytes ] || [ $newwg2rxbytes -le 0 ]; then newwg2rxbytes=0; fi
+      if [ -z $newwg2txbytes ] || [ $newwg2txbytes -le 0 ]; then newwg2txbytes=0; fi
+    fi
 
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
-  then
-     w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     w52rxmbratedisplay=""
-     w52txmbratedisplay=""
-  fi
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
-  then
-     w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     w6rxmbratedisplay=""
-     w6txmbratedisplay=""
-  fi
-  if [ "$FourBandCustom56624" == "True" ]
-  then
-     w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     w62rxmbratedisplay=""
-     w62txmbratedisplay=""
-  fi
-  if [ "$vpn1on" == "True" ]
-  then
-     vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     vpnrxmbratedisplay=""
-     vpntxmbratedisplay=""
-  fi
-  if [ "$vpn2on" == "True" ]
-  then
-     vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     vpn2rxmbratedisplay=""
-     vpn2txmbratedisplay=""
-  fi
-  if [ "$vpn3on" == "True" ]
-  then
-     vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     vpn3rxmbratedisplay=""
-     vpn3txmbratedisplay=""
-  fi
-  if [ "$vpn4on" == "True" ]
-  then
-     vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     vpn4rxmbratedisplay=""
-     vpn4txmbratedisplay=""
-  fi
-  if [ "$vpn5on" == "True" ]
-  then
-     vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     vpn5rxmbratedisplay=""
-     vpn5txmbratedisplay=""
-  fi
-  if [ "$wg1on" == "True" ]
-  then
-     wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     wg1rxmbratedisplay=""
-     wg1txmbratedisplay=""
-  fi
-  if [ "$wg2on" == "True" ]
-  then
-     wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     wg2rxmbratedisplay=""
-     wg2txmbratedisplay=""
-  fi
-  if [ "$wg3on" == "True" ]
-  then
-     wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     wg3rxmbratedisplay=""
-     wg3txmbratedisplay=""
-  fi
-  if [ "$wg4on" == "True" ]
-  then
-     wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     wg4rxmbratedisplay=""
-     wg4txmbratedisplay=""
-  fi
-  if [ "$wg5on" == "True" ]
-  then
-     wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  else
-     wg5rxmbratedisplay=""
-     wg5txmbratedisplay=""
-  fi
+    if [ "$wg3on" == "True" ]; then
+      newwg3txrxbytes=$(wg show wgc3 transfer)
+      newwg3rxbytes="$(echo $newwg3txrxbytes | cut -d' ' -f3)"
+      newwg3txbytes="$(echo $newwg3txrxbytes | cut -d' ' -f2)"
+      if [ -z $newwg3rxbytes ] || [ $newwg3rxbytes -le 0 ]; then newwg3rxbytes=0; fi
+      if [ -z $newwg3txbytes ] || [ $newwg3txbytes -le 0 ]; then newwg3txbytes=0; fi
+    fi
 
-  # Uptime calc #
-  uptimeStr="$(awk '{printf("%3dd %02dh %02dm %02ds\n",($1/60/60/24),($1/60/60%24),($1/60%60),($1%60))}' /proc/uptime)"
+    if [ "$wg4on" == "True" ]; then
+      newwg4txrxbytes=$(wg show wgc4 transfer)
+      newwg4rxbytes="$(echo $newwg4txrxbytes | cut -d' ' -f3)"
+      newwg4txbytes="$(echo $newwg4txrxbytes | cut -d' ' -f2)"
+      if [ -z $newwg4rxbytes ] || [ $newwg4rxbytes -le 0 ]; then newwg4rxbytes=0; fi
+      if [ -z $newwg4txbytes ] || [ $newwg4txbytes -le 0 ]; then newwg4txbytes=0; fi
+    fi
 
+    if [ "$wg5on" == "True" ]; then
+      newwg5txrxbytes=$(wg show wgc5 transfer)
+      newwg5rxbytes="$(echo $newwg5txrxbytes | cut -d' ' -f3)"
+      newwg5txbytes="$(echo $newwg5txrxbytes | cut -d' ' -f2)"
+      if [ -z $newwg5rxbytes ] || [ $newwg5rxbytes -le 0 ]; then newwg5rxbytes=0; fi
+      if [ -z $newwg5txbytes ] || [ $newwg5txbytes -le 0 ]; then newwg5txbytes=0; fi
+    fi
+
+    # Network - Traffic - Calculations to find the difference between old and new total bytes send/received and divided to give Megabits
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
+       diffwanrxbytes=$(awk -v new=$newwanrxbytes -v old=$oldwanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwantxbytes=$(awk -v new=$newwantxbytes -v old=$oldwantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    diff24rxbytes=$(awk -v new=$new24rxbytes -v old=$old24rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    diff24txbytes=$(awk -v new=$new24txbytes -v old=$old24txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    diff5rxbytes=$(awk -v new=$new5rxbytes -v old=$old5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    diff5txbytes=$(awk -v new=$new5txbytes -v old=$old5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    difflanrxbytes=$(awk -v new=$newlanrxbytes -v old=$oldlanrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    difflantxbytes=$(awk -v new=$newlantxbytes -v old=$oldlantxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+       diff52rxbytes=$(awk -v new=$new52rxbytes -v old=$old52rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diff52txbytes=$(awk -v new=$new52txbytes -v old=$old52txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
+       diff6rxbytes=$(awk -v new=$new6rxbytes -v old=$old6rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diff6txbytes=$(awk -v new=$new6txbytes -v old=$old6txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$FourBandCustom56624" == "True" ]; then
+       diff62rxbytes=$(awk -v new=$new62rxbytes -v old=$old62rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diff62txbytes=$(awk -v new=$new62txbytes -v old=$old62txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn1on" == "True" ]; then
+       diffvpnrxbytes=$(awk -v new=$newvpnrxbytes -v old=$oldvpnrxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffvpntxbytes=$(awk -v new=$newvpntxbytes -v old=$oldvpntxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn2on" == "True" ]; then
+       diffvpn2rxbytes=$(awk -v new=$newvpn2rxbytes -v old=$oldvpn2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffvpn2txbytes=$(awk -v new=$newvpn2txbytes -v old=$oldvpn2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn3on" == "True" ]; then
+       diffvpn3rxbytes=$(awk -v new=$newvpn3rxbytes -v old=$oldvpn3rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffvpn3txbytes=$(awk -v new=$newvpn3txbytes -v old=$oldvpn3txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn4on" == "True" ]; then
+       diffvpn4rxbytes=$(awk -v new=$newvpn4rxbytes -v old=$oldvpn4rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffvpn4txbytes=$(awk -v new=$newvpn4txbytes -v old=$oldvpn4txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$vpn5on" == "True" ]; then
+       diffvpn5rxbytes=$(awk -v new=$newvpn5rxbytes -v old=$oldvpn5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffvpn5txbytes=$(awk -v new=$newvpn5txbytes -v old=$oldvpn5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$wg1on" == "True" ]; then
+       diffwg1rxbytes=$(awk -v new=$newwg1rxbytes -v old=$oldwg1rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwg1txbytes=$(awk -v new=$newwg1txbytes -v old=$oldwg1txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$wg2on" == "True" ]; then
+       diffwg2rxbytes=$(awk -v new=$newwg2rxbytes -v old=$oldwg2rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwg2txbytes=$(awk -v new=$newwg2txbytes -v old=$oldwg2txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$wg3on" == "True" ]; then
+       diffwg3rxbytes=$(awk -v new=$newwg3rxbytes -v old=$oldwg3rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwg3txbytes=$(awk -v new=$newwg3txbytes -v old=$oldwg3txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$wg4on" == "True" ]; then
+       diffwg4rxbytes=$(awk -v new=$newwg4rxbytes -v old=$oldwg4rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwg4txbytes=$(awk -v new=$newwg4txbytes -v old=$oldwg4txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+    if [ "$wg5on" == "True" ]; then
+       diffwg5rxbytes=$(awk -v new=$newwg5rxbytes -v old=$oldwg5rxbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+       diffwg5txbytes=$(awk -v new=$newwg5txbytes -v old=$oldwg5txbytes -v mb=125000 'BEGIN{printf "%.4f\n", (new-old)/mb}')
+    fi
+
+    # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
+    if [ "$WAN0AltModes" = "0" ] || [ "$OpsMode" = "1" ]
+    then
+       wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wanrxmbrate=0
+       wantxmbrate=0
+    fi
+
+    w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+    w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+    w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+    lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
+    then
+       w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       w52rxmbrate=0
+       w52txmbrate=0
+    fi
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
+    then
+       w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       w6rxmbrate=0
+       w6txmbrate=0
+    fi
+    if [ "$FourBandCustom56624" == "True" ]
+    then
+       w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       w62rxmbrate=0
+       w62txmbrate=0
+    fi
+    if [ "$vpn1on" == "True" ]
+    then
+       vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       vpnrxmbrate=0
+       vpntxmbrate=0
+    fi
+    if [ "$vpn2on" == "True" ]
+    then
+       vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       vpn2rxmbrate=0
+       vpn2txmbrate=0
+    fi
+    if [ "$vpn3on" == "True" ]
+    then
+       vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       vpn3rxmbrate=0
+       vpn3txmbrate=0
+    fi
+    if [ "$vpn4on" == "True" ]
+    then
+       vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       vpn4rxmbrate=0
+       vpn4txmbrate=0
+    fi
+    if [ "$vpn5on" == "True" ]
+    then
+       vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       vpn5rxmbrate=0
+       vpn5txmbrate=0
+    fi
+    if [ "$wg1on" == "True" ]
+    then
+       wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wg1rxmbrate=0
+       wg1txmbrate=0
+    fi
+    if [ "$wg2on" == "True" ]
+    then
+       wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wg2rxmbrate=0
+       wg2txmbrate=0
+    fi
+    if [ "$wg3on" == "True" ]
+    then
+       wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wg3rxmbrate=0
+       wg3txmbrate=0
+    fi
+    if [ "$wg4on" == "True" ]
+    then
+       wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wg4rxmbrate=0
+       wg4txmbrate=0
+    fi
+    if [ "$wg5on" == "True" ]
+    then
+       wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+       wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+    else
+       wg5rxmbrate=0
+       wg5txmbrate=0
+    fi
+    if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
+    then
+       wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    fi
+
+    w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+    w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+    w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+    lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
+    then
+       w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       w52rxmbratedisplay=""
+       w52txmbratedisplay=""
+    fi
+    if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
+    then
+       w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       w6rxmbratedisplay=""
+       w6txmbratedisplay=""
+    fi
+    if [ "$FourBandCustom56624" == "True" ]
+    then
+       w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       w62rxmbratedisplay=""
+       w62txmbratedisplay=""
+    fi
+    if [ "$vpn1on" == "True" ]
+    then
+       vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       vpnrxmbratedisplay=""
+       vpntxmbratedisplay=""
+    fi
+    if [ "$vpn2on" == "True" ]
+    then
+       vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       vpn2rxmbratedisplay=""
+       vpn2txmbratedisplay=""
+    fi
+    if [ "$vpn3on" == "True" ]
+    then
+       vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       vpn3rxmbratedisplay=""
+       vpn3txmbratedisplay=""
+    fi
+    if [ "$vpn4on" == "True" ]
+    then
+       vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       vpn4rxmbratedisplay=""
+       vpn4txmbratedisplay=""
+    fi
+    if [ "$vpn5on" == "True" ]
+    then
+       vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       vpn5rxmbratedisplay=""
+       vpn5txmbratedisplay=""
+    fi
+    if [ "$wg1on" == "True" ]
+    then
+       wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       wg1rxmbratedisplay=""
+       wg1txmbratedisplay=""
+    fi
+    if [ "$wg2on" == "True" ]
+    then
+       wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       wg2rxmbratedisplay=""
+       wg2txmbratedisplay=""
+    fi
+    if [ "$wg3on" == "True" ]
+    then
+       wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       wg3rxmbratedisplay=""
+       wg3txmbratedisplay=""
+    fi
+    if [ "$wg4on" == "True" ]
+    then
+       wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       wg4rxmbratedisplay=""
+       wg4txmbratedisplay=""
+    fi
+    if [ "$wg5on" == "True" ]
+    then
+       wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+       wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+    else
+       wg5rxmbratedisplay=""
+       wg5txmbratedisplay=""
+    fi
+
+    # Uptime calc #
+    uptimeStr="$(awk '{printf("%3dd %02dh %02dm %02ds\n",($1/60/60/24),($1/60/60%24),($1/60%60),($1%60))}' /proc/uptime)"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2608,7 +2957,6 @@ calculatestats()
 # This function displays the stats UI for page 1
 DisplayPage1()
 {
-
   clear
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "$UpdateNotify${CClear}"
@@ -2724,7 +3072,7 @@ DisplayPage2()
     if [ "$ScreenshotMode" == "1" ]; then
       oldwan0ip="1.2.3.4" #demo
       oldwanip6="abc1:23de::f456:ghi7:89jk:l0mn:opqr" #demo
-      oldvpn1ip="2.3.4.5" #demo
+      oldvpnip="2.3.4.5" #demo
       oldvpn2ip="3.4.5.6" #demo
       oldvpn3ip="4.5.6.7" #demo
       oldvpn4ip="5.6.7.8" #demo
@@ -2734,7 +3082,7 @@ DisplayPage2()
       oldwg3ip="4.5.6.7" #demo
       oldwg4ip="5.6.7.8" #demo
       oldwg5ip="6.7.8.9" #demo
-      oldvpn1city="Rivendell" #demo
+      oldvpncity="Rivendell" #demo
       oldvpn2city="Mordor" #demo
       oldvpn3city="Minas Tirith" #demo
       oldvpn4city="Edoras" #demo
@@ -2782,20 +3130,20 @@ DisplayPage2()
     echo ""
     echo -e "${InvDkGray}${CWhite} OVPN$vpn1slot                                                                                                         ${CClear}"
     echo ""
-    if [ "$oldvpn1city" == "Private Network" ]; then
+    if [ "$oldvpncity" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
       echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
-      printf "%-33s" "$oldvpn1city"
+      printf "%-33s" "$oldvpncity"
 
       echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
-      printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
+      printf '%03d.%03d.%03d.%03d'  ${oldvpnip//./ }
       echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
-      printf "%-33s" "$oldvpn1city"
+      printf "%-33s" "$oldvpncity"
 
       echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     fi
@@ -3619,16 +3967,11 @@ DisplaySpdtst()
     SpdServer="Starlink Satellite Transceiver #488028"
   fi
 
-  if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
+  if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ] || [ "$wg1on" == "True" ] || [ "$wg2on" == "True" ] || [ "$wg3on" == "True" ] || [ "$wg4on" == "True" ]|| [ "$wg5on" == "True" ]; then
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
-  elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
-  elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   else
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
   fi
-
   echo ""
   echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
@@ -3972,10 +4315,10 @@ DisplayPage6()
     #run network diags and save Results
     printf "${InvGreen} ${CClear} ${CWhite}[Updating WAN( ) LAN( ) VPN( ) WG( ) Statistics ... Please stand by...]"
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      timeout 15 iftop -t -s 10 -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
+      iftop -t -i $WANIFNAME 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wanresult.txt
     fi
     printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN( ) VPN( ) WG( ) Statistics ... Please stand by...]"
-      timeout 15 iftop -t -s 10 -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
+    iftop -t -i br0 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/lanresult.txt
     printf "\r${InvGreen} ${CClear} ${CWhite}[Updating WAN(${CGreen}X${CWhite}) LAN(${CGreen}X${CWhite}) VPN( ) WG( ) Statistics ... Please stand by...]"
 
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]
@@ -3994,7 +4337,7 @@ DisplayPage6()
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/vpn${slot}result.txt
           else
-            timeout 15 iftop -t -s 10 -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
+            iftop -t -i tun1$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/vpn${slot}result.txt
           fi
         fi
       done
@@ -4035,7 +4378,7 @@ DisplayPage6()
             { echo 'Private Tunnel'
             } > /jffs/addons/rtrmon.d/wgc${slot}result.txt
           else
-            timeout 15 iftop -t -s 10 -i wgc$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wgc${slot}result.txt
+            iftop -t -i wgc$slot 2>&1 | sed '/^==/ q' > /jffs/addons/rtrmon.d/wgc${slot}result.txt
           fi
         fi
       done
@@ -5427,502 +5770,6 @@ attachedlanclients ()
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# GetVPNWGIPCITY is a function that gathers IP/City stats from all active VPN and WG connections
-
-GetVPNWGIPCITY()
-{
-
-  vpn1slot=1
-  VPN1State="$(_VPN_GetClientState_ ${vpn1slot})"
-  if [ -z "$VPN1State" ]; then VPN1State=0; fi # to catch possible wireguard interference
-  if [ "$VPN1State" -eq 2 ]; then
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN1 Stats...]"; fi
-    TUN1="tun1"$vpn1slot
-    NVRAMVPN1ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
-    NVRAMVPN1IP=$(ping -c 1 -w 1 $NVRAMVPN1ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-    if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ]; then
-      oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn1ip ]; then oldvpn1ip=$NVRAMVPN1IP; fi
-      oldvpn1ADDR=$NVRAMVPN1ADDR
-    fi
-
-    if [ "$(echo $NVRAMVPN1IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpn1ip=$NVRAMVPN1IP
-      oldvpn1city="Private Network"
-    elif [ "$vpn1ip" != "$oldvpn1ip" ]; then
-      oldvpn1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
-      oldvpn1city="$(eval $oldvpn1city)"; if echo $oldvpn1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn1city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpn1ip ($oldvpn1city)" >> $LOGFILE
-    fi
-
-    vpn1ip=$oldvpn1ip
-    vpn1city=$oldvpn1city
-    vpn1on="True"
-
-  else
-    vpn1on="False"
-  fi
-
-  #Check to see if there's a secondary VPN connection
-  vpn2slot=2
-  VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
-  if [ -z "$VPN2State" ]; then VPN2State=0; fi # to catch possible wireguard interference
-  if [ "$VPN2State" -eq 2 ]; then
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN2 Stats...]"; fi
-    TUN2="tun1"$vpn2slot
-    NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
-    NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-    if [ "$NVRAMVPN2ADDR" != "$oldvpn2ADDR" ]; then
-      oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
-      oldvpn2ADDR=$NVRAMVPN2ADDR
-    fi
-
-    if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpn2ip=$NVRAMVPN2IP
-      oldvpn2city="Private Network"
-    elif [ "$vpn2ip" != "$oldvpn2ip" ]; then
-      oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
-      oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
-    fi
-
-    vpn2ip=$oldvpn2ip
-    vpn2city=$oldvpn2city
-    vpn2on="True"
-
-  else
-    vpn5on="False"
-  fi
-
-  #Check to see if there's a third VPN connection
-  vpn3slot=3
-  VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
-  if [ -z "$VPN3State" ]; then VPN3State=0; fi # to catch possible wireguard interference
-  if [ "$VPN3State" -eq 2 ]; then
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN3 Stats...]"; fi
-    TUN3="tun1"$vpn3slot
-    NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
-    NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-    if [ "$NVRAMVPN3ADDR" != "$oldvpn3ADDR" ]; then
-      oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
-      oldvpn3ADDR=$NVRAMVPN3ADDR
-    fi
-
-    if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpn3ip=$NVRAMVPN3IP
-      oldvpn3city="Private Network"
-    elif [ "$vpn3ip" != "$oldvpn3ip" ]; then
-      oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
-      oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
-    fi
-
-    vpn3ip=$oldvpn3ip
-    vpn3city=$oldvpn3city
-    vpn3on="True"
-
-  else
-    vpn3on="False"
-  fi
-
-  #Check to see if there's a fourth VPN connection
-  vpn4slot=4
-  VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
-  if [ -z "$VPN4State" ]; then VPN4State=0; fi # to catch possible wireguard interference
-  if [ "$VPN4State" -eq 2 ]; then
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN4 Stats...]"; fi
-    TUN4="tun1"$vpn4slot
-    NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
-    NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-    if [ "$NVRAMVPN4ADDR" != "$oldvpn4ADDR" ]; then
-      oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
-      oldvpn4ADDR=$NVRAMVPN4ADDR
-    fi
-
-    if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpn4ip=$NVRAMVPN4IP
-      oldvpn4city="Private Network"
-    elif [ "$vpn4ip" != "$oldvpn4ip" ]; then
-      oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
-      oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
-    fi
-
-    vpn4ip=$oldvpn4ip
-    vpn4city=$oldvpn4city
-    vpn4on="True"
-
-  else
-    vpn4on="False"
-  fi
-
-  #Check to see if there's a fifth VPN connection
-  vpn5slot=5
-  VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
-  if [ -z "$VPN5State" ]; then VPN5State=0; fi # to catch possible wireguard interference
-  if [ "$VPN5State" -eq 2 ]; then
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing VPN5 Stats...]"; fi
-    TUN5="tun1"$vpn5slot
-    NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
-    NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
-
-    if [ "$NVRAMVPN5ADDR" != "$oldvpn5ADDR" ]; then
-      oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
-      oldvpn5ADDR=$NVRAMVPN5ADDR
-    fi
-
-    if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldvpn5ip=$NVRAMVPN5IP
-      oldvpn5city="Private Network"
-    elif [ "$vpn5ip" != "$oldvpn5ip" ]; then
-      oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
-      oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
-    fi
-
-    vpn5ip=$oldvpn5ip
-    vpn5city=$oldvpn5city
-    vpn5on="True"
-
-  else
-    vpn5on="False"
-  fi
-
-  #Check to see if there's a WGC1 connection
-  wg1slot=1
-  WG1State="$(_WG_GetClientState_ ${wg1slot})"
-  if [ -z "$WG1State" ]; then WG1State=0; fi
-  if [ "$WG1State" -eq 2 ]; then
-    WGTUN1="wgc$wg1slot"
-    WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
-    WG1ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_ep_addr)
-    NVRAMWG1IP=$(ping -c 1 -w 1 $WGTUN1_IP | awk -F '[()]' '/PING/ { print $2}')
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG1 Stats...]"; fi
-    if [ "$WG1ADDR" != "$oldwg1ADDR" ] || [ "$wg1ip" = "0.0.0.0" ]; then
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
-      oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
-      oldwg1ip="$(eval $oldwg1ip)"
-      if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg1ip="$NVRAMWG1IP"
-      fi
-      oldwg1ADDR=$WG1ADDR
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
-    fi
-
-    if [ "$(echo "$oldwg1ip" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldwg1ip="$NVRAMWG1IP"
-      oldwg1city="Private Network"
-    elif [ "$wg1ip" != "$oldwg1ip" ]; then
-      oldwg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
-      oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
-    fi
-
-    wg1ip="$oldwg1ip"
-    wg1city="$oldwg1city"
-    wg1on="True"
-
-  else
-    wg1on="False"
-  fi
-
-  #Check to see if there's a WGC2 connection
-  wg2slot=2
-  WG2State="$(_WG_GetClientState_ ${wg2slot})"
-  if [ -z "$WG2State" ]; then WG2State=0; fi
-  if [ "$WG2State" -eq 2 ]; then
-    WGTUN2="wgc$wg2slot"
-    WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
-    WG2ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_ep_addr)
-    NVRAMWG2IP=$(ping -c 1 -w 1 $WGTUN2_IP | awk -F '[()]' '/PING/ { print $2}')
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG2 Stats...]"; fi
-    if [ "$WG2ADDR" != "$oldwg2ADDR" ] || [ "$wg2ip" = "0.0.0.0" ]; then
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
-      oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
-      oldwg2ip="$(eval $oldwg2ip)"
-      if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg2ip="$NVRAMWG2IP"
-      fi
-      oldwg2ADDR=$WG2ADDR
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
-    fi
-
-    if [ "$(echo "$oldwg2ip" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldwg2ip="$NVRAMWG2IP"
-      oldwg2city="Private Network"
-    elif [ "$wg2ip" != "$oldwg2ip" ]; then
-      oldwg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
-      oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
-    fi
-
-    wg2ip="$oldwg2ip"
-    wg2city="$oldwg2city"
-    wg2on="True"
-
-  else
-    wg2on="False"
-  fi
-
-  #Check to see if there's a WGC3 connection
-  wg3slot=3
-  WG3State="$(_WG_GetClientState_ ${wg3slot})"
-  if [ -z "$WG3State" ]; then WG3State=0; fi
-  if [ "$WG3State" -eq 2 ]; then
-    WGTUN3="wgc$wg3slot"
-    WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
-    WG3ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_ep_addr)
-    NVRAMWG3IP=$(ping -c 1 -w 1 $WGTUN3_IP | awk -F '[()]' '/PING/ { print $2}')
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG3 Stats...]"; fi
-    if [ "$WG3ADDR" != "$oldwg3ADDR" ] || [ "$wg3ip" = "0.0.0.0" ]; then
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
-      oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
-      oldwg3ip="$(eval $oldwg3ip)"
-      if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg3ip="$NVRAMWG3IP"
-      fi
-      oldwg3ADDR=$WG3ADDR
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
-    fi
-
-    if [ "$(echo "$oldwg3ip" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldwg3ip="$NVRAMWG3IP"
-      oldwg3city="Private Network"
-    elif [ "$wg3ip" != "$oldwg3ip" ]; then
-      oldwg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
-      oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
-    fi
-
-    wg3ip="$oldwg3ip"
-    wg3city="$oldwg3city"
-    wg3on="True"
-
-  else
-    wg3on="False"
-  fi
-
-  #Check to see if there's a WGC4 connection
-  wg4slot=4
-  WG14State="$(_WG_GetClientState_ ${wg4slot})"
-  if [ -z "$WG4State" ]; then WG4State=0; fi
-  if [ "$WG4State" -eq 2 ]; then
-    WGTUN4="wgc$wg4slot"
-    WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
-    WG4ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_ep_addr)
-    NVRAMWG4IP=$(ping -c 1 -w 1 $WGTUN4_IP | awk -F '[()]' '/PING/ { print $2}')
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG4 Stats...]"; fi
-    if [ "$WG4ADDR" != "$oldwg4ADDR" ] || [ "$wg4ip" = "0.0.0.0" ]; then
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
-      oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
-      oldwg4ip="$(eval $oldwg4ip)"
-      if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg4ip="$NVRAMWG4IP"
-      fi
-      oldwg4ADDR=$WG4ADDR
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
-    fi
-
-    if [ "$(echo "$oldwg4ip" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldwg4ip="$NVRAMWG4IP"
-      oldwg4city="Private Network"
-    elif [ "$wg4ip" != "$oldwg4ip" ]; then
-      oldwg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
-      oldwg4city="$(eval $oldwg4city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
-    fi
-
-    wg4ip="$oldwg4ip"
-    wg4city="$oldwg4city"
-    wg4on="True"
-
-  else
-    wg4on="False"
-  fi
-
-  #Check to see if there's a WGC5 connection
-  wg5slot=5
-  WG5State="$(_WG_GetClientState_ ${wg5slot})"
-  if [ -z "$WG5State" ]; then WG5State=0; fi
-  if [ "$WG5State" -eq 2 ]; then
-    WGTUN5="wgc$wg5slot"
-    WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
-    WG5ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_ep_addr)
-    NVRAMWG5IP=$(ping -c 1 -w 1 $WGTUN5_IP | awk -F '[()]' '/PING/ { print $2}')
-    if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG5 Stats...]"; fi
-    if [ "$WG5ADDR" != "$oldwg5ADDR" ] || [ "$wg5ip" = "0.0.0.0" ]; then
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
-      oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
-      oldwg5ip="$(eval $oldwg5ip)"
-      if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg5ip="$NVRAMWG5IP"
-      fi
-      oldwg5ADDR=$WG5ADDR
-      # Added based on suggestion from @ZebMcKayhan
-      ip rule del prio 10 >/dev/null 2>&1
-    fi
-
-    if [ "$(echo "$oldwg5ip" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
-      oldwg5ip="$NVRAMWG5IP"
-      oldwg5city="Private Network"
-    elif [ "$wg5ip" != "$oldwg5ip" ]; then
-      oldwg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
-      oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
-    fi
-
-    wg5ip="$oldwg5ip"
-    wg5city="$oldwg5city"
-    wg5on="True"
-
-  else
-    wg5on="False"
-  fi
-
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
-# GetVPNWGStats is a function that calculates connection stats from all active VPN and WG connections
-
-GetVPNWGStats()
-{
-
-  if [ "$vpn1on" == "True" ]; then
-    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
-    oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
-    oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
-    if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
-    if [ -z $oldvpntxbytes ]; then oldvpntxbytes=0; fi
-
-    if [ $oldvpnrxbytes -le 0 ]; then
-      oldvpnrxbytes=0
-    elif [ $oldvpntxbytes -le 0 ]; then
-      oldvpntxbytes=0
-    fi
-  fi
-
-  if [ "$vpn2on" == "True" ]; then
-    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
-    oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
-    oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
-    if [ -z $oldvpn2txbytes ]; then oldvpn2txbytes=0; fi
-
-    if [ $oldvpn2rxbytes -le 0 ]; then
-      oldvpn2rxbytes=0
-    elif [ $oldvpn2txbytes -le 0 ]; then
-      oldvpn2txbytes=0
-    fi
-  fi
-
-  if [ "$vpn3on" == "True" ]; then
-    oldvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
-    oldvpn3rxbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f1)"
-    oldvpn3txbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldvpn3rxbytes ]; then oldvpn3rxbytes=0; fi
-    if [ -z $oldvpn3txbytes ]; then oldvpn3txbytes=0; fi
-
-    if [ $oldvpn3rxbytes -le 0 ]; then
-      oldvpn3rxbytes=0
-    elif [ $oldvpn3txbytes -le 0 ]; then
-      oldvpn3txbytes=0
-    fi
-  fi
-
-  if [ "$vpn4on" == "True" ]; then
-    oldvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
-    oldvpn4rxbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f1)"
-    oldvpn4txbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldvpn4rxbytes ]; then oldvpn4rxbytes=0; fi
-    if [ -z $oldvpn4txbytes ]; then oldvpn4txbytes=0; fi
-
-    if [ $oldvpn4rxbytes -le 0 ]; then
-      oldvpn4rxbytes=0
-    elif [ $oldvpn4txbytes -le 0 ]; then
-      oldvpn4txbytes=0
-    fi
-  fi
-
-  if [ "$vpn5on" == "True" ]; then
-    oldvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
-    oldvpn5rxbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f1)"
-    oldvpn5txbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldvpn5rxbytes ]; then oldvpn5rxbytes=0; fi
-    if [ -z $oldvpn5txbytes ]; then oldvpn5txbytes=0; fi
-
-    if [ $oldvpn5rxbytes -le 0 ]; then
-      oldvpn5rxbytes=0
-    elif [ $oldvpn5txbytes -le 0 ]; then
-      oldvpn5txbytes=0
-    fi
-  fi
-
-  # Check the wireguard connections
-  if [ "$wg1on" == "True" ]; then
-    oldwg1txrxbytes=$(wg show wgc1 transfer)
-    oldwg1rxbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f3)"
-    oldwg1txbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldwg1rxbytes ] || [ $oldwg1rxbytes -le 0 ]; then oldwg1rxbytes=0; fi
-    if [ -z $oldwg1txbytes ] || [ $oldwg1txbytes -le 0 ]; then oldwg1txbytes=0; fi
-  fi
-
-  if [ "$wg2on" == "True" ]; then
-    oldwg2txrxbytes=$(wg show wgc2 transfer)
-    oldwg2rxbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f3)"
-    oldwg2txbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldwg2rxbytes ] || [ $oldwg2rxbytes -le 0 ]; then oldwg2rxbytes=0; fi
-    if [ -z $oldwg2txbytes ] || [ $oldwg2txbytes -le 0 ]; then oldwg2txbytes=0; fi
-  fi
-
-  if [ "$wg3on" == "True" ]; then
-    oldwg3txrxbytes=$(wg show wgc3 transfer)
-    oldwg3rxbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f3)"
-    oldwg3txbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldwg3rxbytes ] || [ $oldwg3rxbytes -le 0 ]; then oldwg3rxbytes=0; fi
-    if [ -z $oldwg3txbytes ] || [ $oldwg3txbytes -le 0 ]; then oldwg3txbytes=0; fi
-  fi
-
-  if [ "$wg4on" == "True" ]; then
-    oldwg4txrxbytes=$(wg show wgc4 transfer)
-    oldwg4rxbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f3)"
-    oldwg4txbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldwg4rxbytes ] || [ $oldwg4rxbytes -le 0 ]; then oldwg4rxbytes=0; fi
-    if [ -z $oldwg4txbytes ] || [ $oldwg4txbytes -le 0 ]; then oldwg4txbytes=0; fi
-  fi
-
-  if [ "$wg5on" == "True" ]; then
-    oldwg5txrxbytes=$(wg show wgc5 transfer)
-    oldwg5rxbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f3)"
-    oldwg5txbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f2)"
-    if [ -z $oldwg5rxbytes ] || [ $oldwg5rxbytes -le 0 ]; then oldwg5rxbytes=0; fi
-    if [ -z $oldwg5txbytes ] || [ $oldwg5txbytes -le 0 ]; then oldwg5txbytes=0; fi
-  fi
-
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
 # VPN_GetClientState was created by @Martinski in many thanks to trying to eliminate unknown operand errors due to null
 # vpn_clientX_state values
 
@@ -6420,9 +6267,466 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
 
-  #Get the Initial VPN stats
-  GetVPNWGIPCITY
-  GetVPNWGStats
+  #Get the latest VPN stats
+    vpn1slot=1
+    VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
+    if [ -z "$VPNState" ]; then VPNState=0; fi # to catch possible wireguard interference
+    if [ "$VPNState" -eq 2 ]; then
+      TUN="tun1$vpn1slot"
+      NVRAMVPNADDR="$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)"
+      NVRAMVPNIP="$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')"
+
+      if [ "$(echo "$NVRAMVPNIP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpnip="$NVRAMVPNIP"
+        oldvpncity="Private Network"
+      else
+        lastvpnip="$oldvpnip"
+        if [ "$VPNSite2Site" = "1" ]; then
+          oldvpnip="$NVRAMVPNIP"
+        else
+          oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        fi
+        if [ -z "$oldvpnip" ]; then oldvpnip=$NVRAMVPNIP; fi
+        if [ "$lastvpnip" != "$oldvpnip" ]; then
+          oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
+          oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
+          vpncity=$oldvpncity
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpnip ($oldvpncity)" >> $LOGFILE
+        fi
+      fi
+      vpn1on="True"
+    else
+      vpn1on="False"
+    fi
+
+  #Check to see if there's a secondary VPN connection
+    vpn2slot=2
+    VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+    if [ -z $VPN2State ]; then VPN2State=0; fi # to catch possible wireguard interference
+    if [ $VPN2State -eq 2 ]; then
+      TUN2="tun1"$vpn2slot
+      NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
+      NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn2ip=$NVRAMVPN2IP
+        oldvpn2city="Private Network"
+      else
+        lastvpn2ip=$oldvpn2ip
+        oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+        if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+          oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+          oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+          vpn2city=$oldvpn2city
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+        fi
+      fi
+      vpn2on="True"
+    else
+      vpn2on="False"
+    fi
+
+  #Check to see if there's a third VPN connection
+    vpn3slot=3
+    VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+    if [ -z $VPN3State ]; then VPN3State=0; fi # to catch possible wireguard interference
+    if [ $VPN3State -eq 2 ]; then
+      TUN3="tun1"$vpn3slot
+      NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
+      NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn3ip=$NVRAMVPN3IP
+        oldvpn3city="Private Network"
+      else
+        lastvpn3ip=$oldvpn3ip
+        oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+        if [ "$lastvpn3ip" != "$oldvpn3ip" ]; then
+          oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+          oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
+          vpn3city=$oldvpn3city
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
+        fi
+      fi
+      vpn3on="True"
+    else
+      vpn3on="False"
+    fi
+
+  #Check to see if there's a fourth VPN connection
+    vpn4slot=4
+    VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+    if [ -z $VPN4State ]; then VPN4State=0; fi # to catch possible wireguard interference
+    if [ $VPN4State -eq 2 ]; then
+      TUN4="tun1"$vpn4slot
+      NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
+      NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn4ip=$NVRAMVPN4IP
+        oldvpn4city="Private Network"
+      else
+        lastvpn4ip=$oldvpn4ip
+        oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+        if [ "$lastvpn4ip" != "$oldvpn4ip" ]; then
+          oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+          oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
+          vpn4city=$oldvpn4city
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
+        fi
+      fi
+      vpn4on="True"
+    else
+      vpn4on="False"
+    fi
+
+  #Check to see if there's a fifth VPN connection
+    vpn5slot=5
+    VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+    if [ -z $VPN5State ]; then VPN5State=0; fi # to catch possible wireguard interference
+    if [ $VPN5State -eq 2 ]; then
+      TUN5="tun1"$vpn5slot
+      NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
+      NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+      if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldvpn5ip=$NVRAMVPN5IP
+        oldvpn5city="Private Network"
+      else
+        lastvpn5ip=$oldvpn5ip
+        oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+        if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+        if [ "$lastvpn5ip" != "$oldvpn5ip" ]; then
+          oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+          oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
+          vpn5city=$oldvpn5city
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
+        fi
+      fi
+      vpn5on="True"
+    else
+      vpn5on="False"
+    fi
+
+    #Check to see if there's a WGC1 connection
+    wg1slot=1
+    WG1State="$(_WG_GetClientState_ ${wg1slot})"
+    if [ -z "$WG1State" ]; then WG1State=0; fi
+    if [ "$WG1State" -eq 2 ]; then
+      WGTUN1="wgc$wg1slot"
+      WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
+
+      icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg1ip="$(eval $icanhazwg1ip)"
+      if [ -z "$icanhazwg1ip" ] || echo "$icanhazwg1ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG1IP="000.000.000.000"
+      else
+        NVRAMWG1IP="$icanhazwg1ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg1ip="$NVRAMWG1IP"
+        oldwg1city="Private Network"
+      else
+        lastwg1ip="$oldwg1ip"
+        oldwg1ip="$NVRAMWG1IP"
+        #if [ -z "$wg1ip" ]; then wg1ip=$WGTUN1_IP; fi
+        if [ "$lastwg1ip" != "$oldwg1ip" ]; then
+          oldwg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
+          oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
+        fi
+      fi
+      wg1on="True"
+    else
+      wg1on="False"
+    fi
+
+    #Check to see if there's a WGC2 connection
+    wg2slot=2
+    WG2State="$(_WG_GetClientState_ ${wg2slot})"
+    if [ -z "$WG2State" ]; then WG2State=0; fi
+    if [ "$WG2State" -eq 2 ]; then
+      WGTUN2="wgc$wg2slot"
+      WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
+
+      icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg2ip="$(eval $icanhazwg2ip)"
+      if [ -z "$icanhazwg2ip" ] || echo "$icanhazwg2ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG2IP="000.000.000.000"
+      else
+        NVRAMWG2IP="$icanhazwg2ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg2ip="$NVRAMWG2IP"
+        oldwg2city="Private Network"
+      else
+        lastwg2ip="$oldwg2ip"
+        oldwg2ip="$NVRAMWG2IP"
+        if [ "$lastwg2ip" != "$oldwg2ip" ]; then
+          oldwg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
+          oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
+        fi
+      fi
+      wg2on="True"
+    else
+      wg2on="False"
+    fi
+
+    #Check to see if there's a WGC3 connection
+    wg3slot=3
+    WG3State="$(_WG_GetClientState_ ${wg3slot})"
+    if [ -z "$WG3State" ]; then WG3State=0; fi
+    if [ "$WG3State" -eq 2 ]; then
+      WGTUN3="wgc$wg3slot"
+      WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
+
+      icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg3ip="$(eval $icanhazwg3ip)"
+      if [ -z "$icanhazwg3ip" ] || echo "$icanhazwg3ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG3IP="000.000.000.000"
+      else
+        NVRAMWG3IP="$icanhazwg3ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg3ip="$NVRAMWG3IP"
+        oldwg3city="Private Network"
+      else
+        lastwg3ip="$oldwg3ip"
+        oldwg3ip="$NVRAMWG3IP"
+        if [ "$lastwg3ip" != "$oldwg3ip" ]; then
+          oldwg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
+          oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
+        fi
+      fi
+      wg3on="True"
+    else
+      wg3on="False"
+    fi
+
+    #Check to see if there's a WGC4 connection
+    wg4slot=4
+    WG4State="$(_WG_GetClientState_ ${wg4slot})"
+    if [ -z "$WG4State" ]; then WG4State=0; fi
+    if [ "$WG4State" -eq 2 ]; then
+      WGTUN4="wgc$wg4slot"
+      WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
+
+      icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg4ip="$(eval $icanhazwg4ip)"
+      if [ -z "$icanhazwg4ip" ] || echo "$icanhazwg4ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG4IP="000.000.000.000"
+      else
+        NVRAMWG4IP="$icanhazwg4ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg4ip="$NVRAMWG4IP"
+        oldwg4city="Private Network"
+      else
+        lastwg4ip="$oldwg4ip"
+        oldwg4ip="$NVRAMWG4IP"
+        if [ "$lastwg4ip" != "$oldwg4ip" ]; then
+          oldwg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
+          oldwg4city="$(eval $oldwg4city)"; if echo $oldwg4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
+        fi
+      fi
+      wg4on="True"
+    else
+      wg4on="False"
+    fi
+
+    #Check to see if there's a WGC5 connection
+    wg5slot=5
+    WG5State="$(_WG_GetClientState_ ${wg5slot})"
+    if [ -z "$WG5State" ]; then WG5State=0; fi
+    if [ "$WG5State" -eq 2 ]; then
+      WGTUN5="wgc$wg5slot"
+      WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
+
+      icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg5ip="$(eval $icanhazwg5ip)"
+      if [ -z "$icanhazwg5ip" ] || echo "$icanhazwg5ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG5IP="000.000.000.000"
+      else
+        NVRAMWG5IP="$icanhazwg5ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg5ip="$NVRAMWG5IP"
+        oldwg5city="Private Network"
+      else
+        lastwg5ip="$oldwg5ip"
+        oldwg5ip="$NVRAMWG5IP"
+        if [ "$lastwg5ip" != "$oldwg5ip" ]; then
+          oldwg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
+          oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
+        fi
+      fi
+      wg5on="True"
+    else
+      wg5on="False"
+    fi
+
+  if [ "$vpn1on" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
+    oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
+    oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
+    if [ -z $oldvpntxbytes ]; then oldvpntxbytes=0; fi
+
+    if [ $oldvpnrxbytes -le 0 ]; then
+      oldvpnrxbytes=0
+    elif [ $oldvpntxbytes -le 0 ]; then
+      oldvpntxbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
+    oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
+    oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
+    if [ -z $oldvpn2txbytes ]; then oldvpn2txbytes=0; fi
+
+    if [ $oldvpn2rxbytes -le 0 ]; then
+      oldvpn2rxbytes=0
+    elif [ $oldvpn2txbytes -le 0 ]; then
+      oldvpn2txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn3on" == "True" ]; then
+    oldvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+    oldvpn3rxbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f1)"
+    oldvpn3txbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn3rxbytes ]; then oldvpn3rxbytes=0; fi
+    if [ -z $oldvpn3txbytes ]; then oldvpn3txbytes=0; fi
+
+    if [ $oldvpn3rxbytes -le 0 ]; then
+      oldvpn3rxbytes=0
+    elif [ $oldvpn3txbytes -le 0 ]; then
+      oldvpn3txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn4on" == "True" ]; then
+    oldvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+    oldvpn4rxbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f1)"
+    oldvpn4txbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn4rxbytes ]; then oldvpn4rxbytes=0; fi
+    if [ -z $oldvpn4txbytes ]; then oldvpn4txbytes=0; fi
+
+    if [ $oldvpn4rxbytes -le 0 ]; then
+      oldvpn4rxbytes=0
+    elif [ $oldvpn4txbytes -le 0 ]; then
+      oldvpn4txbytes=0
+    fi
+
+  fi
+
+  if [ "$vpn5on" == "True" ]; then
+    oldvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+    oldvpn5rxbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f1)"
+    oldvpn5txbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn5rxbytes ]; then oldvpn5rxbytes=0; fi
+    if [ -z $oldvpn5txbytes ]; then oldvpn5txbytes=0; fi
+
+    if [ $oldvpn5rxbytes -le 0 ]; then
+      oldvpn5rxbytes=0
+    elif [ $oldvpn5txbytes -le 0 ]; then
+      oldvpn5txbytes=0
+    fi
+
+  fi
+
+  # Check the wireguard connections
+  if [ "$wg1on" == "True" ]; then
+    oldwg1txrxbytes=$(wg show wgc1 transfer)
+    oldwg1rxbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f3)"
+    oldwg1txbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg1rxbytes ] || [ $oldwg1rxbytes -le 0 ]; then oldwg1rxbytes=0; fi
+    if [ -z $oldwg1txbytes ] || [ $oldwg1txbytes -le 0 ]; then oldwg1txbytes=0; fi
+  fi
+
+  if [ "$wg2on" == "True" ]; then
+    oldwg2txrxbytes=$(wg show wgc2 transfer)
+    oldwg2rxbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f3)"
+    oldwg2txbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg2rxbytes ] || [ $oldwg2rxbytes -le 0 ]; then oldwg2rxbytes=0; fi
+    if [ -z $oldwg2txbytes ] || [ $oldwg2txbytes -le 0 ]; then oldwg2txbytes=0; fi
+  fi
+
+  if [ "$wg3on" == "True" ]; then
+    oldwg3txrxbytes=$(wg show wgc3 transfer)
+    oldwg3rxbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f3)"
+    oldwg3txbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg3rxbytes ] || [ $oldwg3rxbytes -le 0 ]; then oldwg3rxbytes=0; fi
+    if [ -z $oldwg3txbytes ] || [ $oldwg3txbytes -le 0 ]; then oldwg3txbytes=0; fi
+  fi
+
+  if [ "$wg4on" == "True" ]; then
+    oldwg4txrxbytes=$(wg show wgc4 transfer)
+    oldwg4rxbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f3)"
+    oldwg4txbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg4rxbytes ] || [ $oldwg4rxbytes -le 0 ]; then oldwg4rxbytes=0; fi
+    if [ -z $oldwg4txbytes ] || [ $oldwg4txbytes -le 0 ]; then oldwg4txbytes=0; fi
+  fi
+
+  if [ "$wg5on" == "True" ]; then
+    oldwg5txrxbytes=$(wg show wgc5 transfer)
+    oldwg5rxbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f3)"
+    oldwg5txbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg5rxbytes ] || [ $oldwg5rxbytes -le 0 ]; then oldwg5rxbytes=0; fi
+    if [ -z $oldwg5txbytes ] || [ $oldwg5txbytes -le 0 ]; then oldwg5txbytes=0; fi
+  fi
 
   # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
@@ -6469,7 +6773,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
 ##----------------------------------------##
 while true
 do
-
   _SetUpTimeoutCmdVars_
   _SetLAN_HostName_
   _IgnoreKeypresses_ ON
@@ -6543,12 +6846,470 @@ do
 
   # Get fresh VPN stats
   echo ""
-  GetVPNWGIPCITY loop
-  GetVPNWGStats
+  vpn1slot=1
+  VPNState="$(_VPN_GetClientState_ ${vpn1slot})"
+  if [ -z $VPNState ]; then VPNState=0; fi # to catch possible wireguard interference
+  if [ $VPNState -eq 2 ]; then
+    TUN="tun1"$vpn1slot
+    NVRAMVPNADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN1 Stats...]"
+    NVRAMVPNIP=$(ping -c 1 -w 1 $NVRAMVPNADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPNIP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpnip=$NVRAMVPNIP
+      oldvpncity="Private Network"
+    else
+      lastvpnip=$oldvpnip
+      if [ "$VPNSite2Site" == "1" ]; then
+        oldvpnip=$NVRAMVPNIP
+      else
+        oldvpnip=$(curl --silent --fail --interface $TUN --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      fi
+      if [ -z $oldvpnip ]; then oldvpnip=$NVRAMVPNIP; fi
+      if [ "$lastvpnip" != "$oldvpnip" ]; then
+        oldvpncity="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpnip | jq --raw-output .city"
+        oldvpncity="$(eval $oldvpncity)"; if echo $oldvpncity | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpncity="Undetermined"; fi
+        vpncity=$oldvpncity
+        echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpnip ($oldvpncity)" >> $LOGFILE
+      fi
+    fi
+    vpn1on="True"
+  else
+    vpn1on="False"
+  fi
+
+  #Check to see if there's a secondary VPN connection
+  vpn2slot=2
+  VPN2State="$(_VPN_GetClientState_ ${vpn2slot})"
+  if [ -z $VPN2State ]; then VPN2State=0; fi # to catch possible wireguard interference
+  if [ $VPN2State -eq 2 ]; then
+    TUN2="tun1"$vpn2slot
+    NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN2 Stats...]"
+    NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN2IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn2ip=$NVRAMVPN2IP
+      oldvpn2city="Private Network"
+    else
+      lastvpn2ip=$oldvpn2ip
+      oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+      if [ "$lastvpn2ip" != "$oldvpn2ip" ]; then
+        oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+        oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
+        echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
+      fi
+    fi
+    vpn2on="True"
+  else
+    vpn2on="False"
+  fi
+
+  #Check to see if there's a third VPN connection
+  vpn3slot=3
+  VPN3State="$(_VPN_GetClientState_ ${vpn3slot})"
+  if [ -z $VPN3State ]; then VPN3State=0; fi # to catch possible wireguard interference
+  if [ $VPN3State -eq 2 ]; then
+    TUN3="tun1"$vpn3slot
+    NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN3 Stats...]"
+    NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN3IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn3ip=$NVRAMVPN3IP
+      oldvpn3city="Private Network"
+    else
+      lastvpn3ip=$oldvpn3ip
+      oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+      if [ "$lastvpn3ip" != "$oldvpn3ip" ]; then
+        oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+        oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
+        echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
+      fi
+    fi
+    vpn3on="True"
+  else
+    vpn3on="False"
+  fi
+
+  #Check to see if there's a fourth VPN connection
+  vpn4slot=4
+  VPN4State="$(_VPN_GetClientState_ ${vpn4slot})"
+  if [ -z $VPN4State ]; then VPN4State=0; fi # to catch possible wireguard interference
+  if [ $VPN4State -eq 2 ]; then
+    TUN4="tun1"$vpn4slot
+    NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN4 Stats...]"
+    NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN4IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn4ip=$NVRAMVPN4IP
+      oldvpn4city="Private Network"
+    else
+      lastvpn4ip=$oldvpn4ip
+      oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+      if [ "$lastvpn4ip" != "$oldvpn4ip" ]; then
+        oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+        oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
+        echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
+      fi
+    fi
+    vpn4on="True"
+  else
+    vpn4on="False"
+  fi
+
+  #Check to see if there's a fifth VPN connection
+  vpn5slot=5
+  VPN5State="$(_VPN_GetClientState_ ${vpn5slot})"
+  if [ -z $VPN5State ]; then VPN5State=0; fi # to catch possible wireguard interference
+  if [ $VPN5State -eq 2 ]; then
+    TUN5="tun1"$vpn5slot
+    NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
+    printf "${CGreen}\r[Refreshing VPN5 Stats...]"
+    NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
+
+    if [ "$(echo $NVRAMVPN5IP | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+      oldvpn5ip=$NVRAMVPN5IP
+      oldvpn5city="Private Network"
+    else
+      lastvpn5ip=$oldvpn5ip
+      oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com) # Grab the public IP of the VPN Connection
+      if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+      if [ "$lastvpn5ip" != "$oldvpn5ip" ]; then
+        oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+        oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
+        echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
+      fi
+    fi
+    vpn5on="True"
+  else
+    vpn5on="False"
+  fi
+
+    #Check to see if there's a WGC1 connection
+    wg1slot=1
+    WG1State="$(_WG_GetClientState_ ${wg1slot})"
+    if [ -z "$WG1State" ]; then WG1State=0; fi
+    if [ "$WG1State" -eq 2 ]; then
+      WGTUN1="wgc$wg1slot"
+      WGTUN1_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_addr | cut -d '/' -f1)
+      printf "${CGreen}\r[Refreshing WG1 Stats...]"
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
+
+      icanhazwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg1ip="$(eval $icanhazwg1ip)"
+      if [ -z "$icanhazwg1ip" ] || echo "$icanhazwg1ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG1IP="000.000.000.000"
+      else
+        NVRAMWG1IP="$icanhazwg1ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG1IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg1ip="$NVRAMWG1IP"
+        oldwg1city="Private Network"
+      else
+        lastwg1ip="$oldwg1ip"
+        oldwg1ip="$NVRAMWG1IP"
+        #if [ -z "$wg1ip" ]; then wg1ip=$WGTUN1_IP; fi
+        if [ "$lastwg1ip" != "$oldwg1ip" ]; then
+          oldwg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
+          oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
+        fi
+      fi
+      wg1on="True"
+    else
+      wg1on="False"
+    fi
+
+    #Check to see if there's a WGC2 connection
+    wg2slot=2
+    WG2State="$(_WG_GetClientState_ ${wg2slot})"
+    if [ -z "$WG2State" ]; then WG2State=0; fi
+    if [ "$WG2State" -eq 2 ]; then
+      WGTUN2="wgc$wg2slot"
+      WGTUN2_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_addr | cut -d '/' -f1)
+      printf "${CGreen}\r[Refreshing WG2 Stats...]"
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
+
+      icanhazwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg2ip="$(eval $icanhazwg2ip)"
+      if [ -z "$icanhazwg2ip" ] || echo "$icanhazwg2ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG2IP="000.000.000.000"
+      else
+        NVRAMWG2IP="$icanhazwg2ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG2IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg2ip="$NVRAMWG2IP"
+        oldwg2city="Private Network"
+      else
+        lastwg2ip="$oldwg2ip"
+        oldwg2ip="$NVRAMWG2IP"
+        if [ "$lastwg2ip" != "$oldwg2ip" ]; then
+          oldwg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
+          oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
+        fi
+      fi
+      wg2on="True"
+    else
+      wg2on="False"
+    fi
+
+    #Check to see if there's a WGC3 connection
+    wg3slot=3
+    WG3State="$(_WG_GetClientState_ ${wg3slot})"
+    if [ -z "$WG3State" ]; then WG3State=0; fi
+    if [ "$WG3State" -eq 2 ]; then
+      WGTUN3="wgc$wg3slot"
+      WGTUN3_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_addr | cut -d '/' -f1)
+      printf "${CGreen}\r[Refreshing WG3 Stats...]"
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
+
+      icanhazwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg3ip="$(eval $icanhazwg3ip)"
+      if [ -z "$icanhazwg3ip" ] || echo "$icanhazwg3ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG3IP="000.000.000.000"
+      else
+        NVRAMWG3IP="$icanhazwg3ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG3IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg3ip="$NVRAMWG3IP"
+        oldwg3city="Private Network"
+      else
+        lastwg3ip="$oldwg3ip"
+        oldwg3ip="$NVRAMWG3IP"
+        if [ "$lastwg3ip" != "$oldwg3ip" ]; then
+          oldwg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
+          oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
+        fi
+      fi
+      wg3on="True"
+    else
+      wg3on="False"
+    fi
+
+    #Check to see if there's a WGC4 connection
+    wg4slot=4
+    WG4State="$(_WG_GetClientState_ ${wg4slot})"
+    if [ -z "$WG4State" ]; then WG4State=0; fi
+    if [ "$WG4State" -eq 2 ]; then
+      WGTUN4="wgc$wg4slot"
+      WGTUN4_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_addr | cut -d '/' -f1)
+      printf "${CGreen}\r[Refreshing WG4 Stats...]"
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
+
+      icanhazwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg4ip="$(eval $icanhazwg4ip)"
+      if [ -z "$icanhazwg4ip" ] || echo "$icanhazwg4ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG4IP="000.000.000.000"
+      else
+        NVRAMWG4IP="$icanhazwg4ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG4IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg4ip="$NVRAMWG4IP"
+        oldwg4city="Private Network"
+      else
+        lastwg4ip="$oldwg4ip"
+        oldwg4ip="$NVRAMWG4IP"
+        if [ "$lastwg4ip" != "$oldwg4ip" ]; then
+          oldwg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
+          oldwg4city="$(eval $oldwg4city)"; if echo $oldwg4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
+        fi
+      fi
+      wg4on="True"
+    else
+      wg4on="False"
+    fi
+
+    #Check to see if there's a WGC5 connection
+    wg5slot=5
+    WG5State="$(_WG_GetClientState_ ${wg5slot})"
+    if [ -z "$WG5State" ]; then WG5State=0; fi
+    if [ "$WG5State" -eq 2 ]; then
+      WGTUN5="wgc$wg5slot"
+      WGTUN5_IP=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_addr | cut -d '/' -f1)
+      printf "${CGreen}\r[Refreshing WG5 Stats...]"
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
+
+      icanhazwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+      icanhazwg5ip="$(eval $icanhazwg5ip)"
+      if [ -z "$icanhazwg5ip" ] || echo "$icanhazwg5ip" | grep -qoE 'Internet|traffic|Error|error'
+      then
+        NVRAMWG5IP="000.000.000.000"
+      else
+        NVRAMWG5IP="$icanhazwg5ip"
+      fi
+
+      # Added based on suggestion from @ZebMcKayhan
+      ip rule del prio 10 >/dev/null 2>&1
+
+      if [ "$(echo "$NVRAMWG5IP" | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]; then
+        oldwg5ip="$NVRAMWG5IP"
+        oldwg5city="Private Network"
+      else
+        lastwg5ip="$oldwg5ip"
+        oldwg5ip="$NVRAMWG5IP"
+        if [ "$lastwg5ip" != "$oldwg5ip" ]; then
+          oldwg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
+          oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
+          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
+        fi
+      fi
+      wg5on="True"
+    else
+      wg5on="False"
+    fi
+
+  if [ "$vpn1on" == "True" ]; then
+    oldvpntxrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn1slot/status 2>/dev/null)
+    oldvpnrxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f1)"
+    oldvpntxbytes="$(echo $oldvpntxrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpnrxbytes ]; then oldvpnrxbytes=0; fi
+    if [ -z $oldvpntxbytes ]; then oldvpntxbytes=0; fi
+
+    if [ $oldvpnrxbytes -le 0 ]; then
+      oldvpnrxbytes=0
+    elif [ $oldvpntxbytes -le 0 ]; then
+      oldvpntxbytes=0
+    fi
+  fi
+
+  if [ "$vpn2on" == "True" ]; then
+    oldvpn2txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn2slot/status 2>/dev/null)
+    oldvpn2rxbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f1)"
+    oldvpn2txbytes="$(echo $oldvpn2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn2rxbytes ]; then oldvpn2rxbytes=0; fi
+    if [ -z $oldvpn2txbytes ]; then oldvpn2txbytes=0; fi
+
+    if [ $oldvpn2rxbytes -le 0 ]; then
+      oldvpn2rxbytes=0
+    elif [ $oldvpn2txbytes -le 0 ]; then
+      oldvpn2txbytes=0
+    fi
+  fi
+
+  if [ "$vpn3on" == "True" ]; then
+    oldvpn3txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn3slot/status 2>/dev/null)
+    oldvpn3rxbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f1)"
+    oldvpn3txbytes="$(echo $oldvpn3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn3rxbytes ]; then oldvpn3rxbytes=0; fi
+    if [ -z $oldvpn3txbytes ]; then oldvpn3txbytes=0; fi
+
+    if [ $oldvpn3rxbytes -le 0 ]; then
+      oldvpn3rxbytes=0
+    elif [ $oldvpn3txbytes -le 0 ]; then
+      oldvpn3txbytes=0
+    fi
+  fi
+
+  if [ "$vpn4on" == "True" ]; then
+    oldvpn4txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn4slot/status 2>/dev/null)
+    oldvpn4rxbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f1)"
+    oldvpn4txbytes="$(echo $oldvpn4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn4rxbytes ]; then oldvpn4rxbytes=0; fi
+    if [ -z $oldvpn4txbytes ]; then oldvpn4txbytes=0; fi
+
+    if [ $oldvpn4rxbytes -le 0 ]; then
+      oldvpn4rxbytes=0
+    elif [ $oldvpn4txbytes -le 0 ]; then
+      oldvpn4txbytes=0
+    fi
+  fi
+
+  if [ "$vpn5on" == "True" ]; then
+    oldvpn5txrxbytes=$(awk -F',' '1 == /TUN\/TAP read bytes/ {print $2} 1 == /TUN\/TAP write bytes/ {print $2}' /tmp/etc/openvpn/client$vpn5slot/status 2>/dev/null)
+    oldvpn5rxbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f1)"
+    oldvpn5txbytes="$(echo $oldvpn5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldvpn5rxbytes ]; then oldvpn5rxbytes=0; fi
+    if [ -z $oldvpn5txbytes ]; then oldvpn5txbytes=0; fi
+
+    if [ $oldvpn5rxbytes -le 0 ]; then
+      oldvpn5rxbytes=0
+    elif [ $oldvpn5txbytes -le 0 ]; then
+      oldvpn5txbytes=0
+    fi
+  fi
+
+  # Check the wireguard connections
+  if [ "$wg1on" == "True" ]; then
+    oldwg1txrxbytes=$(wg show wgc1 transfer)
+    oldwg1rxbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f3)"
+    oldwg1txbytes="$(echo $oldwg1txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg1rxbytes ] || [ $oldwg1rxbytes -le 0 ]; then oldwg1rxbytes=0; fi
+    if [ -z $oldwg1txbytes ] || [ $oldwg1txbytes -le 0 ]; then oldwg1txbytes=0; fi
+  fi
+
+  if [ "$wg2on" == "True" ]; then
+    oldwg2txrxbytes=$(wg show wgc2 transfer)
+    oldwg2rxbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f3)"
+    oldwg2txbytes="$(echo $oldwg2txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg2rxbytes ] || [ $oldwg2rxbytes -le 0 ]; then oldwg2rxbytes=0; fi
+    if [ -z $oldwg2txbytes ] || [ $oldwg2txbytes -le 0 ]; then oldwg2txbytes=0; fi
+  fi
+
+  if [ "$wg3on" == "True" ]; then
+    oldwg3txrxbytes=$(wg show wgc3 transfer)
+    oldwg3rxbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f3)"
+    oldwg3txbytes="$(echo $oldwg3txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg3rxbytes ] || [ $oldwg3rxbytes -le 0 ]; then oldwg3rxbytes=0; fi
+    if [ -z $oldwg3txbytes ] || [ $oldwg3txbytes -le 0 ]; then oldwg3txbytes=0; fi
+  fi
+
+  if [ "$wg4on" == "True" ]; then
+    oldwg4txrxbytes=$(wg show wgc4 transfer)
+    oldwg4rxbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f3)"
+    oldwg4txbytes="$(echo $oldwg4txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg4rxbytes ] || [ $oldwg4rxbytes -le 0 ]; then oldwg4rxbytes=0; fi
+    if [ -z $oldwg4txbytes ] || [ $oldwg4txbytes -le 0 ]; then oldwg4txbytes=0; fi
+  fi
+
+  if [ "$wg5on" == "True" ]; then
+    oldwg5txrxbytes=$(wg show wgc5 transfer)
+    oldwg5rxbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f3)"
+    oldwg5txbytes="$(echo $oldwg5txrxbytes | cut -d' ' -f2)"
+    if [ -z $oldwg5rxbytes ] || [ $oldwg5rxbytes -le 0 ]; then oldwg5rxbytes=0; fi
+    if [ -z $oldwg5txbytes ] || [ $oldwg5txbytes -le 0 ]; then oldwg5txbytes=0; fi
+  fi
+
 
   printf "${CGreen}\r                                         "
   printf "${CGreen}\r"
-
 
   # Run through the stats gathering loop based on the current interval
   RM_ELAPSED_TIME=0
