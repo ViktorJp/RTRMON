@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Oct-17
+# Last Modified: 2025-Oct-21
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.2b2"
-Beta=1
+Version="2.2.2"
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -1964,7 +1964,7 @@ oldstats()
 # Calculates and captures, well, all the current stats from their sources  ;)
 calculatestats()
 {
-  
+
   RM_END_TIME="$(date +%s)"
   RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
   [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
@@ -2600,7 +2600,7 @@ calculatestats()
 
   # Uptime calc #
   uptimeStr="$(awk '{printf("%3dd %02dh %02dm %02ds\n",($1/60/60/24),($1/60/60%24),($1/60%60),($1%60))}' /proc/uptime)"
-  
+
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -2608,7 +2608,7 @@ calculatestats()
 # This function displays the stats UI for page 1
 DisplayPage1()
 {
-	
+
   clear
   if [ "$UpdateNotify" != "0" ]; then
     echo -e "$UpdateNotify${CClear}"
@@ -3619,15 +3619,15 @@ DisplaySpdtst()
     SpdServer="Starlink Satellite Transceiver #488028"
   fi
 
-	if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
-	  printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
-	elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
+  if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+  elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
-	elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
-	  printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+  elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   else
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
-	fi
+  fi
 
   echo ""
   echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
@@ -5455,11 +5455,11 @@ GetVPNWGIPCITY()
       oldvpn1city="$(eval $oldvpn1city)"; if echo $oldvpn1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn1city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpn1ip ($oldvpn1city)" >> $LOGFILE
     fi
-    
+
     vpn1ip=$oldvpn1ip
     vpn1city=$oldvpn1city
     vpn1on="True"
-  
+
   else
     vpn1on="False"
   fi
@@ -5488,11 +5488,11 @@ GetVPNWGIPCITY()
       oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
     fi
-    
+
     vpn2ip=$oldvpn2ip
     vpn2city=$oldvpn2city
     vpn2on="True"
-  
+
   else
     vpn5on="False"
   fi
@@ -5521,11 +5521,11 @@ GetVPNWGIPCITY()
       oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
     fi
-    
+
     vpn3ip=$oldvpn3ip
     vpn3city=$oldvpn3city
     vpn3on="True"
-  
+
   else
     vpn3on="False"
   fi
@@ -5554,11 +5554,11 @@ GetVPNWGIPCITY()
       oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
     fi
-    
+
     vpn4ip=$oldvpn4ip
     vpn4city=$oldvpn4city
     vpn4on="True"
-  
+
   else
     vpn4on="False"
   fi
@@ -5587,11 +5587,11 @@ GetVPNWGIPCITY()
       oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
     fi
-    
+
     vpn5ip=$oldvpn5ip
     vpn5city=$oldvpn5city
     vpn5on="True"
-  
+
   else
     vpn5on="False"
   fi
@@ -5607,7 +5607,7 @@ GetVPNWGIPCITY()
     NVRAMWG1IP=$(ping -c 1 -w 1 $WGTUN1_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG1 Stats...]"; fi
     if [ "$WG1ADDR" != "$oldwg1ADDR" ] || [ "$wg1ip" = "0.0.0.0" ]; then
-    	# Added based on suggestion from @ZebMcKayhan
+      # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
       oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
       oldwg1ip="$(eval $oldwg1ip)"
@@ -5628,11 +5628,11 @@ GetVPNWGIPCITY()
       oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
     fi
-    
+
     wg1ip="$oldwg1ip"
     wg1city="$oldwg1city"
     wg1on="True"
-    
+
   else
     wg1on="False"
   fi
@@ -5648,7 +5648,7 @@ GetVPNWGIPCITY()
     NVRAMWG2IP=$(ping -c 1 -w 1 $WGTUN2_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG2 Stats...]"; fi
     if [ "$WG2ADDR" != "$oldwg2ADDR" ] || [ "$wg2ip" = "0.0.0.0" ]; then
-    	# Added based on suggestion from @ZebMcKayhan
+      # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
       oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
       oldwg2ip="$(eval $oldwg2ip)"
@@ -5669,15 +5669,15 @@ GetVPNWGIPCITY()
       oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
     fi
-    
+
     wg2ip="$oldwg2ip"
     wg2city="$oldwg2city"
     wg2on="True"
-    
+
   else
     wg2on="False"
   fi
-  
+
   #Check to see if there's a WGC3 connection
   wg3slot=3
   WG3State="$(_WG_GetClientState_ ${wg3slot})"
@@ -5689,7 +5689,7 @@ GetVPNWGIPCITY()
     NVRAMWG3IP=$(ping -c 1 -w 1 $WGTUN3_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG3 Stats...]"; fi
     if [ "$WG3ADDR" != "$oldwg3ADDR" ] || [ "$wg3ip" = "0.0.0.0" ]; then
-    	# Added based on suggestion from @ZebMcKayhan
+      # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
       oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
       oldwg3ip="$(eval $oldwg3ip)"
@@ -5710,15 +5710,15 @@ GetVPNWGIPCITY()
       oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
     fi
-    
+
     wg3ip="$oldwg3ip"
     wg3city="$oldwg3city"
     wg3on="True"
-    
+
   else
     wg3on="False"
   fi
-  
+
   #Check to see if there's a WGC4 connection
   wg4slot=4
   WG14State="$(_WG_GetClientState_ ${wg4slot})"
@@ -5730,7 +5730,7 @@ GetVPNWGIPCITY()
     NVRAMWG4IP=$(ping -c 1 -w 1 $WGTUN4_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG4 Stats...]"; fi
     if [ "$WG4ADDR" != "$oldwg4ADDR" ] || [ "$wg4ip" = "0.0.0.0" ]; then
-    	# Added based on suggestion from @ZebMcKayhan
+      # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
       oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
       oldwg4ip="$(eval $oldwg4ip)"
@@ -5751,11 +5751,11 @@ GetVPNWGIPCITY()
       oldwg4city="$(eval $oldwg4city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
     fi
-    
+
     wg4ip="$oldwg4ip"
     wg4city="$oldwg4city"
     wg4on="True"
-    
+
   else
     wg4on="False"
   fi
@@ -5771,7 +5771,7 @@ GetVPNWGIPCITY()
     NVRAMWG5IP=$(ping -c 1 -w 1 $WGTUN5_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG5 Stats...]"; fi
     if [ "$WG5ADDR" != "$oldwg5ADDR" ] || [ "$wg5ip" = "0.0.0.0" ]; then
-    	# Added based on suggestion from @ZebMcKayhan
+      # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
       oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
       oldwg5ip="$(eval $oldwg5ip)"
@@ -5792,11 +5792,11 @@ GetVPNWGIPCITY()
       oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
     fi
-    
+
     wg5ip="$oldwg5ip"
     wg5city="$oldwg5city"
     wg5on="True"
-    
+
   else
     wg5on="False"
   fi
@@ -6469,7 +6469,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
 ##----------------------------------------##
 while true
 do
-  
+
   _SetUpTimeoutCmdVars_
   _SetLAN_HostName_
   _IgnoreKeypresses_ ON
@@ -6549,11 +6549,11 @@ do
   printf "${CGreen}\r                                         "
   printf "${CGreen}\r"
 
-	
-	# Run through the stats gathering loop based on the current interval
+
+  # Run through the stats gathering loop based on the current interval
   RM_ELAPSED_TIME=0
   RM_START_TIME="$(date +%s)"
-  
+
   ##----------------------------------------##
   ## Modified by Martinski W. [2024-Nov-05] ##
   ##----------------------------------------##
