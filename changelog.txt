@@ -1,4 +1,4 @@
-v2.2.2b2  - (October 17, 2025)
+v2.2.2    - (October 21, 2025)
           - PATCH: Fixed some of the logic to cut down on the VPN/WG slot calls for external public IP
             address/city validation, and re-use those same values if they have not changed. This would help
             bring down the amount of regular network noise that the script generates while running.
