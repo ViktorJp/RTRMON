@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Oct-21
+# Last Modified: 2025-Oct-22
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.2"
+Version="2.2.3"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -1763,11 +1763,35 @@ gettopstats ()
    numFields="$(echo $TotalMem | awk -F ' '  '{print NF}')"
    [ "$numFields" -lt 13 ] && return 1
 
-   memused="$(echo $TotalMem | awk '{print $1}' | sed 's/K$//')"
-   memfree="$(echo $TotalMem | awk '{print $2}' | sed 's/K$//')"
-   memshrd="$(echo $TotalMem | awk '{print $3}' | sed 's/K$//')"
-   membuff="$(echo $TotalMem | awk '{print $4}' | sed 's/K$//')"
-   memcach="$(echo $TotalMem | awk '{print $5}' | sed 's/K$//')"
+   #totalmemory based on the power of 2 to determine nearest estimated installed RAM
+   memtotal="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
+   totalreportedphysmem=$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' / 1000) }')
+   next_power_of_2=$(awk -v num="$totalreportedphysmem" '
+   BEGIN {
+    if (num == 0) {
+      print 1;
+      exit;
+    }
+    num--;
+    num = or(num, rshift(num, 1));
+    num = or(num, rshift(num, 2));
+    num = or(num, rshift(num, 4));
+    num = or(num, rshift(num, 8));
+    num = or(num, rshift(num, 16));
+    # num = or(num, rshift(num, 32));
+    num++;
+    print num;
+    }
+    ')
+   totalmemory="$next_power_of_2"
+
+   memfree="$(awk '/^MemFree:/ {print $2}' /proc/meminfo)"
+   membuff="$(awk '/^Buffers:/ {print $2}' /proc/meminfo)"
+   memcach="$(awk '/^Cached:/ {print $2}' /proc/meminfo)"
+   memfree="$(awk 'BEGIN { printf "%.0f", ('"$memfree"' + '"$membuff"' + '"$memcach"') }')"
+   memshrd="$(awk '/^Shmem:/ {print $2}' /proc/meminfo)"
+   memused="$(awk 'BEGIN { printf "%.0f", ('"$totalmemory"' * 1000 - '"$memfree"') }')"
+
    cpuusr="$(echo $TotalMem | awk '{print $6}' | sed 's/%$//' | cut -d . -f 1)"
    cpusys="$(echo $TotalMem | awk '{print $7}' | sed 's/%$//' | cut -d . -f 1)"
    cpunice="$(echo $TotalMem | awk '{print $8}' | sed 's/%$//' | cut -d . -f 1)"
@@ -1995,15 +2019,13 @@ calculatestats()
   if [ -n "$membuff1" ]; then membuff1=$((membuff1 / Interval)); else membuff1=0; fi
   if [ -n "$memcach1" ]; then memcach1=$((memcach1 / Interval)); else memcach1=0; fi
 
-  memused2="$((memused1 / 1000))"
-  memfree2="$((memfree1 / 1000))"
-  memshrd2="$((memshrd1 / 1000))"
-  membuff2="$((membuff1 / 1000))"
-  memcach2="$((memcach1 / 1000))"
-  totalmemory="$(((memused1 + memfree1) / 1000))"
+  totalphysmem="$totalmemory"
 
-  totalphysmem=$(/usr/bin/free | awk 'NR==2 {print $2}' 2>/dev/null)
-  totalphysmem="$((totalphysmem / 1000))"
+  memused2=$(awk 'BEGIN { printf "%.0f", ('"$memused1"' / 1000) }')
+  memfree2=$(awk 'BEGIN { printf "%.0f", ('"$memfree1"' / 1000) }')
+  memshrd2=$(awk 'BEGIN { printf "%.0f", ('"$memshrd1"' / 1000) }')
+  membuff2=$(awk 'BEGIN { printf "%.0f", ('"$membuff1"' / 1000) }')
+  memcach2=$(awk 'BEGIN { printf "%.0f", ('"$memcach1"' / 1000) }')
 
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
   eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
@@ -2022,15 +2044,15 @@ calculatestats()
   disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
   jffstotal="$(echo $disk_use | awk '{print $1}')"
   jffsused="$(echo $disk_use | awk '{print $2}')"
-  jffstotal="$(($jffstotal / 1000))"
-  jffsused="$(($jffsused / 1000))"
+  jffstotal=$(awk 'BEGIN { printf "%.0f", ('"$jffstotal"' / 1000) }')
+  jffsused=$(awk 'BEGIN { printf "%.0f", ('"$jffsused"' / 1000) }')
 
   # Disk - Swap file
   swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
   swaptotal="$(echo $swap_use | awk '{print $1}')"
   swapused="$(echo $swap_use | awk '{print $2}')"
-  swaptotal="$(($swaptotal / 1000))"
-  swapused="$(($swapused / 1000))"
+  swaptotal=$(awk 'BEGIN { printf "%.0f", ('"$swaptotal"' / 1000) }')
+  swapused=$(awk 'BEGIN { printf "%.0f", ('"$swapused"' / 1000) }')
   if [ $swaptotal == "0" ]; then swaptotal=100; fi
 
   # Disk - SD devices
