@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Nov-16
+# Last Modified: 2025-Dec-4
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.3"
+Version="2.2.4"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -4660,7 +4660,7 @@ if [ "$NCView" = "WG" ]
 
 # -------------------------------------------------------------------------------------------------------------------------
 ##------------------------------------------##
-## Modified by ExtremeFiretop [2024-Aug-06] ##
+## Modified by ExtremeFiretop [2025-Dec-03] ##
 ##------------------------------------------##
 # This function displays the stats UI for page 3
 DisplayPage7()
@@ -4795,85 +4795,93 @@ DisplayPage7()
   echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
 
+  # --- Local 2.4 GHz: only show heading if clients exist on the base iface ---
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
-    if [ "$w24updown" == "UP" ]; then
+    section_output="$(attachedwificlients "$ifname24")"
+    if [ -n "$section_output" ] && \
+       ! echo "$section_output" | grep -q "No Devices Connected"; then
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
-    else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      printf '%s\n' "$section_output"
+      echo ""
     fi
-    attachedwificlients "$ifname24"
-    echo ""
   else
     echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
+
+  # --- Local 5.0 GHz: only show if clients on base iface ---
   #Testing
   #MaxSpeed5GhzNow=0 #testing
   #w5updown="UP" #testing
   if [ "$MaxSpeed5GhzNow" != "0" ]; then
-    if [ "$w5updown" == "UP" ]; then
+    section_output="$(attachedwificlients "$ifname5")"
+    if [ -n "$section_output" ] && \
+       ! echo "$section_output" | grep -q "No Devices Connected"; then
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
-    else
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      printf '%s\n' "$section_output"
+      echo ""
     fi
-    attachedwificlients "$ifname5"
-    echo ""
   else
     echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
     echo ""
   fi
+
+  # --- Local 5.0 GHz (2): only show if clients on base iface ---
   #Testing
   #FourBandCustom55624="True" #testing
   #MaxSpeed52GhzNow=0 #testing
   #w52updown="UP" #testing
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
-      if [ "$w52updown" == "UP" ]; then
+      section_output="$(attachedwificlients "$ifname52")"
+      if [ -n "$section_output" ] && \
+         ! echo "$section_output" | grep -q "No Devices Connected"; then
         echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
-      else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        printf '%s\n' "$section_output"
+        echo ""
       fi
-      attachedwificlients "$ifname52"
-      #attachedwificlients "$ifname5" #testing
-      echo ""
     else
       echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
+
+  # --- Local 6.0 GHz: only show if clients on base iface ---
   #Testing
   #ThreeBand2456="True" #testing
   #MaxSpeed6GhzNow=1 #testing
   #w6updown="UP" #testing
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
+  if [ "$FourBandCustom55624" == "True" ] || \
+     [ "$ThreeBand2456" == "True" ]   || \
+     [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed6GhzNow" != "0" ]; then
-      if [ "$w6updown" == "UP" ]; then
+      section_output="$(attachedwificlients "$ifname6")"
+      if [ -n "$section_output" ] && \
+         ! echo "$section_output" | grep -q "No Devices Connected"; then
         echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
-      else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        printf '%s\n' "$section_output"
+        echo ""
       fi
-      attachedwificlients "$ifname6"
-      #attachedwificlients "$ifname5" #testing
-      echo ""
     else
       echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
+
+  # --- Local 6.0 GHz (2): only show if clients on base iface ---
   #Testing
   #FourBandCustom56624="True" #testing
   #MaxSpeed62GhzNow=0 #testing
   #w62updown="UP" #testing
   if [ "$FourBandCustom56624" == "True" ]; then
     if [ "$MaxSpeed62GhzNow" != "0" ]; then
-      if [ "$w62updown" == "UP" ]; then
+      section_output="$(attachedwificlients "$ifname62")"
+      if [ -n "$section_output" ] && \
+         ! echo "$section_output" | grep -q "No Devices Connected"; then
         echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
-      else
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        printf '%s\n' "$section_output"
+        echo ""
       fi
-      attachedwificlients "$ifname62"
-      #attachedwificlients "$ifname5" #testing
-      echo ""
     else
       echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
       echo ""
@@ -4882,19 +4890,41 @@ DisplayPage7()
 
   # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
   cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
-  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) $(nvram get wl2_vifs) $(nvram get wl3_vifs)
-    do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local Guest Wi-Fi          ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"
+
+  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) \
+                     $(nvram get wl2_vifs) $(nvram get wl3_vifs)
+  do
+      guestssid=$(nvram get ${guestiface}_ssid 2>/dev/null)
+      # Skip VIFs with no SSID at all
+      [ -z "$guestssid" ] && continue
+
+      bridge_name=""
+      # Find which bridge this VIF is enslaved to by checking /sys/class/net/br*/brif
+      for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
+          if [ -d "/sys/class/net/$br/brif/$guestiface" ]; then
+              bridge_name="$br"
+              break
+          fi
+      done
+
+      if [ -n "$bridge_name" ] && [ "$bridge_name" != "br0" ]; then
+          guestlabel="Guest Wi-Fi"
+      else
+          guestlabel="Local Wi-Fi"
+      fi
+
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}${guestlabel}: ${CGreen}${guestssid}${CWhite} ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"
+
       attachedguestclients "$guestiface"
       echo ""
-    done
+  done
 
   for vlanlabels in $(nvram get apg_ifnames)
-    do
+  do
       echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
       attachedvlanclients "$vlanlabels"
       echo ""
-    done
+  done
 
   echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
   #Remove non-LAN records
@@ -4962,8 +4992,11 @@ attachedwificlients ()
     maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
     rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
     dhcpleases="$(read_all_dhcp_leases)"
-    local clients=$(nvram get custom_clientlist)
-    local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+    local clients
+    clients="$(nvram get custom_clientlist)"
+    # Number of '<...>' entries = NF - 1 (first field is empty before first '<')
+    local maxextractcount
+    maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
 
     local clientcount=0
     while [ $clientcount -le $maxclientcount ]
@@ -4972,12 +5005,11 @@ attachedwificlients ()
         conntime=""
         clientip=""
         paddedclientip=""
+
         clientcount=$((clientcount+1))
         local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
 
-        if [ -z "$clientmac" ]; then
-            continue
-        fi
+        [ -z "$clientmac" ] && continue
 
         networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
         conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
@@ -4988,81 +5020,116 @@ attachedwificlients ()
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
 
-        # --- Unified MLD MAC retrieval logic ---
+        # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
+        # the same MAC that appears in ARP/DHCP. Start with the assoc MAC
+        # as canonical, then override if we find a better ARP match.
+        canonical_mac="$clientmac"
+        canonlower="$maclower"
+
+        # --- MLD / dnsmasq lookup helper ---
         lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
 
-        # Find IPs for the given MAC address in the ARP table
-        ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
+        # 1) Try to find IPs for this MAC directly in the temp ARP table
+        ips=$(awk -v mac="$maclower" '
+            BEGIN{IGNORECASE=1}
+            tolower($4)==mac {print $1}
+        ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
 
-        # Iterate over the IPs to find the reachable one
-        for ip in $ips; do
-            # Check the status of the IP in the neighbor table
-            arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-
-            # Check if the current IP is reachable
-            if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-                if [ -z "$sigstrength" ]; then
-                    conntime="STALE"
+        # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
+        if [ -z "$ips" ]; then
+            mac_mid4=$(echo "$maclower" | awk -F: '{print $2":"$3":"$4":"$5}')
+            if [ -n "$mac_mid4" ]; then
+                arp_line=$(awk -v mid="$mac_mid4" '
+                    BEGIN{IGNORECASE=1}
+                    index(tolower($4), mid) > 0 {print; exit}
+                ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
+                if [ -n "$arp_line" ]; then
+                    clientip=$(echo "$arp_line"  | awk '{print $1}')
+                    canonical_mac=$(echo "$arp_line" | awk '{print $4}')
+                    canonlower=$(echo "$canonical_mac" | awk '{print tolower($0)}')
                 fi
-                continue
-            else
-                # Set the clientip to the current IP if it is reachable or delay
-                clientip="$ip"
-                break
             fi
-        done
-
-        # Fallback to using the ARP table if no reachable IP was found
-        if [ -z "$clientip" ]; then
-            clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
         fi
 
-        paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+        # 3) If we had multiple IPs from a direct match, prefer one that is REACHABLE/DELAY
+        if [ -z "$clientip" ] && [ -n "$ips" ]; then
+            for ip in $ips; do
+                arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+                if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
+                    [ -z "$sigstrength" ] && conntime="STALE"
+                    continue
+                else
+                    clientip="$ip"
+                    break
+                fi
+            done
+            [ -z "$clientip" ] && clientip=$(echo "$ips" | tail -n 1)
+        fi
 
-        #calcs
+        # 4) Final fallback: /proc/net/arp using the canonical MAC
+        if [ -z "$clientip" ]; then
+            clientip=$(awk -v mac="$canonlower" '
+                BEGIN{IGNORECASE=1}
+                tolower($4)==mac {print $1}
+            ' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
+        fi
+
+        paddedclientip=$(echo "${clientip}" | \
+            grep -o -E '([0-9]*\.|[0-9]*)' | \
+            awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+
+        # Traffic/rate conversions
         txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
         rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
         txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
         rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
 
+        # Try custom_clientlist first (match either assoc MAC or canonical ARP MAC)
         local found=0
-        local counter=0
+        local counter=2
+        canonupper=$(echo "$canonical_mac" | tr 'a-f' 'A-F')
         while [ $counter -le $maxextractcount ]
         do
-            counter=$((counter+1))
-            local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+            local clientextract
+            clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
 
-            if [ -z "$clientextract" ]; then
-                break
-            fi
+            [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
 
-            local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-            local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+            local client
+            local mac
+            client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
+            mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
 
-            if [ "$mac" == "$clientmac" ]; then
-                clientname=$client
+            if [ "$mac" = "$clientmac" ] || [ "$mac" = "$canonupper" ]; then
+                clientname="$client"
                 found=1
                 break
             fi
+
+            counter=$((counter+1))
         done
-        # Fallback to using dnsmasq.leases if no match found
+
+        # Fallback: name from dnsmasq leases using lookup_mac
         if [ $found -ne 1 ]; then
             clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
-            if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
+            if [ -z "$clientname" ] || [ "$clientname" = "*" ]; then
                 clientname="UNKNOWN"
             fi
         fi
+
         if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-            # Add the check for already processed clients
-            if grep -qi "$clientmac" /jffs/addons/rtrmon.d/processed_clients.txt; then
-                # Skip processing if the device was already handled
+            # Track by canonical MAC so the same device won't show again under LAN
+            if grep -qi "$canonupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
                 continue
             else
-                echo "$clientmac" >> /jffs/addons/rtrmon.d/processed_clients.txt
+                echo "$canonupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
             fi
-            #delete entry from temparp table
-            sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
-            echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+
+            # Remove this canonical MAC from the temp ARP table
+            sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
+
+            echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" \
+                >> /jffs/addons/rtrmon.d/clientlist$iface.txt
         fi
     done
 
@@ -5078,20 +5145,27 @@ attachedwificlients ()
     fi
 }
 
+
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedguestclients pulls connected client info from wl, arp and nvram
 ##------------------------------------------##
-## Modified by ExtremeFiretop [2024-Aug-06] ##
+## Modified by ExtremeFiretop [2025-Dec-03] ##
+##------------------------------------------##
+# attachedguestclients pulls connected client info from wl, arp and nvram
+##------------------------------------------##
+## Modified by ExtremeFiretop [2025-Dec-04] ##
 ##------------------------------------------##
 attachedguestclients() {
   iface="$1"
   rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-  wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+  wl -i "$iface" assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
   maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
   rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
   dhcpleases="$(read_all_dhcp_leases)"
-  local clients=$(nvram get custom_clientlist)
-  local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+  local clients
+  clients="$(nvram get custom_clientlist)"
+  local maxextractcount
+  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
 
   local clientcount=0
   while [ $clientcount -le $maxclientcount ]
@@ -5115,82 +5189,132 @@ attachedguestclients() {
     rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    # --- Unified MLD MAC retrieval logic ---
-    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
 
-    # Find IPs for the given MAC address in the ARP table
-    ips=$(grep "$maclower" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
+    # Start with assoc MAC as canonical, may override with ARP MAC (WiFi7 / MLO case).
+    canonical_mac="$clientmac"
+    canonlower="$maclower"
 
-    # Iterate over the IPs to find the reachable one
-    for ip in $ips; do
-        # Check the status of the IP in the neighbor table
-        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+    # 1) Try ARP in temparp.txt for canonical MAC.
+    ips=$(awk -v mac="$canonlower" '
+      BEGIN{IGNORECASE=1}
+      tolower($4)==mac {print $1}
+    ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
 
-        # Check if the current IP is reachable
-        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-            if [ -z "$sigstrength" ]; then
-                conntime="STALE"
-            fi
-            continue
-        else
-            # Set the clientip to the current IP if it is reachable or delay
-            clientip="$ip"
-            break
+    # 2) If no direct ARP match, try fuzzy match on middle 4 bytes.
+    if [ -z "$ips" ]; then
+      mac_mid4=$(echo "$maclower" | awk -F: '{print $2":"$3":"$4":"$5}')
+      if [ -n "$mac_mid4" ]; then
+        arp_line=$(awk -v mid="$mac_mid4" '
+          BEGIN{IGNORECASE=1}
+          index(tolower($4), mid) > 0 {print; exit}
+        ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
+        if [ -n "$arp_line" ]; then
+          clientip=$(echo "$arp_line"  | awk '{print $1}')
+          canonical_mac=$(echo "$arp_line" | awk '{print $4}')
+          canonlower=$(echo "$canonical_mac" | awk '{print tolower($0)}')
         fi
-    done
-
-    # Fallback to using the ARP table or DHCP leases if no reachable IP was found
-    if [ -z "$clientip" ]; then
-        # Try to get the last IP from the ARP table
-        clientip=$(cat /proc/net/arp | grep "$maclower" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
+      fi
     fi
 
-    paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+    # 3) If we had a set of ARP IPs from direct match, choose REACHABLE/DELAY if possible.
+    if [ -z "$clientip" ] && [ -n "$ips" ]; then
+      for ip in $ips; do
+        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
+        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
+          [ -z "$sigstrength" ] && conntime="STALE"
+          continue
+        else
+          clientip="$ip"
+          break
+        fi
+      done
+      [ -z "$clientip" ] && clientip=$(echo "$ips" | tail -n 1)
+    fi
 
-    #calcs
+    # 4) Final ARP fallback: /proc/net/arp with canonical MAC.
+    if [ -z "$clientip" ]; then
+      clientip=$(awk -v mac="$canonlower" '
+        BEGIN{IGNORECASE=1}
+        tolower($4)==mac {print $1}
+      ' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
+    fi
+
+    # 5) NEW: If ARP could not give us an IP (guest VLAN case),
+    #    fall back to dnsmasq leases for this canonical MAC.
+    if [ -z "$clientip" ]; then
+      lease_line=$(echo "$dhcpleases" | awk -v mac="$canonlower" '
+        BEGIN{IGNORECASE=1}
+        tolower($2)==mac {print; exit}
+      ')
+      if [ -n "$lease_line" ]; then
+        clientip=$(echo "$lease_line" | awk '{print $3}')
+      fi
+    fi
+
+    paddedclientip=$(echo "${clientip}" | \
+      grep -o -E '([0-9]*\.|[0-9]*)' | \
+      awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
+
+    # Conversions
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
     rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
     txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
     rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
 
+    # Resolve client name from custom_clientlist (assoc MAC OR canonical ARP MAC).
     local found=0
-    local counter=0
+    local counter=2
+    canonupper=$(echo "$canonical_mac" | tr 'a-f' 'A-F')
     while [ $counter -le $maxextractcount ]
     do
-        counter=$((counter+1))
-        local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+      local clientextract
+      clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
 
-        if [ -z "$clientextract" ]; then
-            break
-        fi
+      [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
 
-        local client=$(echo $clientextract | awk -F ">" '{print $1}')
-        local mac=$(echo $clientextract | awk -F ">" '{print $2}')
+      local client
+      local mac
+      client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
+      mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
 
-        if [ "$mac" == "$clientmac" ]; then
-            clientname=$client
-            found=1
-            break
-        fi
+      if [ "$mac" = "$clientmac" ] || [ "$mac" = "$canonupper" ]; then
+        clientname="$client"
+        found=1
+        break
+      fi
+
+      counter=$((counter+1))
     done
-    # Fallback to using dnsmasq.leases if no match found
+
+    # Fallback: name from dnsmasq leases for canonical MAC.
     if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
-        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-            clientname="UNKNOWN"
-        fi
+      lookup_mac="$canonlower"
+      clientname=$(echo "$dhcpleases" | awk -v mac="$lookup_mac" '
+        BEGIN{IGNORECASE=1}
+        tolower($2)==mac {print $4; exit}
+      ') 2>/dev/null
+      if [ -z "$clientname" ] || [ "$clientname" = "*" ]; then
+        clientname="UNKNOWN"
+      fi
     fi
+
     if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-        # Add the check for already processed clients
-        if grep -qi "$clientmac" /jffs/addons/rtrmon.d/processed_clients.txt; then
-            # Skip processing if the device was already handled
-            continue
-        else
-            echo "$clientmac" >> /jffs/addons/rtrmon.d/processed_clients.txt
-        fi
-        #delete entry from temparp table
-        sed -i -e '/'$maclower'/d' /jffs/addons/rtrmon.d/temparp.txt
-        echo "$clientname,$paddedclientip,$clientmac,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/clientlist$iface.txt
+      # Mark canonical MAC as processed so it won't also show under LAN.
+      if grep -qi "$canonupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
+        continue
+      else
+        echo "$canonupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
+      fi
+
+      # Prefer to remove from temparp.txt by IP (handles cases where ARP MAC != client MAC).
+      if [ -n "$clientip" ]; then
+        sed -i -e "/^$clientip[[:space:]]/d" /jffs/addons/rtrmon.d/temparp.txt
+      else
+        sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
+      fi
+
+      echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" \
+        >> /jffs/addons/rtrmon.d/clientlist$iface.txt
     fi
   done
 
@@ -5206,17 +5330,21 @@ attachedguestclients() {
   fi
 }
 
+
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedvlanclients pulls connected client info from wl, arp and nvram
 
+# attachedvlanclients pulls connected client info from wl, arp and nvram
 attachedvlanclients() {
   iface="$1"
   vlansfound=1
   maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
   rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
   dhcpleases="$(read_all_dhcp_leases)"
-  local clients=$(nvram get custom_clientlist)
-  local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+  local clients
+  clients="$(nvram get custom_clientlist)"
+  local maxextractcount
+  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
 
   local clientcount=0
   while [ $clientcount -le $maxclientcount ]
@@ -5233,7 +5361,6 @@ attachedvlanclients() {
       continue
     fi
 
-    # Convert the MAC address to uppercase and store it in a new variable
     macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
     macprefix=$(echo "$macupper" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
     clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
@@ -5245,16 +5372,13 @@ attachedvlanclients() {
 
     interfaces=$(ip link show | grep -E 'wl|wlan' | awk -F: '{print $2}' | tr -d ' ')
     for wirelessface in $interfaces; do
-        # Suppress both standard output and error from the wl command and check for the MAC
         if wl -i "$wirelessface" assoclist 2>/dev/null | grep -iq "$macprefix"; then
-            # Save the interface name into the variable
             interface_name="$wirelessface"
             continue
         fi
     done
 
     networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
-    # Set conntime to "OFFLINE" if networktime is empty
     if [ -z "$networktime" ]; then
         conntime="AiMesh"
     else
@@ -5266,81 +5390,71 @@ attachedvlanclients() {
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
 
-    # --- Unified MLD MAC lookup for VLAN clients ---
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
     lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
 
-    # Find IPs for the given MAC address in the ARP table
     ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
 
-    # Iterate over the IPs to find the reachable one
     for ip in $ips; do
-        # Check the status of the IP in the neighbor table
         arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-
-        # Check if the current IP is reachable
         if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
             if [ -z "$sigstrength" ]; then
                 conntime="STALE"
             fi
             continue
         else
-            # Set the clientip to the current IP if it is reachable or delay
             clientip="$ip"
             break
         fi
     done
 
-    # Fallback to using the ARP table if no reachable IP was found
     if [ -z "$clientip" ]; then
         clientip=$(cat /proc/net/arp | grep "$clientmac" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
     fi
 
     paddedclientip=$(echo "$clientip" | awk -F '.' '{printf "%03d.%03d.%03d.%03d\n", $1, $2, $3, $4}') 2>/dev/null
 
-    #calcs
     txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
     rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
     txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
     rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
 
     local found=0
-    local counter=0
+    local counter=2
     while [ $counter -le $maxextractcount ]
     do
-      counter=$((counter+1))
-      local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+      local clientextract
+      clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
 
-      if [ -z "$clientextract" ]; then
-          break
-      fi
+      [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
 
-      local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-      local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+      local client
+      local mac
+      client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
+      mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
 
-      if [ "$mac" == "$macupper" ]; then
-        clientname=$client
+      if [ "$mac" = "$macupper" ]; then
+        clientname="$client"
         found=1
         break
       fi
 
+      counter=$((counter+1))
     done
-    # Fallback to using dnsmasq.leases if no match found
+
     if [ $found -ne 1 ]; then
         clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
         if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
             clientname="UNKNOWN"
         fi
     fi
+
     if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-        # Check if this MAC address has already been processed
         if grep -q "$macupper" /jffs/addons/rtrmon.d/processed_vlanclients.txt && [ "$conntime" = "STALE" ]; then
-            continue  # Skip processing this MAC address
+            continue
         else
-            # Mark this MAC as processed by adding it to the processed_macs_file
             echo "$macupper" >> /jffs/addons/rtrmon.d/processed_vlanclients.txt
         fi
-        #delete entry from temparp table
         sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
         if [ "$conntime" = "AiMesh" ]; then
             echo "$clientname,$paddedclientip,$macupper,$conntime" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
@@ -5354,7 +5468,6 @@ attachedvlanclients() {
     if [ $vlansfound -eq 0 ]; then
       sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
       awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
-      # Move sorted file back to original
       mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
       column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
     else
@@ -5365,17 +5478,20 @@ attachedvlanclients() {
   fi
 }
 
+
 # -------------------------------------------------------------------------------------------------------------------------
 # attachedlanclients pulls connected client info from wl, arp and nvram
 
+# attachedlanclients pulls connected client info from wl, arp and nvram
 attachedlanclients ()
 {
   maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
   rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt
   dhcpleases="$(read_all_dhcp_leases)"
-  #find matchine client name
-  local clients=$(nvram get custom_clientlist)
-  local maxextractcount=$(echo "$clients" | awk -F'>>' '{count=0; for (i=1; i<=NF; i++) if ($i != "") count++; print count}')
+  local clients
+  clients="$(nvram get custom_clientlist)"
+  local maxextractcount
+  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
 
   local clientcount=0
   while [ $clientcount -le $maxclientcount ]
@@ -5391,40 +5507,39 @@ attachedlanclients ()
 
       local macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
 
-      # Add the check for already processed clients
-      if grep -qi "$clients" /jffs/addons/rtrmon.d/processed_clients.txt; then
-          # Skip processing if the device was already handled
+      if grep -qi "$macupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
           continue
       else
           echo "$macupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
       fi
 
-      local counter=0
+      local counter=2
       local found=0
       while [ $counter -le $maxextractcount ]
       do
-          counter=$((counter+1))
-          local clientextract="$(echo $clients | cut -d "<" -f$counter | cut -d ">" -f1,2)"
+          local clientextract
+          clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
 
-          if [ -z "$clientextract" ]; then
-              continue
-          fi
+          [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
 
-          #clientip=$(cat /proc/net/arp | grep $clientmac | awk '{print $1}')
           clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1; exit}') 2>/dev/null
           paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-          if [ -z $paddedclientip ]; then paddedclientip="000.000.000.000"; fi
+          if [ -z "$paddedclientip" ]; then paddedclientip="000.000.000.000"; fi
 
-          local client="$(echo $clientextract | awk -F ">" '{print $1}')"
-          local mac="$(echo $clientextract | awk -F ">" '{print $2}')"
+          local client
+          local mac
+          client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
+          mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
 
-          if [ "$mac" == "$macupper" ]; then
-              clientname=$client
+          if [ "$mac" = "$macupper" ]; then
+              clientname="$client"
               found=1
               break
           fi
+
+          counter=$((counter+1))
       done
-      # Fallback to using dnsmasq.leases if no match found
+
       if [ $found -ne 1 ]; then
             clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
             if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
@@ -5464,8 +5579,12 @@ GetVPNWGIPCITY()
     NVRAMVPN1IP=$(ping -c 1 -w 1 $NVRAMVPN1ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ]; then
-      oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn1ip ]; then oldvpn1ip=$NVRAMVPN1IP; fi
+    	if [ "$VPNSite2Site" == "1" ]; then
+        oldvpn1ip=$NVRAMVPN1IP
+      else
+        oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn1ip ]; then oldvpn1ip=$NVRAMVPN1IP; fi
+      fi
       oldvpn1ADDR=$NVRAMVPN1ADDR
     fi
 
@@ -5497,8 +5616,12 @@ GetVPNWGIPCITY()
     NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN2ADDR" != "$oldvpn2ADDR" ]; then
-      oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+    	if [ "$VPNSite2Site" == "1" ]; then
+        oldvpn2ip=$NVRAMVPN2IP
+      else
+        oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
+      fi
       oldvpn2ADDR=$NVRAMVPN2ADDR
     fi
 
@@ -5530,8 +5653,12 @@ GetVPNWGIPCITY()
     NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN3ADDR" != "$oldvpn3ADDR" ]; then
-      oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+    	if [ "$VPNSite2Site" == "1" ]; then
+        oldvpn3ip=$NVRAMVPN3IP
+      else
+        oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
+      fi
       oldvpn3ADDR=$NVRAMVPN3ADDR
     fi
 
@@ -5563,8 +5690,12 @@ GetVPNWGIPCITY()
     NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN4ADDR" != "$oldvpn4ADDR" ]; then
-      oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+      if [ "$VPNSite2Site" == "1" ]; then
+        oldvpn4ip=$NVRAMVPN4IP
+      else
+        oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
+      fi
       oldvpn4ADDR=$NVRAMVPN4ADDR
     fi
 
@@ -5596,8 +5727,12 @@ GetVPNWGIPCITY()
     NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN5ADDR" != "$oldvpn5ADDR" ]; then
-      oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com)
-      if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+    	if [ "$VPNSite2Site" == "1" ]; then
+        oldvpn5ip=$NVRAMVPN5IP
+      else
+        oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
+      fi
       oldvpn5ADDR=$NVRAMVPN5ADDR
     fi
 
@@ -5631,11 +5766,15 @@ GetVPNWGIPCITY()
     if [ "$WG1ADDR" != "$oldwg1ADDR" ] || [ "$wg1ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
-      oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
-      oldwg1ip="$(eval $oldwg1ip)"
-      if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldwg1ip="$NVRAMWG1IP"
+      else
+        oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+        oldwg1ip="$(eval $oldwg1ip)"
+        if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg1ip="$NVRAMWG1IP"
+        fi
       fi
       oldwg1ADDR=$WG1ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -5672,11 +5811,15 @@ GetVPNWGIPCITY()
     if [ "$WG2ADDR" != "$oldwg2ADDR" ] || [ "$wg2ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
-      oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
-      oldwg2ip="$(eval $oldwg2ip)"
-      if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
+      else
+        oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+        oldwg2ip="$(eval $oldwg2ip)"
+        if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg2ip="$NVRAMWG2IP"
+        fi
       fi
       oldwg2ADDR=$WG2ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -5713,11 +5856,15 @@ GetVPNWGIPCITY()
     if [ "$WG3ADDR" != "$oldwg3ADDR" ] || [ "$wg3ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
-      oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
-      oldwg3ip="$(eval $oldwg3ip)"
-      if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldwg3ip="$NVRAMWG3IP"
+      else
+        oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+        oldwg3ip="$(eval $oldwg3ip)"
+        if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg3ip="$NVRAMWG3IP"
+        fi
       fi
       oldwg3ADDR=$WG3ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -5754,11 +5901,15 @@ GetVPNWGIPCITY()
     if [ "$WG4ADDR" != "$oldwg4ADDR" ] || [ "$wg4ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
-      oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
-      oldwg4ip="$(eval $oldwg4ip)"
-      if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldwg4ip="$NVRAMWG4IP"
+      else
+        oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+        oldwg4ip="$(eval $oldwg4ip)"
+        if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg4ip="$NVRAMWG4IP"
+        fi
       fi
       oldwg4ADDR=$WG4ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -5795,11 +5946,15 @@ GetVPNWGIPCITY()
     if [ "$WG5ADDR" != "$oldwg5ADDR" ] || [ "$wg5ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
-      oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
-      oldwg5ip="$(eval $oldwg5ip)"
-      if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
-      then
-        oldwg5ip="$NVRAMWG5IP"
+      if [ "$VPNSite2Site" == "1" ]; then
+        oldwg2ip="$NVRAMWG2IP"
+      else
+        oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+        oldwg5ip="$(eval $oldwg5ip)"
+        if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg5ip="$NVRAMWG5IP"
+        fi
       fi
       oldwg5ADDR=$WG5ADDR
       # Added based on suggestion from @ZebMcKayhan
