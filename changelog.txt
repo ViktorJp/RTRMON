@@ -1,4 +1,4 @@
-v2.2.4b   - (TBA)
+v2.2.4b2  - (TBA)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
             firmware release that seemed to be causing some incorrect reporting on this page. Both these
@@ -18,6 +18,8 @@ v2.2.4b   - (TBA)
             providing a deep dive into the date command options.
           - PATCH: Various spacing tweaks to ensure alignment of required data elements. That's right.
             I blame the OCD.
+          - PATCH: Added the wireless channel spec to the table output list per @visortgw request. We
+            may need to start widening the UI here soon! :)
 
 v2.2.3    - (November 16, 2025)
           - PATCH: Modified how the memory stats are being captured, and is now more in line with the 
