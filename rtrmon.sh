@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-4
+# Last Modified: 2025-Dec-5
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.4"
-Beta=0
+Version="2.2.4b1"
+Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -4802,12 +4802,12 @@ DisplayPage7()
     section_output="$(attachedwificlients "$ifname24")"
     if [ -n "$section_output" ] && \
        ! echo "$section_output" | grep -q "No Devices Connected"; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
       printf '%s\n' "$section_output"
       echo ""
     fi
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[                    ${CRed} Disabled                                                    ${CDkGray}]${CClear}"
     echo ""
   fi
 
@@ -4819,12 +4819,12 @@ DisplayPage7()
     section_output="$(attachedwificlients "$ifname5")"
     if [ -n "$section_output" ] && \
        ! echo "$section_output" | grep -q "No Devices Connected"; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
       printf '%s\n' "$section_output"
       echo ""
     fi
   else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
     echo ""
   fi
 
@@ -4838,12 +4838,12 @@ DisplayPage7()
       section_output="$(attachedwificlients "$ifname52")"
       if [ -n "$section_output" ] && \
          ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
         printf '%s\n' "$section_output"
         echo ""
       fi
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4860,12 +4860,12 @@ DisplayPage7()
       section_output="$(attachedwificlients "$ifname6")"
       if [ -n "$section_output" ] && \
          ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
         printf '%s\n' "$section_output"
         echo ""
       fi
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4880,12 +4880,12 @@ DisplayPage7()
       section_output="$(attachedwificlients "$ifname62")"
       if [ -n "$section_output" ] && \
          ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
+        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
         printf '%s\n' "$section_output"
         echo ""
       fi
     else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[ ${CRed} Disabled                                                                       ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
       echo ""
     fi
   fi
@@ -4915,7 +4915,9 @@ DisplayPage7()
           guestlabel="Local Wi-Fi"
       fi
 
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}${guestlabel}: ${CGreen}${guestssid}${CWhite} ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface  ${CClear}"
+      echo -en "${InvGreen} ${CClear}${InvDkGray} ${CWhite}${guestlabel}: ${CGreen}"
+      printf "%-32s" ${guestssid}
+      echo -e "${CWhite} ${CDkGray}[ ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface   ${CClear}"
 
       attachedguestclients "$guestiface"
       echo ""
@@ -4923,12 +4925,12 @@ DisplayPage7()
 
   for vlanlabels in $(nvram get apg_ifnames)
   do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels   ${CClear}"
+      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
       attachedvlanclients "$vlanlabels"
       echo ""
   done
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[ ${CWhite}Enabled                                                        ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
   #Remove non-LAN records
   sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
   sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
@@ -4990,7 +4992,7 @@ attachedwificlients ()
 {
     iface="$1"
     rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-    wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+    wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt 2>/dev/null
     maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
     rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
     dhcpleases="$(read_all_dhcp_leases)"
@@ -5160,7 +5162,7 @@ attachedwificlients ()
 attachedguestclients() {
   iface="$1"
   rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-  wl -i "$iface" assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt
+  wl -i "$iface" assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt 2>/dev/null
   maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
   rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
   dhcpleases="$(read_all_dhcp_leases)"
