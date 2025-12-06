@@ -5396,7 +5396,7 @@ attachedvlanclients() {
     txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
-    chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
+    chanspec=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
 
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
     lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
