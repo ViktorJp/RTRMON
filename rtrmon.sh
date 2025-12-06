@@ -208,7 +208,7 @@ showheader()
   #Display RTRMON client header
   echo -en "${InvGreen} ${InvDkGray}${CWhite} RTRMON - v"
   printf "%-8s" $Version
-  echo -e "                  ${CGreen}(S)${CWhite}how/${CGreen}(H)${CWhite}ide Operations Menu ${InvDkGray}        $tzspaces$(date) ${CClear}"
+  echo -e "              ${CGreen}(S)${CWhite}how/${CGreen}(H)${CWhite}ide Operations Menu ${InvDkGray}     $tzspaces$(date +"%a %b %d, %Y %H:%M:%S %Z %z") ${CClear}"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
