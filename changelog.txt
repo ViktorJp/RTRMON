@@ -1,9 +1,9 @@
-v2.2.4    - (TBA)
+v2.2.4b   - (TBA)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
             firmware release that seemed to be causing some incorrect reporting on this page. Both these
-            guys stepped in, and were able to collaboratively bring this home, and get this page to
-            report things accurately again. RTRMON wouldn't be as awesome as it is without these two
+            guys stepped in, and were able to collaboratively knock it out of the park, and get this page
+            to report things accurately again. RTRMON wouldn't be as awesome as it is without these two
             incredible gentlemen! :) Thank you!
           - PATCH: Thanks to a CPU temperature issue report from @fr0s7, it was found that the normal
             methods of finding CPU temp readings were no longer working on the RT-BE92U. @Dave14503 came
@@ -12,6 +12,8 @@ v2.2.4    - (TBA)
             left out an optimization that affects vpn/wg connections that are using private IPs, and was
             causing a 1min delay when RTRMON started up. I got this added back in, and is launching
             successfully again. Thanks to @visortgw for the report!
+          - PATCH: Various spacing tweaks to ensure alignment of required data elements. That's right.
+            I blame the OCD.
 
 v2.2.3    - (November 16, 2025)
           - PATCH: Modified how the memory stats are being captured, and is now more in line with the 
