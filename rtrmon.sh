@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-5
+# Last Modified: 2025-Dec-6
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.4b1"
+Version="2.2.4b2"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -4664,7 +4664,7 @@ if [ "$NCView" = "WG" ]
 ##------------------------------------------##
 ## Modified by ExtremeFiretop [2025-Dec-03] ##
 ##------------------------------------------##
-# This function displays the stats UI for page 3
+# This function displays the stats UI for page 7
 DisplayPage7()
 {
   clear
@@ -5022,6 +5022,8 @@ attachedwificlients ()
         txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
         rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
         sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+        chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
+
         maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
 
         # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
@@ -5132,7 +5134,7 @@ attachedwificlients ()
             # Remove this canonical MAC from the temp ARP table
             sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
 
-            echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" \
+            echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" \
                 >> /jffs/addons/rtrmon.d/clientlist$iface.txt
         fi
     done
@@ -5140,7 +5142,7 @@ attachedwificlients ()
     if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
       if [ $maxclientcount -ge 1 ]; then
           sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
       else
           echo -e "  No Devices Connected"
       fi
