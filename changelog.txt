@@ -6,7 +6,7 @@ v2.2.4b   - (TBA)
             to report things accurately again. RTRMON wouldn't be as awesome as it is without these two
             incredible gentlemen! :) Thank you!
           - PATCH: Thanks to a CPU temperature issue report from @fr0s7, it was found that the normal
-            methods of finding CPU temp readings were no longer working on the RT-BE92U. @Dave14503 came
+            methods of finding CPU temp readings were no longer working on the RT-BE92U. @dave14305 came
             to the rescue, and was able to find the correct file for a temp reading. Thank you both!
           - PATCH: Some oversight on my part... after my efforts to optimize my code, I inadvertently
             left out an optimization that affects vpn/wg connections that are using private IPs, and was
