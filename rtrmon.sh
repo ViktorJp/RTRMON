@@ -5194,6 +5194,7 @@ attachedguestclients() {
     txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+    chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
 
     # Start with assoc MAC as canonical, may override with ARP MAC (WiFi7 / MLO case).
@@ -5319,7 +5320,7 @@ attachedguestclients() {
         sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
       fi
 
-      echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" \
+      echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" \
         >> /jffs/addons/rtrmon.d/clientlist$iface.txt
     fi
   done
@@ -5327,7 +5328,7 @@ attachedguestclients() {
   if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
     if [ $maxclientcount -ge 1 ]; then
       sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
     else
       echo -e "  No Devices Connected"
     fi
@@ -5395,6 +5396,7 @@ attachedvlanclients() {
     txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
     rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
     sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
+    chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
 
     maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
     lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
@@ -5465,7 +5467,7 @@ attachedvlanclients() {
         if [ "$conntime" = "AiMesh" ]; then
             echo "$clientname,$paddedclientip,$macupper,$conntime" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
         else
-            echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
+            echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
         fi
     fi
   done
@@ -5475,7 +5477,7 @@ attachedvlanclients() {
       sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
       awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
       mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
+      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
     else
       echo -e "  No Devices Connected"
     fi
