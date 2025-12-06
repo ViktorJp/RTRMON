@@ -12,6 +12,10 @@ v2.2.4b   - (TBA)
             left out an optimization that affects vpn/wg connections that are using private IPs, and was
             causing a 1min delay when RTRMON started up. I got this added back in, and is launching
             successfully again. Thanks to @visortgw for the report!
+          - PATCH: Changed the date/time to include the offset alongside the timezone. This is to give
+            more visibility for those who aren't assigned a standard timezone name, and in some cases
+            would fall back to using "GMT". Thanks to @Tarek Yag for reporting this, and for @EmeraldDeer
+            providing a deep dive into the date command options.
           - PATCH: Various spacing tweaks to ensure alignment of required data elements. That's right.
             I blame the OCD.
 
