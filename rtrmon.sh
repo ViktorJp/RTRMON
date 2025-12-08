@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-6
+# Last Modified: 2025-Dec-7
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.4b2"
+Version="2.2.4b3"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -5346,6 +5346,7 @@ attachedvlanclients() {
   iface="$1"
   vlansfound=1
   maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
+  maxclientcount=$((maxclientcount-1)) #To account for header row
   rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
   dhcpleases="$(read_all_dhcp_leases)"
   local clients
@@ -5353,7 +5354,7 @@ attachedvlanclients() {
   local maxextractcount
   maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
 
-  local clientcount=0
+  local clientcount=1 #Increased to 1 from 0, to account for header row
   while [ $clientcount -le $maxclientcount ]
   do
     clientname=""
@@ -5361,7 +5362,7 @@ attachedvlanclients() {
     clientip=""
     paddedclientip=""
     interface_name=""
-    clientcount=$((clientcount+1))
+    clientcount=$((clientcount+1)) #This would make it start on row 2, skipping header row
     local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
 
     if [ -z "$clientmac" ]; then
