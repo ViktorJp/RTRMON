@@ -46,7 +46,7 @@ detect_router_model() {
             ;;
         
         # Four-band routers: 5GHz, 6GHz, 6GHz, 2.4GHz (wl0=5, wl1=6, wl2=6, wl3=2.4)
-        GT-BE98_Pro)
+        GT-BE98_PRO)
             IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_6=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_6_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
@@ -61,7 +61,7 @@ detect_router_model() {
             ;;
         
         # Three-band routers: 2.4GHz, 5GHz, 5GHz (wl0=2.4, wl1=5, wl2=5)
-        GT-AX11000_Pro|GT-AX11000|ZenWiFi_Pro_XT12|ZenWiFi_XT8)
+        GT-AX11000_PRO|GT-AX11000|ZenWiFi_Pro_XT12|ZenWiFi_XT8)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_5_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
