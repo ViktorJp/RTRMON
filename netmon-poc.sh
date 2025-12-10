@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################
 # Asus-Merlin Network Client Monitor
-# Compatible with GT-AX6000 running Asus-Merlin Firmware 3006.102.6
+# Compatible with multiple Asus router models running Asus-Merlin Firmware
 # Identifies all active interfaces and connected clients across bands
 ################################################################################
 
@@ -16,6 +16,72 @@ WL="wl"
 ARP="arp"
 IFCONFIG="ifconfig"
 CAT="cat"
+
+# Radio configuration variables
+IFNAME_24=""
+IFNAME_5=""
+IFNAME_5_2=""
+IFNAME_6=""
+IFNAME_6_2=""
+
+################################################################################
+# ROUTER MODEL DETECTION AND INTERFACE MAPPING
+################################################################################
+
+# Detect router model and configure interface mappings
+detect_router_model() {
+    local router_model=$(${NVRAM} get productid 2>/dev/null)
+    [ -z "${router_model}" ] && router_model=$(${NVRAM} get model 2>/dev/null)
+    
+    echo "Detected Router Model: ${router_model}" >&2
+    
+    # Determine radio configuration based on router model
+    case "${router_model}" in
+        # Four-band routers: 5GHz, 5GHz, 6GHz, 2.4GHz (wl0=5, wl1=5, wl2=6, wl3=2.4)
+        GT-AXE16000|GT-BE98)
+            IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5_2=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
+            ;;
+        
+        # Four-band routers: 5GHz, 6GHz, 6GHz, 2.4GHz (wl0=5, wl1=6, wl2=6, wl3=2.4)
+        GT-BE98_Pro)
+            IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
+            ;;
+        
+        # Three-band routers: 2.4GHz, 5GHz, 6GHz (wl0=2.4, wl1=5, wl2=6)
+        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            ;;
+        
+        # Three-band routers: 2.4GHz, 5GHz, 5GHz (wl0=2.4, wl1=5, wl2=5)
+        GT-AX11000_Pro|GT-AX11000|ZenWiFi_Pro_XT12|ZenWiFi_XT8)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_5_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            ;;
+        
+        # Default two-band routers: 2.4GHz, 5GHz (wl0=2.4, wl1=5)
+        *)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            ;;
+    esac
+    
+    # Log detected interfaces
+    echo "Interface Mapping:" >&2
+    [ -n "${IFNAME_24}" ] && echo "  2.4GHz: ${IFNAME_24}" >&2
+    [ -n "${IFNAME_5}" ] && echo "  5.0GHz: ${IFNAME_5}" >&2
+    [ -n "${IFNAME_5_2}" ] && echo "  5.0GHz-2: ${IFNAME_5_2}" >&2
+    [ -n "${IFNAME_6}" ] && echo "  6.0GHz: ${IFNAME_6}" >&2
+    [ -n "${IFNAME_6_2}" ] && echo "  6.0GHz-2: ${IFNAME_6_2}" >&2
+}
 
 ################################################################################
 # UTILITY FUNCTIONS
@@ -48,6 +114,26 @@ get_wireless_interfaces() {
     done | sort -u
 }
 
+# Get band name from interface name based on detected configuration
+get_band_from_interface() {
+    local iface="$1"
+    
+    # Check against detected interface names
+    if [ "${iface}" = "${IFNAME_24}" ]; then
+        echo "2.4GHz"
+    elif [ "${iface}" = "${IFNAME_5}" ]; then
+        echo "5.0GHz"
+    elif [ -n "${IFNAME_5_2}" ] && [ "${iface}" = "${IFNAME_5_2}" ]; then
+        echo "5.0GHz-2"
+    elif [ -n "${IFNAME_6}" ] && [ "${iface}" = "${IFNAME_6}" ]; then
+        echo "6.0GHz"
+    elif [ -n "${IFNAME_6_2}" ] && [ "${iface}" = "${IFNAME_6_2}" ]; then
+        echo "6.0GHz-2"
+    else
+        echo ""
+    fi
+}
+
 # Get interface type and band information
 get_interface_info() {
     local iface="$1"
@@ -60,28 +146,41 @@ get_interface_info() {
         local base_iface=$(echo "${iface}" | cut -d'.' -f1)
         local guest_num=$(echo "${iface}" | cut -d'.' -f2)
         
-        # Determine band from base interface
-        case "${base_iface}" in
-            wl0|eth6) band="2.4GHz" ;;
-            wl1|eth7) band="5.0GHz" ;;
-            wl2|eth8) band="6.0GHz" ;;
-        esac
+        # Determine band from base interface using detected mappings
+        band=$(get_band_from_interface "${base_iface}")
         
         # Get guest SSID
-        guest_ssid=$(${NVRAM} get ${base_iface}.${guest_num}_ssid 2>/dev/null || echo "Guest Network")
+        # Need to find which wl unit corresponds to this interface
+        local wl_unit=""
+        for unit in 0 1 2 3; do
+            local unit_iface=$(${NVRAM} get wl${unit}_ifname 2>/dev/null)
+            if [ "${unit_iface}" = "${base_iface}" ]; then
+                wl_unit="${unit}"
+                break
+            fi
+        done
+        
+        if [ -n "${wl_unit}" ]; then
+            guest_ssid=$(${NVRAM} get wl${wl_unit}.${guest_num}_ssid 2>/dev/null || echo "Guest Network")
+        else
+            guest_ssid="Guest Network"
+        fi
+        
         type="guest"
         echo "${type}|${band}|${guest_ssid}"
         return
     fi
     
-    # Determine main interface type
-    case "${iface}" in
-        eth6|wl0) band="2.4GHz"; type="main" ;;
-        eth7|wl1) band="5.0GHz"; type="main" ;;
-        eth8|wl2) band="6.0GHz"; type="main" ;;
-        br0) type="lan" ;;
-        *) type="unknown" ;;
-    esac
+    # Determine main interface type using detected mappings
+    band=$(get_band_from_interface "${iface}")
+    
+    if [ -n "${band}" ]; then
+        type="main"
+    elif [ "${iface}" = "br0" ]; then
+        type="lan"
+    else
+        type="unknown"
+    fi
     
     echo "${type}|${band}|"
 }
@@ -321,8 +420,8 @@ display_network_clients() {
     
     echo ""
     echo "================================================================================"
-    echo "  ASUS GT-AX6000 Network Client Monitor"
-    echo "  Asus-Merlin Firmware 3006.102.6"
+    echo "  ASUS Network Client Monitor"
+    echo "  Asus-Merlin Firmware"
     echo "  Generated: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "================================================================================"
     echo ""
@@ -380,6 +479,11 @@ display_network_clients() {
 ################################################################################
 # ENTRY POINT
 ################################################################################
+
+clear
+
+# Detect router model and configure interface mappings
+detect_router_model
 
 # Execute main routine
 display_network_clients
