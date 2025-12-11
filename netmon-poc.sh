@@ -297,7 +297,7 @@ get_wireless_client_details() {
         uptime=$(echo "${sta_info}" | grep 'in network' | awk '{for(i=1;i<=NF;i++){if($i=="network"){print $(i+1); exit}}}')
         [ -z "${uptime}" ] && uptime="0"
         
-        signal=$(echo "${sta_info}" | grep 'RSSI:' | head -n1 | awk '{print $2}')
+        signal=$(echo "${sta_info}" | grep 'smoothed rssi:' | head -n1 | awk '{print $3}')
         [ -z "${signal}" ] && signal="0"
         
         tx_rate=$(echo "${sta_info}" | grep 'rate of last tx pkt:' | awk '{print $6}')
@@ -306,8 +306,8 @@ get_wireless_client_details() {
         [ -z "${rx_rate}" ] && rx_rate="0"
         
         # Get TX/RX bytes from wl sta_info
-        tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes/ {print $NF}')
-        rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes/ {print $NF}')
+        tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes:/ {print $4}')
+        rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes:/ {print $4}')
         [ -z "${tx_bytes}" ] && tx_bytes="0"
         [ -z "${rx_bytes}" ] && rx_bytes="0"
         
