@@ -32,9 +32,9 @@ IFNAME_6_2=""
 detect_router_model() {
     local router_model=$(${NVRAM} get productid 2>/dev/null)
     [ -z "${router_model}" ] && router_model=$(${NVRAM} get model 2>/dev/null)
-    
+
     echo "Detected Router Model: ${router_model}" >&2
-    
+
     # Determine radio configuration based on router model
     case "${router_model}" in
         # Four-band routers: 5GHz, 5GHz, 6GHz, 2.4GHz (wl0=5, wl1=5, wl2=6, wl3=2.4)
@@ -44,7 +44,7 @@ detect_router_model() {
             IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
             IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
             ;;
-        
+
         # Four-band routers: 5GHz, 6GHz, 6GHz, 2.4GHz (wl0=5, wl1=6, wl2=6, wl3=2.4)
         GT-BE98_PRO)
             IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
@@ -52,28 +52,28 @@ detect_router_model() {
             IFNAME_6_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
             IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
             ;;
-        
+
         # Three-band routers: 2.4GHz, 5GHz, 6GHz (wl0=2.4, wl1=5, wl2=6)
         GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
             ;;
-        
+
         # Three-band routers: 2.4GHz, 5GHz, 5GHz (wl0=2.4, wl1=5, wl2=5)
         GT-AX11000_PRO|GT-AX11000|ZenWiFi_Pro_XT12|ZenWiFi_XT8)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_5_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
             ;;
-        
+
         # Default two-band routers: 2.4GHz, 5GHz (wl0=2.4, wl1=5)
         *)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             ;;
     esac
-    
+
     # Log detected interfaces
     echo "Interface Mapping:" >&2
     [ -n "${IFNAME_24}" ] && echo "  2.4GHz: ${IFNAME_24}" >&2
@@ -90,7 +90,7 @@ detect_router_model() {
 # Check if IP is a local/private address
 is_local_ip() {
     local ip="$1"
-    
+
     # Check for private IP ranges
     case "${ip}" in
         10.*) return 0 ;;
@@ -116,7 +116,7 @@ get_wireless_interfaces() {
 # Get band name from interface name based on detected configuration
 get_band_from_interface() {
     local iface="$1"
-    
+
     if [ "${iface}" = "${IFNAME_24}" ]; then
         echo "2.4GHz"
     elif [ "${iface}" = "${IFNAME_5}" ]; then
@@ -138,16 +138,16 @@ get_interface_info() {
     local band=""
     local type=""
     local guest_ssid=""
-    
+
     echo "${iface}" | grep '\.' >/dev/null 2>&1
     if [ $? -eq 0 ]; then
         local base_iface=$(echo "${iface}" | cut -d'.' -f1)
         local guest_num=$(echo "${iface}" | cut -d'.' -f2)
-        
+
         band=$(get_band_from_interface "${base_iface}")
-        
+
         local wl_unit=""
-        
+
         echo "${base_iface}" | grep '^wl[0-9]$' >/dev/null 2>&1
         if [ $? -eq 0 ]; then
             wl_unit=$(echo "${base_iface}" | grep -o '[0-9]')
@@ -161,7 +161,7 @@ get_interface_info() {
                 fi
             done
         fi
-        
+
         if [ -n "${wl_unit}" ]; then
             guest_ssid=$(${NVRAM} get wl${wl_unit}.${guest_num}_ssid 2>/dev/null)
             if [ -z "${guest_ssid}" ] || [ "${guest_ssid}" = " " ]; then
@@ -170,14 +170,14 @@ get_interface_info() {
         else
             guest_ssid="Guest Network"
         fi
-        
+
         type="guest"
         echo "${type}|${band}|${guest_ssid}"
         return
     fi
-    
+
     band=$(get_band_from_interface "${iface}")
-    
+
     if [ -n "${band}" ]; then
         type="main"
     elif [ "${iface}" = "br0" ]; then
@@ -185,7 +185,7 @@ get_interface_info() {
     else
         type="unknown"
     fi
-    
+
     echo "${type}|${band}|"
 }
 
@@ -211,15 +211,15 @@ bytes_to_gb() {
 get_ip_from_mac() {
     local mac="$1"
     local ip=""
-    
+
     if [ -f /proc/net/arp ]; then
         ip=$(grep -i "${mac}" /proc/net/arp 2>/dev/null | awk '{print $1}' | head -n1)
     fi
-    
+
     if [ -z "${ip}" ]; then
         ip=$(${ARP} -n 2>/dev/null | grep -i "${mac}" | awk '{print $1}' | head -n1)
     fi
-    
+
     if [ -z "${ip}" ] || [ "${ip}" = "?" ]; then
         echo "Unknown"
     else
@@ -234,34 +234,36 @@ get_hostname() {
     local hostname=""
     local mac_normalized=""
     mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
-    
-    if [ -f /var/lib/misc/dnsmasq.leases ]; then
-        hostname=$(awk -v mac="${mac_normalized}" '{if (tolower($2) == mac) {print $4; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
-    fi
-    
-    if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
-        if [ -f /var/lib/misc/dnsmasq.leases ] && [ "${ip}" != "Unknown" ]; then
-            hostname=$(awk -v ip="${ip}" '{if ($3 == ip) {print $4; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
-        fi
-    fi
-    
+
     if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
         local clientlist=$(${NVRAM} get custom_clientlist 2>/dev/null)
         if [ -n "${clientlist}" ]; then
             hostname=$(echo "${clientlist}" | tr '<' '\n' | grep -i "${mac}" | cut -d'>' -f1 | head -n1)
         fi
     fi
-    
+
+    if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
+        if [ -f /var/lib/misc/dnsmasq.leases ]; then
+            hostname=$(awk -v mac="${mac_normalized}" '{if (tolower($2) == mac) {print $4; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
+        fi
+    fi
+
+    if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
+        if [ -f /var/lib/misc/dnsmasq.leases ] && [ "${ip}" != "Unknown" ]; then
+            hostname=$(awk -v ip="${ip}" '{if ($3 == ip) {print $4; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
+        fi
+    fi
+
     if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
         if [ -f /var/lib/misc/networkmap.log ]; then
             hostname=$(grep -i "${mac}" /var/lib/misc/networkmap.log 2>/dev/null | awk '{print $1}' | head -n1)
         fi
     fi
-    
+
     if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
         hostname="${mac}"
     fi
-    
+
     echo "${hostname}"
 }
 
@@ -288,37 +290,37 @@ get_wireless_client_details() {
     local rx_rate="0"
     local signal="0"
     local bandwidth=""
-    
+
     ip=$(get_ip_from_mac "${mac}")
     hostname=$(get_hostname "${mac}" "${ip}")
-    
+
     sta_info=$(${WL} -i "${iface}" sta_info "${mac}" 2>/dev/null)
     if [ -n "${sta_info}" ]; then
         uptime=$(echo "${sta_info}" | grep 'in network' | awk '{for(i=1;i<=NF;i++){if($i=="network"){print $(i+1); exit}}}')
         [ -z "${uptime}" ] && uptime="0"
-        
+
         signal=$(echo "${sta_info}" | grep 'smoothed rssi:' | head -n1 | awk '{print $3}')
         [ -z "${signal}" ] && signal="0"
-        
+
         tx_rate=$(echo "${sta_info}" | grep 'rate of last tx pkt:' | awk '{print $6}')
         rx_rate=$(echo "${sta_info}" | grep 'rate of last rx pkt:' | awk '{print $6}')
         [ -z "${tx_rate}" ] && tx_rate="0"
         [ -z "${rx_rate}" ] && rx_rate="0"
-        
+
         # Get TX/RX bytes from wl sta_info
         tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes:/ {print $4}')
         rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes:/ {print $4}')
         [ -z "${tx_bytes}" ] && tx_bytes="0"
         [ -z "${rx_bytes}" ] && rx_bytes="0"
-        
+
         local bw_mhz=""
         local nss=""
-        
+
         local link_bw_line=$(echo "${sta_info}" | grep -i 'link bandwidth')
         if [ -n "${link_bw_line}" ]; then
             bw_mhz=$(echo "${link_bw_line}" | grep -o '[0-9]\{2,3\}' | head -n1)
         fi
-        
+
         if [ -z "${bw_mhz}" ]; then
             local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
             if [ -n "${chanspec_line}" ]; then
@@ -331,33 +333,33 @@ get_wireless_client_details() {
                 fi
             fi
         fi
-        
+
         if [ -z "${bw_mhz}" ]; then
             local omi_line=$(echo "${sta_info}" | grep 'OMI')
             if [ -n "${omi_line}" ]; then
                 bw_mhz=$(echo "${omi_line}" | grep -o '[0-9]\{2,3\}[Mm][Hh][Zz]' | grep -o '[0-9]\{2,3\}')
             fi
         fi
-        
+
         local omi_line=$(echo "${sta_info}" | grep 'OMI')
         if [ -n "${omi_line}" ]; then
             nss=$(echo "${omi_line}" | grep -o 'tx=[0-9]ss' | grep -o '[0-9]' | head -n1)
         fi
-        
+
         if [ -z "${nss}" ]; then
             local nrate_line=$(echo "${sta_info}" | grep 'tx nrate\|rx nrate' | head -n1)
             if [ -n "${nrate_line}" ]; then
                 nss=$(echo "${nrate_line}" | grep -o 'Nss [0-9]' | grep -o '[0-9]')
             fi
         fi
-        
+
         if [ -z "${nss}" ]; then
             local vht_line=$(echo "${sta_info}" | grep 'VHT SET' -A 1 | tail -n1)
             if [ -n "${vht_line}" ]; then
                 nss=$(echo "${vht_line}" | grep -o '[0-9]x[0-9]' | head -n1 | cut -d'x' -f1)
             fi
         fi
-        
+
         if [ -n "${bw_mhz}" ]; then
             if [ -n "${nss}" ]; then
                 bandwidth="${nss}x${nss}:${bw_mhz}"
@@ -368,7 +370,7 @@ get_wireless_client_details() {
             bandwidth="Unknown"
         fi
     fi
-    
+
     # Format output
     printf "  %-14s | %-15s | %-17s | %7s | %5s | %5s | %7.1f | %7.1f | %3s | %s\n" \
         "${hostname}" \
@@ -391,32 +393,32 @@ get_lan_clients() {
     local wireless_macs=""
     local iface
     local temp_file="/tmp/lan_clients_$$.tmp"
-    
+
     for iface in $(get_wireless_interfaces); do
         local clients=$(get_wireless_clients "${iface}")
         if [ -n "${clients}" ]; then
             wireless_macs="${wireless_macs} ${clients}"
         fi
     done
-    
+
     wireless_macs=$(echo "${wireless_macs}" | tr 'A-F' 'a-f')
-    
+
     if [ -f /proc/net/arp ]; then
         ${CAT} /proc/net/arp | awk 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" {print $1, $4}' > "${temp_file}"
     else
         ${ARP} -n 2>/dev/null | awk 'NR>1 && $1!="?" {print $1, $3}' > "${temp_file}"
     fi
-    
+
     while read ip mac; do
         [ -z "${mac}" ] || [ -z "${ip}" ] && continue
         [ "${ip}" = "IP" ] && continue
-        
+
         if ! is_local_ip "${ip}"; then
             continue
         fi
-        
+
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
-        
+
         local is_wireless=0
         for wmac in ${wireless_macs}; do
             if [ "${mac_normalized}" = "${wmac}" ]; then
@@ -424,13 +426,13 @@ get_lan_clients() {
                 break
             fi
         done
-        
+
         if [ ${is_wireless} -eq 0 ]; then
             local hostname=$(get_hostname "${mac}" "${ip}")
             printf "  %-14s | %-15s | %s\n" "${hostname}" "${ip}" "${mac}"
         fi
     done < "${temp_file}" | sort -u
-    
+
     rm -f "${temp_file}"
 }
 
@@ -439,7 +441,7 @@ get_primary_subnet() {
     if [ -z "${br0_ip}" ]; then
         br0_ip=$(${IFCONFIG} br0 2>/dev/null | awk '/inet / {print $2}')
     fi
-    
+
     if [ -n "${br0_ip}" ]; then
         echo "${br0_ip}" | awk -F'.' '{print $1"."$2"."$3".0/24"}'
     fi
@@ -448,13 +450,13 @@ get_primary_subnet() {
 get_unique_subnets() {
     local temp_file="/tmp/subnets_$$.tmp"
     local primary_subnet=$(get_primary_subnet)
-    
+
     if [ -f /proc/net/arp ]; then
         ${CAT} /proc/net/arp | awk 'NR>1 && $3!="0x0" && $1!="0.0.0.0" {print $1}' > "${temp_file}"
     else
         ${ARP} -n 2>/dev/null | awk 'NR>1 && $1!="?" {print $1}' > "${temp_file}"
     fi
-    
+
     while read ip; do
         if is_local_ip "${ip}"; then
             local subnet=$(echo "${ip}" | awk -F'.' '{print $1"."$2"."$3".0/24"}')
@@ -463,20 +465,20 @@ get_unique_subnets() {
             fi
         fi
     done < "${temp_file}" | sort -u
-    
+
     rm -f "${temp_file}"
 }
 
 get_vlan_interface() {
     local subnet="$1"
     local subnet_prefix=$(echo "${subnet}" | cut -d'/' -f1 | sed 's/\.0$//')
-    
+
     ${IFCONFIG} | grep "^br[0-9]\|^vlan[0-9]" | awk '{print $1}' | while read iface; do
         local iface_ip=$(${IFCONFIG} "${iface}" 2>/dev/null | grep 'inet addr:' | awk '{print $2}' | cut -d':' -f2)
         if [ -z "${iface_ip}" ]; then
             iface_ip=$(${IFCONFIG} "${iface}" 2>/dev/null | awk '/inet / {print $2}')
         fi
-        
+
         if [ -n "${iface_ip}" ]; then
             local iface_subnet=$(echo "${iface_ip}" | awk -F'.' '{print $1"."$2"."$3}')
             if [ "${iface_subnet}" = "${subnet_prefix}" ]; then
@@ -492,18 +494,18 @@ get_vlan_clients() {
     local wireless_macs="$2"
     local subnet_prefix=$(echo "${subnet}" | cut -d'/' -f1 | sed 's/\.0$//')
     local temp_file="/tmp/vlan_clients_$$.tmp"
-    
+
     if [ -f /proc/net/arp ]; then
         ${CAT} /proc/net/arp | awk -v prefix="${subnet_prefix}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $1 ~ "^"prefix {print $1, $4}' > "${temp_file}"
     else
         ${ARP} -n 2>/dev/null | awk -v prefix="${subnet_prefix}" 'NR>1 && $1!="?" && $1 ~ "^"prefix {print $1, $3}' > "${temp_file}"
     fi
-    
+
     while read ip mac; do
         [ -z "${mac}" ] || [ -z "${ip}" ] && continue
-        
+
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
-        
+
         local is_wireless=0
         for wmac in ${wireless_macs}; do
             if [ "${mac_normalized}" = "${wmac}" ]; then
@@ -511,13 +513,13 @@ get_vlan_clients() {
                 break
             fi
         done
-        
+
         if [ ${is_wireless} -eq 0 ]; then
             local hostname=$(get_hostname "${mac}" "${ip}")
             printf "  %-14s | %-15s | %s\n" "${hostname}" "${ip}" "${mac}"
         fi
     done < "${temp_file}"
-    
+
     rm -f "${temp_file}"
 }
 
@@ -533,7 +535,7 @@ display_network_clients() {
     local guest_ssid
     local client_count
     local wireless_macs=""
-    
+
     echo ""
     echo "================================================================================"
     echo "  ASUS Network Client Monitor"
@@ -541,32 +543,32 @@ display_network_clients() {
     echo "  Generated: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "================================================================================"
     echo ""
-    
+
     for iface in $(get_wireless_interfaces); do
         info_str=$(get_interface_info "${iface}")
         iface_type=$(echo "${info_str}" | cut -d'|' -f1)
         band=$(echo "${info_str}" | cut -d'|' -f2)
         guest_ssid=$(echo "${info_str}" | cut -d'|' -f3)
-        
+
         [ "${iface_type}" = "unknown" ] && continue
-        
+
         client_count=0
         client_list=$(get_wireless_clients "${iface}")
-        
+
         if [ -n "${client_list}" ]; then
             client_count=$(echo "${client_list}" | wc -l)
         fi
-        
+
         if [ "${iface_type}" = "guest" ]; then
             echo " Guest Wi-Fi: ${guest_ssid} - IFace: ${iface}"
         elif [ "${iface_type}" = "main" ]; then
             echo " Local ${band} - IFace: ${iface}"
         fi
-        
+
         if [ "${iface_type}" = "main" ] || [ "${iface_type}" = "guest" ]; then
             printf "  %-14s | %-15s | %-17s | %7s | %5s | %5s | %7s | %7s | %3s | %s\n" \
                 "Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
-            
+
             if [ -n "${client_list}" ]; then
                 for mac in ${client_list}; do
                     get_wireless_client_details "${iface}" "${mac}"
@@ -577,7 +579,7 @@ display_network_clients() {
             echo ""
         fi
     done
-    
+
     for iface in $(get_wireless_interfaces); do
         local clients=$(get_wireless_clients "${iface}")
         if [ -n "${clients}" ]; then
@@ -585,33 +587,33 @@ display_network_clients() {
         fi
     done
     wireless_macs=$(echo "${wireless_macs}" | tr 'A-F' 'a-f')
-    
+
     local primary_subnet=$(get_primary_subnet)
     local vlan_subnets=$(get_unique_subnets)
     local has_vlans=0
-    
+
     if [ -n "${vlan_subnets}" ]; then
         has_vlans=1
     fi
-    
+
     if [ ${has_vlans} -eq 1 ]; then
         echo " Local VLAN/AiMesh VLAN"
         echo ""
-        
+
         for subnet in ${vlan_subnets}; do
             local subnet_prefix=$(echo "${subnet}" | cut -d'/' -f1 | sed 's/\.0$//')
             local vlan_iface=$(get_vlan_interface "${subnet}")
-            
+
             if [ -n "${vlan_iface}" ]; then
                 echo "  VLAN ${subnet} - IFace: ${vlan_iface}"
             else
                 echo "  VLAN ${subnet}"
             fi
-            
+
             printf "  %-14s | %-15s | %s\n" "Name" "IP" "MAC"
-            
+
             local vlan_clients=$(get_vlan_clients "${subnet}" "${wireless_macs}")
-            
+
             if [ -n "${vlan_clients}" ]; then
                 echo "${vlan_clients}"
             else
@@ -620,10 +622,10 @@ display_network_clients() {
             echo ""
         done
     fi
-    
+
     echo " Local LAN/Non-VLAN AiMesh - Subnet: ${primary_subnet} - IFace: br0"
     printf "  %-14s | %-15s | %s\n" "Name" "IP" "MAC"
-    
+
     if [ -n "${primary_subnet}" ]; then
         local primary_clients=$(get_vlan_clients "${primary_subnet}" "${wireless_macs}")
         if [ -n "${primary_clients}" ]; then
@@ -634,7 +636,7 @@ display_network_clients() {
     else
         get_lan_clients
     fi
-    
+
     echo ""
     echo "================================================================================"
 }
