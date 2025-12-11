@@ -297,8 +297,7 @@ get_wireless_client_details() {
         uptime=$(echo "${sta_info}" | grep 'in network' | awk '{for(i=1;i<=NF;i++){if($i=="network"){print $(i+1); exit}}}')
         [ -z "${uptime}" ] && uptime="0"
         
-        # Get signal strength from "smoothed rssi:" line
-        signal=$(echo "${sta_info}" | awk '/smoothed rssi:/ {print $3}')
+        signal=$(echo "${sta_info}" | grep 'RSSI:' | head -n1 | awk '{print $2}')
         [ -z "${signal}" ] && signal="0"
         
         tx_rate=$(echo "${sta_info}" | grep 'rate of last tx pkt:' | awk '{print $6}')
@@ -307,8 +306,8 @@ get_wireless_client_details() {
         [ -z "${rx_rate}" ] && rx_rate="0"
         
         # Get TX/RX bytes from wl sta_info
-        tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes:/ {print $4}')
-        rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes:/ {print $4}')
+        tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes/ {print $NF}')
+        rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes/ {print $NF}')
         [ -z "${tx_bytes}" ] && tx_bytes="0"
         [ -z "${rx_bytes}" ] && rx_bytes="0"
         
@@ -323,8 +322,11 @@ get_wireless_client_details() {
         if [ -z "${bw_mhz}" ]; then
             local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
             if [ -n "${chanspec_line}" ]; then
-                bw_mhz=$(echo "${chanspec_line}" | sed 's/.*chanspec[^0-9]*[0-9]*\/\([0-9]*\).*/\1/')
-                if [ "${bw_mhz}" = "${chanspec_line}" ]; then
+                # Extract bandwidth from chanspec (format: "100/160" where 160 is the bandwidth)
+                # Check if there's a / in the chanspec line
+                if echo "${chanspec_line}" | grep '/' >/dev/null 2>&1; then
+                    bw_mhz=$(echo "${chanspec_line}" | sed 's/.*\/\([0-9]\{2,3\}\).*/\1/')
+                else
                     bw_mhz=$(echo "${chanspec_line}" | grep -o '[0-9]\{2,3\}' | tail -n1)
                 fi
             fi
@@ -367,13 +369,7 @@ get_wireless_client_details() {
         fi
     fi
     
-    if [ "${ip}" != "Unknown" ] && [ -f /proc/net/nf_conntrack ]; then
-        tx_bytes=$(grep "${ip}" /proc/net/nf_conntrack 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
-        rx_bytes=$(grep "${ip}" /proc/net/nf_conntrack 2>/dev/null | awk '{sum+=$2} END {print sum+0}')
-        [ -z "${tx_bytes}" ] && tx_bytes="0"
-        [ -z "${rx_bytes}" ] && rx_bytes="0"
-    fi
-    
+    # Format output
     printf "  %-14s | %-15s | %-17s | %7s | %5s | %5s | %7.1f | %7.1f | %3s | %s\n" \
         "${hostname}" \
         "${ip}" \
