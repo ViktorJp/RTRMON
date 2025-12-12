@@ -211,9 +211,17 @@ bytes_to_gb() {
 get_ip_from_mac() {
     local mac="$1"
     local ip=""
+    local mac_normalized=""
+    mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
 
     if [ -f /proc/net/arp ]; then
         ip=$(grep -i "${mac}" /proc/net/arp 2>/dev/null | awk '{print $1}' | head -n1)
+    fi
+
+    if [ -z "${ip}" ]; then
+    	  if [ -f /var/lib/misc/dnsmasq.leases ]; then
+            ip=$(awk -v mac="${mac_normalized}" '{if (tolower($2) == mac) {print $3; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
+        fi
     fi
 
     if [ -z "${ip}" ]; then
@@ -254,11 +262,11 @@ get_hostname() {
         fi
     fi
 
-    if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
-        if [ -f /var/lib/misc/networkmap.log ]; then
-            hostname=$(grep -i "${mac}" /var/lib/misc/networkmap.log 2>/dev/null | awk '{print $1}' | head -n1)
-        fi
-    fi
+    #if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
+    #    if [ -f /var/lib/misc/networkmap.log ]; then
+    #        hostname=$(grep -i "${mac}" /var/lib/misc/networkmap.log 2>/dev/null | awk '{print $1}' | head -n1)
+    #    fi
+    #fi
 
     if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
         hostname="${mac}"
