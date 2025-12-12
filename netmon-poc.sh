@@ -262,12 +262,6 @@ get_hostname() {
         fi
     fi
 
-    #if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
-    #    if [ -f /var/lib/misc/networkmap.log ]; then
-    #        hostname=$(grep -i "${mac}" /var/lib/misc/networkmap.log 2>/dev/null | awk '{print $1}' | head -n1)
-    #    fi
-    #fi
-
     if [ -z "${hostname}" ] || [ "${hostname}" = "*" ]; then
         hostname="${mac}"
     fi
