@@ -224,6 +224,23 @@ get_band_from_interface() {
     fi
 }
 
+# Get SSID for a main wireless interface
+get_ssid_for_interface() {
+    local iface="$1"
+    local ssid=""
+    
+    # Find the wl unit number for this interface
+    for wl_unit in 0 1 2 3; do
+        local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+        if [ "${unit_iface}" = "${iface}" ]; then
+            ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
+            break
+        fi
+    done
+    
+    echo "${ssid}"
+}
+
 # Get interface type and band information
 # Uses bridge membership to accurately determine guest vs local Wi-Fi
 get_interface_info() {
@@ -837,7 +854,7 @@ display_network_clients() {
 
     echo ""
     echo "================================================================================"
-    echo "  ASUS Network Client Monitor PoC v10"
+    echo "  ASUS Network Client Monitor PoC v12"
     echo "  Asus-Merlin Firmware"
     echo "  Generated: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "================================================================================"
@@ -866,11 +883,12 @@ display_network_clients() {
         fi
 
         if [ "${iface_type}" = "guest" ]; then
-            echo " Guest Wi-Fi: ${guest_ssid}${bridge_info} - IFace: ${iface}"
+            echo " Guest ${band} Wi-Fi: ${guest_ssid}${bridge_info} - IFace: ${iface}"
         elif [ "${iface_type}" = "main" ]; then
-            if [ -n "${guest_ssid}" ]; then
-                # This is a VIF on br0 (Local Wi-Fi on main bridge)
-                echo " Local Wi-Fi: ${guest_ssid}${bridge_info} - ${band} - IFace: ${iface}"
+            # Get SSID for main wireless interfaces
+            local main_ssid=$(get_ssid_for_interface "${iface}")
+            if [ -n "${main_ssid}" ]; then
+                echo " Local ${band} Wi-Fi: ${main_ssid}${bridge_info} - IFace: ${iface}"
             else
                 echo " Local ${band}${bridge_info} - IFace: ${iface}"
             fi
