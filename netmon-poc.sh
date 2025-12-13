@@ -105,7 +105,7 @@ read_all_dhcp_leases() {
 
 # Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
 # determine the lookup MAC (which may be the MLD MAC if present).
-# For WiFi 7 / MLO clients the MAC used by 'wl assoclist' may NOT be the same MAC 
+# For WiFi 7 / MLO clients the MAC used by 'wl assoclist' may NOT be the same MAC
 # that appears in ARP/DHCP. This function finds the correct MAC to use for lookups.
 get_lookup_mac() {
     local maclower="$1"
@@ -114,7 +114,7 @@ get_lookup_mac() {
     local mld_line=""
     local field_count=""
     local mld_mac=""
-    
+
     mld_line=$(echo "${leases}" | grep -i "${maclower}" | head -n1)
     if [ -n "${mld_line}" ]; then
         field_count=$(echo "${mld_line}" | awk '{print NF; exit}')
@@ -136,14 +136,14 @@ get_lookup_mac() {
 get_bridge_for_interface() {
     local iface="$1"
     local bridge_name=""
-    
+
     for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
         if [ -d "/sys/class/net/${br}/brif/${iface}" ]; then
             bridge_name="${br}"
             break
         fi
     done
-    
+
     echo "${bridge_name}"
 }
 
@@ -175,14 +175,14 @@ is_local_ip() {
 # Get all active wireless interfaces including VIFs (guest networks)
 get_wireless_interfaces() {
     local temp_file="/tmp/wireless_ifaces_$$.tmp"
-    
+
     # Get main wireless interfaces
     ${IFCONFIG} | grep '^eth[0-9]\|^wl[0-9]' | awk '{print $1}' | while read iface; do
         if ${WL} -i "${iface}" status >/dev/null 2>&1; then
             echo "${iface}"
         fi
     done > "${temp_file}"
-    
+
     # Get VIFs (virtual interfaces for guest networks) from nvram
     for wl_unit in 0 1 2 3; do
         local vifs=$(${NVRAM} get wl${wl_unit}_vifs 2>/dev/null)
@@ -199,7 +199,7 @@ get_wireless_interfaces() {
             done
         fi
     done >> "${temp_file}"
-    
+
     # Sort and deduplicate
     sort -u "${temp_file}"
     rm -f "${temp_file}"
@@ -253,7 +253,7 @@ get_interface_info() {
                     # Get the base interface to determine band
                     local base_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
                     band=$(get_band_from_interface "${base_iface}")
-                    
+
                     # Get SSID for this VIF
                     guest_ssid=$(${NVRAM} get ${iface}_ssid 2>/dev/null)
                     if [ -z "${guest_ssid}" ] || [ "${guest_ssid}" = " " ]; then
@@ -443,7 +443,7 @@ get_wireless_client_details() {
 
     # Get client statistics from wl
     local sta_info=$(${WL} -i "${iface}" sta_info "${mac}" 2>/dev/null)
-    
+
     if [ -n "${sta_info}" ]; then
         local network_time=$(echo "${sta_info}" | awk '/in network/ {print $3}')
         if [ -n "${network_time}" ]; then
@@ -451,7 +451,7 @@ get_wireless_client_details() {
         else
             uptime="Unknown"
         fi
-        
+
         tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes:/ {print $4}')
         rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes:/ {print $4}')
         tx_rate=$(echo "${sta_info}" | awk '/rate of last tx pkt:/ {print $6}')
@@ -465,7 +465,7 @@ get_wireless_client_details() {
     local ips=""
     if [ -f /proc/net/arp ]; then
         ips=$(awk -v mac="${mac_normalized}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null)
-        
+
         # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
         if [ -z "${ips}" ]; then
             local mac_mid4=$(echo "${mac_normalized}" | awk -F: '{print $2":"$3":"$4":"$5}')
@@ -527,7 +527,7 @@ get_wireless_client_details() {
             return
         fi
     fi
-    
+
     # Track this canonical MAC as processed
     echo "${canonupper}" >> "${PROCESSED_CLIENTS}"
 
@@ -544,14 +544,14 @@ get_wireless_client_details() {
     local bandwidth=""
     local bw_mhz=""
     local nss=""
-    
+
     # Try to extract bandwidth from various fields in sta_info
     # Method 1: Check for "link bandwidth" line
     local link_bw_line=$(echo "${sta_info}" | grep -i 'link bandwidth')
     if [ -n "${link_bw_line}" ]; then
         bw_mhz=$(echo "${link_bw_line}" | grep -o '[0-9]\{2,3\}' | head -n1)
     fi
-    
+
     # Method 2: Extract from chanspec if bandwidth not found
     if [ -z "${bw_mhz}" ] && [ -n "${chanspec}" ]; then
         local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
@@ -564,7 +564,7 @@ get_wireless_client_details() {
             fi
         fi
     fi
-    
+
     # Method 3: Try OMI line for bandwidth
     if [ -z "${bw_mhz}" ]; then
         local omi_line=$(echo "${sta_info}" | grep 'OMI')
@@ -572,14 +572,14 @@ get_wireless_client_details() {
             bw_mhz=$(echo "${omi_line}" | grep -o '[0-9]\{2,3\}[Mm][Hh][Zz]' | grep -o '[0-9]\{2,3\}')
         fi
     fi
-    
+
     # Extract NSS (Number of Spatial Streams)
     # Method 1: Check OMI line
     local omi_line=$(echo "${sta_info}" | grep 'OMI')
     if [ -n "${omi_line}" ]; then
         nss=$(echo "${omi_line}" | grep -o 'tx=[0-9]ss' | grep -o '[0-9]' | head -n1)
     fi
-    
+
     # Method 2: Check nrate line if NSS not found
     if [ -z "${nss}" ]; then
         local nrate_line=$(echo "${sta_info}" | grep 'tx nrate\|rx nrate' | head -n1)
@@ -587,7 +587,7 @@ get_wireless_client_details() {
             nss=$(echo "${nrate_line}" | grep -o 'Nss [0-9]' | grep -o '[0-9]')
         fi
     fi
-    
+
     # Method 3: Check VHT SET if NSS still not found
     if [ -z "${nss}" ]; then
         local vht_line=$(echo "${sta_info}" | grep 'VHT SET' -A 1 | tail -n1)
@@ -595,7 +595,7 @@ get_wireless_client_details() {
             nss=$(echo "${vht_line}" | grep -o '[0-9]x[0-9]' | head -n1 | cut -d'x' -f1)
         fi
     fi
-    
+
     # Format bandwidth display
     if [ -n "${bw_mhz}" ]; then
         if [ -n "${nss}" ]; then
@@ -615,7 +615,7 @@ get_wireless_client_details() {
         else
             bandwidth=$(get_band_from_interface "${iface}" | sed 's/GHz//; s/\.0//; s/-2$/2/')
         fi
-        
+
         # If still no bandwidth info, mark as unknown
         [ -z "${bandwidth}" ] && bandwidth="?"
     fi
@@ -637,7 +637,7 @@ get_lan_clients() {
 
     # Group IPs by MAC to handle multiple IPs per MAC
     local processed_macs_local=""
-    
+
     while read ip mac; do
         [ -z "${mac}" ] || [ -z "${ip}" ] && continue
         [ "${ip}" = "IP" ] && continue
@@ -651,7 +651,7 @@ get_lan_clients() {
 
         # Skip if already processed this MAC in this function
         echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
-        
+
         # Skip if this MAC was already shown in wireless section
         if [ -f "${PROCESSED_CLIENTS}" ]; then
             if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
@@ -665,7 +665,7 @@ get_lan_clients() {
         # Find all IPs for this MAC and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
-        
+
         if [ -n "${all_ips}" ]; then
             for candidate_ip in ${all_ips}; do
                 local arp_status=$(ip neigh show | grep -w "${candidate_ip}" | awk '{print $NF}' 2>/dev/null)
@@ -679,7 +679,7 @@ get_lan_clients() {
         else
             best_ip="${ip}"
         fi
-        
+
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
         printf "  %-14s | %-15s | %s\n" "${hostname}" "${best_ip}" "${mac}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
@@ -786,14 +786,14 @@ get_bridge_clients() {
                 continue
             fi
         fi
-        
+
         # Track this MAC as processed
         echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
 
         # Find all IPs for this MAC on this bridge and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
-        
+
         if [ -n "${all_ips}" ]; then
             for candidate_ip in ${all_ips}; do
                 local arp_status=$(ip neigh show | grep -w "${candidate_ip}" | awk '{print $NF}' 2>/dev/null)
@@ -807,7 +807,7 @@ get_bridge_clients() {
         else
             best_ip="${ip}"
         fi
-        
+
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
         printf "  %-14s | %-15s | %s\n" "${hostname}" "${best_ip}" "${mac}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
@@ -827,11 +827,11 @@ display_network_clients() {
     local band
     local guest_ssid
     local client_count
-    
+
     # Initialize processed client tracking files
     > "${PROCESSED_CLIENTS}"
     > "${PROCESSED_VLAN_CLIENTS}"
-    
+
     # Read DHCP leases once for MLO/MLD awareness
     local dhcp_leases=$(read_all_dhcp_leases)
 
@@ -883,11 +883,11 @@ display_network_clients() {
             if [ -n "${client_list}" ]; then
                 local temp_output="/tmp/netmon_client_output_$$.tmp"
                 > "${temp_output}"
-                
+
                 for mac in ${client_list}; do
                     get_wireless_client_details "${iface}" "${mac}" "${dhcp_leases}" >> "${temp_output}"
                 done
-                
+
                 if [ -s "${temp_output}" ]; then
                     ${CAT} "${temp_output}"
                 else
@@ -903,12 +903,12 @@ display_network_clients() {
 
     # Get VLAN/AiMesh bridges from apg_ifnames (more accurate than subnet detection)
     local vlan_bridges=$(get_vlan_bridges)
-    
+
     if [ -n "${vlan_bridges}" ]; then
         for bridge in ${vlan_bridges}; do
             # Get subnet for this bridge if available
             local bridge_subnet=$(get_bridge_subnet "${bridge}")
-            
+
             if [ -n "${bridge_subnet}" ]; then
                 echo " Local VLAN/AiMesh VLAN ${bridge_subnet} - IFace: ${bridge}"
             else
@@ -943,7 +943,7 @@ display_network_clients() {
 
     echo ""
     echo "================================================================================"
-    
+
     # Cleanup tracking files
     rm -f "${PROCESSED_CLIENTS}" "${PROCESSED_VLAN_CLIENTS}"
 }
