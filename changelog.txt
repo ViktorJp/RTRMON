@@ -8,10 +8,10 @@ v2.3.0b4  - (TBA)
           - MINOR: The fixes above led to a complete rework of the wired/wireless client page in order to
             streamline and make it easier to understand and troubleshoot. As @ExtremeFiretop explained,
             the methodology he was going down was causing patch after bandaid after patch as requirements
-            continued to change over time. This gave us a reset using all the knowledge that @ExtremeFiretop
-            had amassed thusfar into a new working version. Again, HUGE THANKS to both @ExtremeFiretop for
-            his incredible knowledge and dedication to making sure this all works as best as it can, and
-            for @visortgw for his relentless testing and feedback using the massively large and complex
+            and firmware continued to change things over time. This gave us a chance to reset using all
+            the knowledge that @ExtremeFiretop had amassed thus far into a new working version. Again,
+            HUGE THANKS to both @ExtremeFiretop for his incredible knowledge and dedication, and for
+            @visortgw for his relentless testing and feedback using the massively large and complex 
             network he has at his disposal for running RTRMON through the ringer! :) This page 7 has now
             been officially "Dedicated to @ExtremeFiretop and @visortgw" for their hard work on this!
           - PATCH: The new wired/wireless page 7 has column headers moved to the top of the page, instead
