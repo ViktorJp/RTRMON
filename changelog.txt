@@ -42,6 +42,9 @@ v2.3.0b4  - (TBA)
             trim any client names > 16 characters.
           - PATCH: NMAP results on the Network Diagnotics Page 6 are now indented by 3 characters to show
             better placement under the various interfaces it is reporting on.
+          - PATCH: Per suggestions from @visortgw, changed defaults to disable screen run-off limiter,
+            and can be enabled anytime using (A). Also, extended column 1 that shows the device name from
+            16 chars to 17 chars. Thank you!
 
 v2.2.3    - (November 16, 2025)
           - PATCH: Modified how the memory stats are being captured, and is now more in line with the 
