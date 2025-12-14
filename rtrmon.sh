@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-7
+# Last Modified: 2025-Dec-14
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.2.4b3"
+Version="2.3.0b4"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -135,6 +135,8 @@ w52updown="UP"
 w6updown="UP"
 w62updown="UP"
 SortbyOpt="Name"
+PreventScrolling=1 # PreventScrolling: 0=Show all output, 1=Paginate output
+MaxRows=24 # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-04] ##
@@ -208,7 +210,7 @@ showheader()
   #Display RTRMON client header
   echo -en "${InvGreen} ${InvDkGray}${CWhite} RTRMON - v"
   printf "%-8s" $Version
-  echo -e "              ${CGreen}(S)${CWhite}how/${CGreen}(H)${CWhite}ide Operations Menu ${InvDkGray}     $tzspaces$(date +"%a %b %d, %Y %H:%M:%S %Z %z") ${CClear}"
+  echo -e "                   ${CGreen}(S)${CWhite}how/${CGreen}(H)${CWhite}ide Operations Menu ${InvDkGray}          $tzspaces$(date +"%a %b %d, %Y %H:%M:%S %Z %z") ${CClear}"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -221,23 +223,23 @@ displayopsmenu()
 {
     amtmdisp="${CDkGray}[n/a]        "
 
-    echo -e "${InvGreen} ${InvDkGray}${CWhite} Operations Menu                                                                                              ${CClear}"
+    echo -e "${InvGreen} ${InvDkGray}${CWhite} Operations Menu                                                                                                        ${CClear}"
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ]
     then
-       echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN / VPN 1:${CGreen}(1)${CClear} 2:${CGreen}(2)${CClear} 3:${CGreen}(3)${CClear} 4:${CGreen}(4)${CClear} 5:${CGreen}(5)${CClear} ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
+       echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN / VPN 1:${CGreen}(1)${CClear} 2:${CGreen}(2)${CClear} 3:${CGreen}(3)${CClear} 4:${CGreen}(4)${CClear} 5:${CGreen}(5)${CClear}      ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
     else
-       echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN ${CDkGray}/ VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)${CClear} ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
+       echo -e "${InvGreen} ${CClear} Speedtest ${CGreen}(I)${CClear} WAN ${CDkGray}/ VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)${CClear}      ${InvGreen} ${CClear} ${CGreen}(M)${CClear}ain Setup Menu / Configuration Menu${CClear}"
     fi
     if [ "$wg1on" == "True" ] || [ "$wg2on" == "True" ] || [ "$wg3on" == "True" ] || [ "$wg4on" == "True" ] || [ "$wg5on" == "True" ]
     then
-       echo -e "${InvGreen} ${CClear} Speedtest Wireguard 1:${CGreen}(6)${CClear} 2:${CGreen}(7)${CClear} 3:${CGreen}(8)${CClear} 4:${CGreen}(9)${CClear} 5:${CGreen}(0)${CClear}     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
+       echo -e "${InvGreen} ${CClear} Speedtest Wireguard 1:${CGreen}(6)${CClear} 2:${CGreen}(7)${CClear} 3:${CGreen}(8)${CClear} 4:${CGreen}(9)${CClear} 5:${CGreen}(0)${CClear}          ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     else
-       echo -e "${InvGreen} ${CClear} ${CDkGray}Speedtest Wireguard 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}     ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
+       echo -e "${InvGreen} ${CClear} ${CDkGray}Speedtest Wireguard 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}          ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     fi
-    echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                      ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/7)${CClear}"
-    echo -e "${InvGreen} ${CClear} Refresh ${CGreen}(C)${CClear}urrent Network Statistics                  ${InvGreen} ${CClear} Auto ${CGreen}(R)${CClear}otate Pages Option: ${CGreen}$autorotateindicator${CClear}"
-    echo -e "${InvGreen} ${CClear} View ${CGreen}(W)${CClear}AN / ${CGreen}(L)${CClear}AN / ${CGreen}(V)${CClear}PN / W${CGreen}(G)${CClear} Stats               ${InvGreen} ${CClear} Router Model/FW: ${CGreen}${RouterModel} | ${FWBUILD}${CClear}"
-    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                           ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/7)${CClear}"
+    echo -e "${InvGreen} ${CClear} Refresh ${CGreen}(C)${CClear}urrent Network Statistics                       ${InvGreen} ${CClear} Auto ${CGreen}(R)${CClear}otate Pages Option: ${CGreen}$autorotateindicator${CClear}"
+    echo -e "${InvGreen} ${CClear} View ${CGreen}(W)${CClear}AN / ${CGreen}(L)${CClear}AN / ${CGreen}(V)${CClear}PN / W${CGreen}(G)${CClear} Stats                    ${InvGreen} ${CClear} Router Model/FW: ${CGreen}${RouterModel} | ${FWBUILD}${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
 }
 
@@ -540,6 +542,8 @@ progressbaroverride()
         if [ "$key_press" ]
         then
            case "$key_press" in
+               [Aa]) if [ "$PreventScrolling" = "1" ]; then PreventScrolling=0; elif [ "$PreventScrolling" = "0" ]; then PreventScrolling=1; fi;
+               		   timerReset=1;;
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
                      sleep 1; NextPage=6; timerReset=1
@@ -2639,63 +2643,63 @@ DisplayPage1()
   fi
   showheader
   echo ""
-  echo -e "${InvDkGray}${CWhite} CPU                                                                                                           ${CClear}"
+  echo -e "${InvDkGray}${CWhite} CPU                                                                                                                     ${CClear}"
   echo ""
-  echo -e "${InvGreen} ${CClear} ${CWhite}Uptime     ${CDkGray}[                               ${CWhite}$uptimeStr${CDkGray}                                ]${CClear}"
-  echo -e "${InvGreen} ${CClear} ${CWhite}CPU Load   ${CDkGray}[                         ${CGreen}1m: ${CWhite}$cpuload1m  ${CGreen}5m: ${CWhite}$cpuload5m  ${CGreen}15m: ${CWhite}$cpuload15m${CDkGray}                         ]${CClear}"
-  preparebar 79 "|"
+  echo -e "${InvGreen} ${CClear} ${CWhite}Uptime     ${CDkGray}[                                    ${CWhite}$uptimeStr${CDkGray}                                     ]${CClear}"
+  echo -e "${InvGreen} ${CClear} ${CWhite}CPU Load   ${CDkGray}[                              ${CGreen}1m: ${CWhite}$cpuload1m  ${CGreen}5m: ${CWhite}$cpuload5m  ${CGreen}15m: ${CWhite}$cpuload15m${CDkGray}                              ]${CClear}"
+  preparebar 89 "|"
   progressbar $oldcpuusr1 100 " CPU User  " "%%" "Standard" $olddisplaycpuusr1
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldcpusys1 100 " CPU System" "%%" "Standard" $olddisplaycpusys1
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldcpunice1 100 " CPU Nice  " "%%" "Standard" $olddisplaycpunice1
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldcpuidle1 100 " CPU Idle  " "%%" "Reverse" $olddisplaycpuidle1
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldcpuirq1 100 " CPU IRQ   " "%%" "Standard" $olddisplaycpuirq1
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   converttemps $oldF_cputemp
   progressbar $currenttemp $currentrange " CPU Temp  " $TempUnits "CPU" $currenttemp $currentrange
   echo ""
   echo ""
-  echo -e "${InvDkGray}${CWhite} Memory                                                                                                        ${CClear}"
+  echo -e "${InvDkGray}${CWhite} Memory                                                                                                                  ${CClear}"
   echo ""
-  echo -en "${InvGreen} ${CClear} ${CWhite}Mem Total  ${CDkGray}[                                    ${CWhite}"
+  echo -en "${InvGreen} ${CClear} ${CWhite}Mem Total  ${CDkGray}[                                         ${CWhite}"
   printf "%-7s" "$totalphysmem MB"
-  echo -e "${CDkGray}                                    ]${CClear}"
-  preparebar 79 "|"
+  echo -e "${CDkGray}                                         ]${CClear}"
+  preparebar 89 "|"
   progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldmemfree2 $oldtotalmemory " Mem Free  " "MB" "Reverse"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldmemshrd2 $oldtotalmemory " Mem Shared" "MB" "Standard"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldmembuff2 $oldtotalmemory " Mem Buffer" "MB" "Standard"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldmemcach2 $oldtotalmemory " Mem Cache " "MB" "Standard"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldnvramused $oldtotalnvram " NVRAM Used" "B" "Standard"
   echo ""
   echo ""
-  echo -e "${InvDkGray}${CWhite} Disk                                                                                                          ${CClear}"
+  echo -e "${InvDkGray}${CWhite} Disk                                                                                                                    ${CClear}"
   echo ""
-  echo -en "${InvGreen} ${CClear} ${CWhite}Swap Size  ${CDkGray}[                                    ${CWhite}"
+  echo -en "${InvGreen} ${CClear} ${CWhite}Swap Size  ${CDkGray}[                                         ${CWhite}"
   printf "%-8s" "$swaptotal MB"
-  echo -e "${CDkGray}                                   ]${CClear}"
-  preparebar 79 "|"
+  echo -e "${CDkGray}                                        ]${CClear}"
+  preparebar 89 "|"
   progressbar $oldswapused $oldswaptotal " Swap Used " "MB" "Standard"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldjffsused $oldjffstotal " JFFS Used " "MB" "Standard"
 
   #Disk - SD devices
@@ -2726,7 +2730,7 @@ DisplayPage1()
     sdnameformat=$(printf "%-10s" $sdname)
 
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $sdused $sdtotal " $sdnameformat" "GB" "Standard"
   done
 }
@@ -2743,7 +2747,7 @@ DisplayPage2()
   showheader
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
     echo ""
-    echo -e "${InvDkGray}${CWhite} WAN                                                                                                           ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WAN                                                                                                                     ${CClear}"
     echo ""
     if [ "$ScreenshotMode" == "1" ]; then
       oldwan0ip="1.2.3.4" #demo
@@ -2773,341 +2777,341 @@ DisplayPage2()
     printf '%03d.%03d.%03d.%03d'  ${oldwan0ip//./ }
     echo -en " / "
     printf '%03d.%03d.%03d.%03d'  ${oldwan1ip//./ }
-    echo -en "${CDkGray} ] ${CWhite}  DNS ${CDkGray}[ ${CWhite}"
-    if [ $olddns1ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
+    echo -en "${CDkGray}      ] ${CWhite}  DNS ${CDkGray}[ ${CWhite}"
+    if [ $olddns1ip = "0.0.0.0"           ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns1ip//./ }; fi
     echo -en " / "
-    if [ $olddns2ip = "0.0.0.0" ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
-    echo -e "${CDkGray} ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
+    if [ $olddns2ip = "0.0.0.0"           ]; then printf "000.000.000.000"; else printf '%03d.%03d.%03d.%03d'  ${olddns2ip//./ }; fi
+    echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}IFace: $WANIFNAME${CClear}"
     if [ ! -z $oldwanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}WAN 0/1 I6 ${CDkGray}[ ${CWhite}$oldwanip6${CClear}"; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwanrxmbrate $MaxSpeedInet " Avg WAN RX" "Mbps" "Standard" $oldwanrxmbratedisplay $MaxSpeedInet
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwantxmbrate $MaxSpeedInetUL " Avg WAN TX" "Mbps" "Standard" $oldwantxmbratedisplay $MaxSpeedInetUL
     echo ""
   fi
   echo ""
-  echo -e "${InvDkGray}${CWhite} LAN                                                                                                           ${CClear}"
+  echo -e "${InvDkGray}${CWhite} LAN                                                                                                                     ${CClear}"
   echo ""
   echo -en "${InvGreen} ${CClear}${CWhite} BR0 LAN IP ${CDkGray}[ ${CWhite}"
   printf '%03d.%03d.%03d.%03d'  ${oldlanip//./ }
-  echo -e "${CDkGray}                                                               ] ${InvDkGray}${CWhite}IFace: br0${CClear}"
+  echo -e "${CDkGray}                                                                         ] ${InvDkGray}${CWhite}IFace: br0${CClear}"
   if [ ! -z $oldlanip6 ]; then echo -e "${InvGreen} ${CClear} ${CWhite}BR0 LAN I6 ${CDkGray}[ ${CWhite}$oldlanip6${CClear}"; fi
 
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $oldlanrxmbrate $MaxSpeedLAN " Avg LAN RX" "Mbps" "Standard" $oldlanrxmbratedisplay $MaxSpeedLAN
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   if [ ${oldlantxmbrate%.*} -lt 0 ]; then oldlantxmbrate=0; oldlantxmbratedisplay=0; fi
   progressbar $oldlantxmbrate $MaxSpeedLAN " Avg LAN TX" "Mbps" "Standard" $oldlantxmbratedisplay $MaxSpeedLAN
 
   if [ "$vpn1on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} OVPN$vpn1slot                                                                                                         ${CClear}"
+    echo -e "${InvDkGray}${CWhite} OVPN$vpn1slot                                                                                                                   ${CClear}"
     echo ""
     if [ "$oldvpn1city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn1city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn1ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn1city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn1slot${CClear}"
     fi
     if [ ${oldvpntxmbrate%.*} -lt 0 ]; then oldvpntxmbrate=0; oldvpntxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpntxmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpntxmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldvpnrxmbrate%.*} -lt 0 ]; then oldvpnrxmbrate=0; oldvpnrxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpnrxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpnrxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$vpn2on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} OVPN$vpn2slot                                                                                                         ${CClear}"
+    echo -e "${InvDkGray}${CWhite} OVPN$vpn2slot                                                                                                                   ${CClear}"
     echo ""
     if [ "$oldvpn2city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn2city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn2ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn2city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn2slot${CClear}"
     fi
     if [ ${oldvpn2txmbrate%.*} -lt 0 ]; then oldvpn2txmbrate=0; oldvpn2txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn2txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn2txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldvpn2rxmbrate%.*} -lt 0 ]; then oldvpn2rxmbrate=0; oldvpn2rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn2rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn2rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$vpn3on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} OVPN$vpn3slot                                                                                                         ${CClear}"
+    echo -e "${InvDkGray}${CWhite} OVPN$vpn3slot                                                                                                                   ${CClear}"
     echo ""
     if [ "$oldvpn3city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn3ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn3city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn3ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn3city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn3slot${CClear}"
     fi
     if [ ${oldvpn3txmbrate%.*} -lt 0 ]; then oldvpn3txmbrate=0; oldvpn3txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn3txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn3txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldvpn3rxmbrate%.*} -lt 0 ]; then oldvpn3rxmbrate=0; oldvpn3rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn3rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn3rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$vpn4on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} OVPN$vpn4slot                                                                                                         ${CClear}"
+    echo -e "${InvDkGray}${CWhite} OVPN$vpn4slot                                                                                                                   ${CClear}"
     echo ""
     if [ "$oldvpn4city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn4ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn4city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn4ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn4city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn4slot${CClear}"
     fi
     if [ ${oldvpn4txmbrate%.*} -lt 0 ]; then oldvpn4txmbrate=0; oldvpn4txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn4txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn4txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldvpn4rxmbrate%.*} -lt 0 ]; then oldvpn4rxmbrate=0; oldvpn4rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn4rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn4rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$vpn5on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} OVPN$vpn5slot                                                                                                         ${CClear}"
+    echo -e "${InvDkGray}${CWhite} OVPN$vpn5slot                                                                                                                   ${CClear}"
     echo ""
     if [ "$oldvpn5city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn5ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn5city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB VPN IP ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldvpn5ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldvpn5city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: tun1$vpn5slot${CClear}"
     fi
     if [ ${oldvpn5txmbrate%.*} -lt 0 ]; then oldvpn5txmbrate=0; oldvpn5txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn5txmbrate $MaxSpeedInet " Avg VPN RX" "Mbps" "Standard" $oldvpn5txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldvpn5rxmbrate%.*} -lt 0 ]; then oldvpn5rxmbrate=0; oldvpn5rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldvpn5rxmbrate $MaxSpeedInetUL " Avg VPN TX" "Mbps" "Standard" $oldvpn5rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$wg1on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} WG$wg1slot                                                                                                           ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WG$wg1slot                                                                                                                     ${CClear}"
     echo ""
     if [ "$oldwg1city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg1ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg1city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg1slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg1slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg1ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg1city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg1slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg1slot${CClear}"
     fi
     if [ ${oldwg1txmbrate%.*} -lt 0 ]; then oldwg1txmbrate=0; oldwg1txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg1txmbrate $MaxSpeedInet " Avg WG RX " "Mbps" "Standard" $oldwg1txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldwg1rxmbrate%.*} -lt 0 ]; then oldwg1rxmbrate=0; oldwg1rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg1rxmbrate $MaxSpeedInetUL " Avg WG TX " "Mbps" "Standard" $oldwg1rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$wg2on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} WG$wg2slot                                                                                                           ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WG$wg2slot                                                                                                                     ${CClear}"
     echo ""
     if [ "$oldwg2city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg2ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg2city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg2slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg2slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg2ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg2city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg2slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg2slot${CClear}"
     fi
     if [ ${oldwg2txmbrate%.*} -lt 0 ]; then oldwg2txmbrate=0; oldwg2txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg2txmbrate $MaxSpeedInet " Avg WG RX " "Mbps" "Standard" $oldwg2txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldwg2rxmbrate%.*} -lt 0 ]; then oldwg2rxmbrate=0; oldwg2rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg2rxmbrate $MaxSpeedInetUL " Avg WG TX " "Mbps" "Standard" $oldwg2rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$wg3on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} WG$wg3slot                                                                                                           ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WG$wg3slot                                                                                                                     ${CClear}"
     echo ""
     if [ "$oldwg3city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg3ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg3city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg3slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg3slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg3ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg3city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg3slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg3slot${CClear}"
     fi
     if [ ${oldwg3txmbrate%.*} -lt 0 ]; then oldwg3txmbrate=0; oldwg3txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg3txmbrate $MaxSpeedInet " Avg WG RX " "Mbps" "Standard" $oldwg3txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldwg3rxmbrate%.*} -lt 0 ]; then oldwg3rxmbrate=0; oldwg3rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg3rxmbrate $MaxSpeedInetUL " Avg WG TX " "Mbps" "Standard" $oldwg3rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$wg4on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} WG$wg4slot                                                                                                           ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WG$wg4slot                                                                                                                     ${CClear}"
     echo ""
     if [ "$oldwg4city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg4ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg4city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg4slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg4slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg4ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg4city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg4slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg4slot${CClear}"
     fi
     if [ ${oldwg4txmbrate%.*} -lt 0 ]; then oldwg4txmbrate=0; oldwg4txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg4txmbrate $MaxSpeedInet " Avg WG RX " "Mbps" "Standard" $oldwg4txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldwg4rxmbrate%.*} -lt 0 ]; then oldwg4rxmbrate=0; oldwg4rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg4rxmbrate $MaxSpeedInetUL " Avg WG TX " "Mbps" "Standard" $oldwg4rxmbratedisplay $MaxSpeedInetUL
   fi
 
   if [ "$wg5on" == "True" ]; then
     echo ""
     echo ""
-    echo -e "${InvDkGray}${CWhite} WG$wg5slot                                                                                                          ${CClear}"
+    echo -e "${InvDkGray}${CWhite} WG$wg5slot                                                                                                                    ${CClear}"
     echo ""
     if [ "$oldwg5city" == "Private Network" ]; then
       echo -en "${InvGreen} ${CClear}${CWhite} PRV WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg5ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg5city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg5slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg5slot${CClear}"
     else
       echo -en "${InvGreen} ${CClear}${CWhite} PUB WG IP  ${CDkGray}[ ${CWhite}"
       printf '%03d.%03d.%03d.%03d'  ${oldwg5ip//./ }
-      echo -en "${CDkGray}                   ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
+      echo -en "${CDkGray}                        ]  ${CWhite}CITY ${CDkGray}[ ${CWhite}"
 
       printf "%-33s" "$oldwg5city"
 
-      echo -e "${CDkGray} ] ${InvDkGray}${CWhite}TUN: wgc$wg5slot${CClear}"
+      echo -e "${CDkGray}      ] ${InvDkGray}${CWhite}TUN: wgc$wg5slot${CClear}"
     fi
     if [ ${oldwg5txmbrate%.*} -lt 0 ]; then oldwg5txmbrate=0; oldwg5txmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg5txmbrate $MaxSpeedInet " Avg WG RX " "Mbps" "Standard" $oldwg5txmbratedisplay $MaxSpeedInet
     echo ""
     if [ ${oldwg5rxmbrate%.*} -lt 0 ]; then oldwg5rxmbrate=0; oldwg5rxmbratedisplay=0; fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldwg5rxmbrate $MaxSpeedInetUL " Avg WG TX " "Mbps" "Standard" $oldwg5rxmbratedisplay $MaxSpeedInetUL
   fi
 
@@ -3212,70 +3216,70 @@ DisplayPage3()
   fi
 
   echo ""
-  echo -e "${InvDkGray}${CWhite} WiFi                                                                                                          ${CClear}"
+  echo -e "${InvDkGray}${CWhite} WiFi                                                                                                                    ${CClear}"
   echo ""
   if [ "$MaxSpeed24GhzNow" != "0" ]; then
     if [ "$w24updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - UP                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
     else
-      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}2.4GHz     ${CDkGray}[ ${CWhite}Enabled - $w24udsched - DOWN                                                           ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24${CClear}"
     fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldw24rxmbrate $MaxSpeed24GhzNow " Avg 24G RX" "Mbps" "Standard" $oldw24rxmbratedisplay $MaxSpeed24GhzNow
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldw24txmbrate $MaxSpeed24GhzNow " Avg 24G TX" "Mbps" "Standard" $oldw24txmbratedisplay $MaxSpeed24GhzNow
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     converttemps $oldw24temp
     progressbar $currenttemp $currentrange " 2.4G Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
-    echo -e "${InvRed} ${CClear}${CWhite} 2.4GHz     ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${CWhite} 2.4GHz     ${CDkGray}[ ${CRed}Disabled                                                                                ${CDkGray}]${CClear}"
   fi
   if [ "$MaxSpeed5GhzNow" != "0" ]; then
     echo ""
     echo ""
     if [ "$w5updown" == "UP" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - UP                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
     else
-      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w5udsched - DOWN                                                           ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5${CClear}"
     fi
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldw5rxmbrate $MaxSpeed5GhzNow " Avg 5G1 RX" "Mbps" "Standard" $oldw5rxmbratedisplay $MaxSpeed5GhzNow
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     progressbar $oldw5txmbrate $MaxSpeed5GhzNow " Avg 5G1 TX" "Mbps" "Standard" $oldw5txmbratedisplay $MaxSpeed5GhzNow
     echo ""
-    preparebar 79 "|"
+    preparebar 89 "|"
     converttemps $oldw5temp
     progressbar $currenttemp $currentrange " 5G-1 Temp " $TempUnits "Standard" $currenttemp $currentrange
   else
     echo ""
     echo ""
-    echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                      ${CDkGray}]${CClear}"
+    echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                                ${CDkGray}]${CClear}"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
     if [ "$MaxSpeed52GhzNow" != "0" ]; then
       echo ""
       echo ""
       if [ "$w52updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - UP                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
       else
-        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}5.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w52udsched - DOWN                                                           ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52${CClear}"
       fi
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw52rxmbrate $MaxSpeed5GhzNow " Avg 5G2 RX" "Mbps" "Standard" $oldw52rxmbratedisplay $MaxSpeed5GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw52txmbrate $MaxSpeed5GhzNow " Avg 5G2 TX" "Mbps" "Standard" $oldw52txmbratedisplay $MaxSpeed5GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       converttemps $oldw52temp
       progressbar $currenttemp $currentrange " 5G-2 Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
       echo ""
       echo ""
-      echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${CWhite} 5.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                              ${CDkGray}]${CClear}"
     fi
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
@@ -3283,23 +3287,23 @@ DisplayPage3()
       echo ""
       echo ""
       if [ "$w6updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - UP                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
       else
-        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz     ${CDkGray}[ ${CWhite}Enabled - $w6udsched - DOWN                                                           ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6${CClear}"
       fi
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw6rxmbrate $MaxSpeed6GhzNow " Avg 60G RX" "Mbps" "Standard" $oldw6rxmbratedisplay $MaxSpeed6GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw6txmbrate $MaxSpeed6GhzNow " Avg 60G TX" "Mbps" "Standard" $oldw6txmbratedisplay $MaxSpeed6GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       converttemps $oldw6temp
       progressbar $currenttemp $currentrange " 6.0G Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
       echo ""
       echo ""
-      echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz     ${CDkGray}[ ${CRed}Disabled                                                                              ${CDkGray}]${CClear}"
     fi
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
@@ -3307,23 +3311,23 @@ DisplayPage3()
       echo ""
       echo ""
       if [ "$w62updown" == "UP" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w62udsched - UP                                                   ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w62udsched - UP                                                             ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62${CClear}"
       else
-        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w62udsched - DOWN                                                 ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}6.0GHz (2) ${CDkGray}[ ${CWhite}Enabled - $w62udsched - DOWN                                                           ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62${CClear}"
       fi
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw62rxmbrate $MaxSpeed62GhzNow " Avg 6G2 RX" "Mbps" "Standard" $oldw62rxmbratedisplay $MaxSpeed62GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       progressbar $oldw62txmbrate $MaxSpeed62GhzNow " Avg 6G2 TX" "Mbps" "Standard" $oldw62txmbratedisplay $MaxSpeed62GhzNow
       echo ""
-      preparebar 79 "|"
+      preparebar 89 "|"
       converttemps $oldw62temp
       progressbar $currenttemp $currentrange " 6G-2 Temp " $TempUnits "Standard" $currenttemp $currentrange
     else
       echo ""
       echo ""
-      echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                    ${CDkGray}]${CClear}"
+      echo -e "${InvRed} ${CClear}${CWhite} 6.0GHz (2) ${CDkGray}[ ${CRed}Disabled                                                                              ${CDkGray}]${CClear}"
     fi
   fi
 }
@@ -3339,7 +3343,7 @@ DisplayPage4()
   fi
   showheader
   echo ""
-  echo -e "${InvDkGray}${CWhite} Speedtest                                                                                                     ${CClear}"
+  echo -e "${InvDkGray}${CWhite} Speedtest                                                                                                               ${CClear}"
 
   if [ "$QueueVPNSlot1" = "1" ]; then
     DisplaySpdtst 1
@@ -3644,17 +3648,17 @@ DisplaySpdtst()
   fi
 
   if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5) ${CWhite} |  ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
   elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME  ${CWhite}|  ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5) ${CWhite} |  WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   else
     printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
   fi
 
   echo ""
-  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+  echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
   echo -e "${InvGreen} ${CClear} ${CWhite}Test Date    ${CDkGray}[ ${CGreen}$SpdDate${CClear}"
   echo -e "${InvGreen} ${CClear} ${CWhite}Server       ${CDkGray}[ ${CGreen}$SpdServer${CClear}"
@@ -3671,10 +3675,10 @@ DisplaySpdtst()
   echo -e "${InvGreen} ${CClear} ${CCyan}Upload       ${CDkGray}[ ${CGreen}$SpdUpload (Mbps)${CWhite} | Jitter: ${CGreen}$SpdULLatencyJt (ms)${CClear}"
   echo -e "${InvGreen} ${CClear} ${CDkGray}             [ ${CWhite}Latency: ${CGreen}$SpdULLatency (ms)${CWhite} | Latency Low: ${CGreen}$SpdULLatencyLo (ms) ${CWhite}| High: ${CGreen}$SpdULLatencyHi (ms)${CClear}"
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $SpdDownload $MaxSpeedInet " DL vs WAN " "Mbps" "Reverse" $SpdDownload $MaxSpeedInet
   echo ""
-  preparebar 79 "|"
+  preparebar 89 "|"
   progressbar $SpdUpload $MaxSpeedInetUL " UL vs WAN " "Mbps" "Reverse" $SpdUpload $MaxSpeedInetUL
 }
 
@@ -3713,10 +3717,10 @@ DisplayPage5()
   fi
   showheader
   echo ""
-  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Network Diagnostics                                                                                          ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Network Diagnostics                                                                                                    ${CClear}"
   echo -e "${InvGreen} ${CClear}"
   echo -e "${InvGreen} ${CClear} ${CWhite}Run ${CGreen}(D)${CWhite}iagnostics  |  Last Run Date/Time: ${CGreen}$Lastruntime"
-  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+  echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
   echo ""
 
   if [ "$QueueNetworkDiag" = "1" ]
@@ -3807,48 +3811,48 @@ DisplayPage5()
       fi
     echo ""
 
-    printf "${InvYellow} ${CClear} ${CWhite}SSL Handshake Test...        ${CYellow}[Checking] ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
+    printf "${InvYellow} ${CClear} ${CWhite}SSL Handshake Test...        ${CYellow}[Checking] ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
       SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
         SSLHandshakeTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
         SSLHandshakeTest="Failed"
       fi
     echo ""
     echo ""
-    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                       ${CClear}"
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                                 ${CClear}"
 
     if [ "$PSView" == "TCP" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
-      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
         echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
-        WANnmap=$(nmap $oldwan0ip | grep "open")
-        if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open"; fi
+        WANnmap=$(nmap $oldwan0ip | grep "open" | sed 's/^/   /')
+        if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open" | sed 's/^/   /'; fi
         echo ""
       fi
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
-      LANnmap=$(nmap $oldlanip | grep "open")
-      if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open"; fi
+      LANnmap=$(nmap $oldlanip | grep "open" | sed 's/^/   /')
+      if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open" | sed 's/^/   /'; fi
     elif [ "$PSView" == "UDP" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
-      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
         echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
-        WANUnmap=$(nmap -sU $oldwan0ip | grep "open")
-        if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open"; fi
+        WANUnmap=$(nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /')
+        if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /'; fi
       echo ""
       fi
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
-      LANUnmap=$(nmap -sU $oldlanip | grep "open")
-      if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open"; fi
+      LANUnmap=$(nmap -sU $oldlanip | grep "open" | sed 's/^/   /')
+      if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open" | sed 's/^/   /'; fi
     fi
 
   { echo 'Lastruntime="'"$(date)"'"'
@@ -3918,18 +3922,18 @@ else
   fi
   echo ""
   if [ "$SSLHandshakeTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443>${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
   fi
   echo ""
   echo ""
-  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                       ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} NMAP Port Scan Results                                                                                                 ${CClear}"
 
   if [ "$PSView" == "TCP" ]; then
     echo -e "${InvGreen} ${CClear}"
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open ${InvDkGray} ${CGreen}(T)${CWhite}CP ${CClear}${CWhite} Ports  |  Show Open  ${CGreen}(U)${CWhite}DP  Ports${CClear}"
-    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     if [ "$ScreenshotMode" == "1" ]; then
       oldwan0ip="12.34.56.78" #demo
@@ -3939,8 +3943,8 @@ else
       if [ ! -f $NMAPWANRESPATH ]; then
         echo "None"
       else
-        WANnmap=$(cat $NMAPWANRESPATH | grep "open")
-        if [ -z "$WANnmap" ]; then echo "None"; else cat $NMAPWANRESPATH | grep "open"; fi
+        WANnmap=$(cat $NMAPWANRESPATH | grep "open" | sed 's/^/   /')
+        if [ -z "$WANnmap" ]; then echo "None"; else cat $NMAPWANRESPATH | grep "open" | sed 's/^/   /'; fi
       fi
     echo ""
     fi
@@ -3948,21 +3952,21 @@ else
     if [ ! -f $NMAPLANRESPATH ]; then
       echo "None"
     else
-      LANnmap=$(cat $NMAPLANRESPATH | grep "open")
-      if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open"; fi
+      LANnmap=$(cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /')
+      if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
   elif [ "$PSView" == "UDP" ]; then
     echo -e "${InvGreen} ${CClear}"
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
-    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
       echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPUWANRESPATH ]; then
         echo "None"
       else
-        WANUnmap=$(cat $NMAPUWANRESPATH | grep "open")
-        if [ -z "$WANUnmap" ]; then echo "None"; else cat $NMAPUWANRESPATH | grep "open"; fi
+        WANUnmap=$(cat $NMAPUWANRESPATH | grep "open" | sed 's/^/   /')
+        if [ -z "$WANUnmap" ]; then echo "None"; else cat $NMAPUWANRESPATH | grep "open" | sed 's/^/   /'; fi
       fi
       echo ""
     fi
@@ -3970,8 +3974,8 @@ else
     if [ ! -f $NMAPULANRESPATH ]; then
       echo "None"
     else
-      LANUnmap=$(cat $NMAPULANRESPATH | grep "open")
-      if [ -z "$LANUnmap" ]; then echo "None"; else cat $NMAPULANRESPATH | grep "open"; fi
+      LANUnmap=$(cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /')
+      if [ -z "$LANUnmap" ]; then echo "None"; else cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
   fi
 fi
@@ -3988,7 +3992,7 @@ DisplayPage6()
   fi
   showheader
   echo ""
-  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Top 10 Network Connections/Bandwidth Stats                                                                   ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Top 10 Network Connections/Bandwidth Stats                                                                             ${CClear}"
   echo -e "${InvGreen} ${CClear}"
 
   if [ "$QueueNetworkConn" = "1" ]
@@ -4102,9 +4106,9 @@ DisplayPage6()
       echo -e "${InvGreen} ${CClear}${CWhite} View ${InvDkGray} ${CGreen}(W)${CWhite}AN ${CClear}${CWhite} |  ${CGreen}(L)${CWhite}AN${CClear}"
     fi
 
-    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
-    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} WAN                                                                                                          ${CClear}"
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} WAN                                                                                                                    ${CClear}"
 
     wansegments1=$(cat /jffs/addons/rtrmon.d/wanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -4187,45 +4191,45 @@ DisplayPage6()
     in10="$(echo $wansegments10 | awk '{print $5}')"
 
     if [ "$line1" == "1" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
     else
       echo "No Data"
     fi
 
     if [ "$line2" == "2" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
     fi
 
     if [ "$line3" == "3" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
     fi
 
     if [ "$line4" == "4" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
     fi
 
     if [ "$line5" == "5" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
     fi
 
     if [ "$line6" == "6" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
     fi
 
     if [ "$line7" == "7" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
     fi
 
     if [ "$line8" == "8" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
     fi
 
     if [ "$line9" == "9" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
     fi
 
     if [ "$line10" == "10" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
+      printf "${CWhite}%-92s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
     fi
   fi
 
@@ -4238,10 +4242,10 @@ DisplayPage6()
       echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  | ${InvDkGray} ${CGreen}(L)${CWhite}AN ${CClear}"
     fi
 
-    echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
 
-    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} LAN                                                                                                          ${CClear}"
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} LAN                                                                                                                    ${CClear}"
 
     lansegments1=$(cat /jffs/addons/rtrmon.d/lanresult.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -4324,45 +4328,45 @@ DisplayPage6()
     in10="$(echo $lansegments10 | awk '{print $5}')"
 
     if [ "$line1" == "1" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
     else
       echo "No Data"
     fi
 
     if [ "$line2" == "2" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
     fi
 
     if [ "$line3" == "3" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
     fi
 
     if [ "$line4" == "4" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
     fi
 
     if [ "$line5" == "5" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
     fi
 
     if [ "$line6" == "6" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
     fi
 
     if [ "$line7" == "7" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
     fi
 
     if [ "$line8" == "8" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
     fi
 
     if [ "$line9" == "9" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
+      printf "${CWhite}%-92s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
     fi
 
     if [ "$line10" == "10" ]; then
-      printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
+      printf "${CWhite}%-92s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
     fi
   fi
 
@@ -4371,7 +4375,7 @@ DisplayPage6()
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ] || [ "$wg1on" == "True" ] || [ "$wg2on" == "True" ] || [ "$wg3on" == "True" ] || [ "$wg4on" == "True" ] || [ "$wg5on" == "True" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN  | ${InvDkGray} ${CGreen}(V)${CWhite}PN ${CClear} ${CWhite}|  W${CGreen}(G)${CClear}"
-      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
 
       slot=0
@@ -4382,7 +4386,7 @@ DisplayPage6()
         eval selectedslot="\$${selectedslot}"
         if [ "$selectedslot" = "True" ] && [ "$VPNSite2Site" = "0" ]
         then
-          echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} VPN$slot                                                                                                         ${CClear}"
+          echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} VPN$slot                                                                                                                   ${CClear}"
 
           vpnsegments1=$(cat /jffs/addons/rtrmon.d/vpn${slot}result.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -4465,45 +4469,45 @@ DisplayPage6()
           in10="$(echo $vpnsegments10 | awk '{print $5}')"
 
           if [ "$line1" == "1" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
           else
             echo "No Data"
           fi
 
           if [ "$line2" == "2" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
           fi
 
           if [ "$line3" == "3" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
           fi
 
           if [ "$line4" == "4" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
           fi
 
           if [ "$line5" == "5" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
           fi
 
           if [ "$line6" == "6" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
           fi
 
           if [ "$line7" == "7" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
           fi
 
           if [ "$line8" == "8" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
           fi
 
           if [ "$line9" == "9" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
           fi
 
           if [ "$line10" == "10" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
+            printf "${CWhite}%-92s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
           fi
 
           echo ""
@@ -4517,7 +4521,7 @@ if [ "$NCView" = "WG" ]
     if [ "$vpn1on" == "True" ] || [ "$vpn2on" == "True" ] || [ "$vpn3on" == "True" ] || [ "$vpn4on" == "True" ] || [ "$vpn5on" == "True" ] || [ "$wg1on" == "True" ] || [ "$wg2on" == "True" ] || [ "$wg3on" == "True" ] || [ "$wg4on" == "True" ] || [ "$wg5on" == "True" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} View  ${CGreen}(W)${CWhite}AN  ${CWhite}|  ${CGreen}(L)${CWhite}AN  |  ${CGreen}(V)${CWhite}PN  | ${InvDkGray} W${CGreen}(G) ${CClear}"
-      echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
+      echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
 
       slot=0
@@ -4528,7 +4532,7 @@ if [ "$NCView" = "WG" ]
         eval selectedslot="\$${selectedslot}"
         if [ "$selectedslot" = "True" ] && [ "$VPNSite2Site" = "0" ]
         then
-          echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} WG$slot                                                                                                          ${CClear}"
+          echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} WG$slot                                                                                                                    ${CClear}"
 
           wgsegments1=$(cat /jffs/addons/rtrmon.d/wgc${slot}result.txt 2>&1 | awk 'NR==7 {print $1, $2, $4} NR==8 {print $1, $3}')
 
@@ -4611,45 +4615,45 @@ if [ "$NCView" = "WG" ]
           in10="$(echo $wgsegments10 | awk '{print $5}')"
 
           if [ "$line1" == "1" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line1  $dest1 <=> $src1" "  Out: $out1 | In: $in1"
           else
             echo "No Data"
           fi
 
           if [ "$line2" == "2" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line2  $dest2 <=> $src2" "  Out: $out2 | In: $in2"
           fi
 
           if [ "$line3" == "3" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line3  $dest3 <=> $src3" "  Out: $out3 | In: $in3"
           fi
 
           if [ "$line4" == "4" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line4  $dest4 <=> $src4" "  Out: $out4 | In: $in4"
           fi
 
           if [ "$line5" == "5" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line5  $dest5 <=> $src5" "  Out: $out5 | In: $in5"
           fi
 
           if [ "$line6" == "6" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line6  $dest6 <=> $src6" "  Out: $out6 | In: $in6"
           fi
 
           if [ "$line7" == "7" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line7  $dest7 <=> $src7" "  Out: $out7 | In: $in7"
           fi
 
           if [ "$line8" == "8" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line8  $dest8 <=> $src8" "  Out: $out8 | In: $in8"
           fi
 
           if [ "$line9" == "9" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
+            printf "${CWhite}%-92s${CGreen}%s\n" " $line9  $dest9 <=> $src9" "  Out: $out9 | In: $in9"
           fi
 
           if [ "$line10" == "10" ]; then
-            printf "${CWhite}%-82s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
+            printf "${CWhite}%-92s${CGreen}%s\n" "$line10  $dest10 <=> $src10" "  Out: $out10 | In: $in10"
           fi
 
           echo ""
@@ -4661,9 +4665,6 @@ if [ "$NCView" = "WG" ]
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-##------------------------------------------##
-## Modified by ExtremeFiretop [2025-Dec-03] ##
-##------------------------------------------##
 # This function displays the stats UI for page 7
 DisplayPage7()
 {
@@ -4672,904 +4673,1059 @@ DisplayPage7()
     echo -e "$UpdateNotify${CClear}"
   fi
   showheader
-  # Create a temp arp table of connected wifi/lan clients
-  cat /proc/net/arp > /jffs/addons/rtrmon.d/temparp.txt
 
-  # Force create the processed clients list file
-  touch /jffs/addons/rtrmon.d/processed_clients.txt
-  # Force create the processed clients list file for VLAN
-  touch /jffs/addons/rtrmon.d/processed_vlanclients.txt
-
-  # Per @Stephen Harrington's sugguestion, check NVRAM to see if Wifi is turned on, else mark them as disabled
-  if [ "$FourBandCustom55624" == "True" ]; then
-    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-      MaxSpeed5GhzNow=0
-    else
-      MaxSpeed5GhzNow=$MaxSpeed5Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-      MaxSpeed52GhzNow=0
-    else
-      MaxSpeed52GhzNow=$MaxSpeed5Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-      MaxSpeed6GhzNow=0
-    else
-      MaxSpeed6GhzNow=$MaxSpeed6Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
-      MaxSpeed24GhzNow=0
-    else
-      MaxSpeed24GhzNow=$MaxSpeed24Ghz
-    fi
-  elif [ "$FourBandCustom56624" == "True" ]; then
-    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-      MaxSpeed5GhzNow=0
-    else
-      MaxSpeed5GhzNow=$MaxSpeed5Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-      MaxSpeed6GhzNow=0
-    else
-      MaxSpeed6GhzNow=$MaxSpeed6Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-      MaxSpeed62GhzNow=0
-    else
-      MaxSpeed62GhzNow=$MaxSpeed6Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl3_radio) -eq 0 ]; then
-      MaxSpeed24GhzNow=0
-    else
-      MaxSpeed24GhzNow=$MaxSpeed24Ghz
-    fi
-  elif [ "$ThreeBand2456" == "True" ]; then
-    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-      MaxSpeed24GhzNow=0
-    else
-      MaxSpeed24GhzNow=$MaxSpeed24Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-      MaxSpeed5GhzNow=0
-    else
-      MaxSpeed5GhzNow=$MaxSpeed5Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-      MaxSpeed6GhzNow=0
-    else
-      MaxSpeed6GhzNow=$MaxSpeed6Ghz
-    fi
-  elif [ "$ThreeBand2455" == "True" ]; then
-    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-      MaxSpeed24GhzNow=0
-    else
-      MaxSpeed24GhzNow=$MaxSpeed24Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-      MaxSpeed5GhzNow=0
-    else
-      MaxSpeed5GhzNow=$MaxSpeed5Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl2_radio) -eq 0 ]; then
-      MaxSpeed52GhzNow=0
-    else
-      MaxSpeed52GhzNow=$MaxSpeed5Ghz
-    fi
-  else
-    if [ $($timeoutcmd$timeoutsec nvram get wl0_radio) -eq 0 ]; then
-      MaxSpeed24GhzNow=0
-    else
-      MaxSpeed24GhzNow=$MaxSpeed24Ghz
-    fi
-    if [ $($timeoutcmd$timeoutsec nvram get wl1_radio) -eq 0 ]; then
-      MaxSpeed5GhzNow=0
-    else
-      MaxSpeed5GhzNow=$MaxSpeed5Ghz
-    fi
-  fi
-
-  if [ "$SortbyOpt" = "Name" ]; then
-     SortbyNum="1"
-  elif [ "$SortbyOpt" = "IP" ]; then
-     SortbyNum="2"
-  elif [ "$SortbyOpt" = "MAC" ]; then
-     SortbyNum="3"
-  else
-     SortbyNum="1"
-  fi
-  prevSortByOpt="$SortbyOpt"
-
-  #Testing
-  #MaxSpeed24GhzNow=0
-  #w24updown="UP" #testing
   echo ""
-  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                                                            ${CClear}"
+  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                         (Dedicated to @ExtremeFiretop and @visortgw) ${CClear}"
   if [ "$SortbyOpt" = "Name" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   elif [ "$SortbyOpt" = "IP" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   elif [ "$SortbyOpt" = "MAC" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   fi
-  echo -e "${InvGreen} ${CClear}${CDkGray}--------------------------------------------------------------------------------------------------------------${CClear}"
-  echo ""
+  echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
 
-  # --- Local 2.4 GHz: only show heading if clients exist on the base iface ---
-  if [ "$MaxSpeed24GhzNow" != "0" ]; then
-    section_output="$(attachedwificlients "$ifname24")"
-    if [ -n "$section_output" ] && \
-       ! echo "$section_output" | grep -q "No Devices Connected"; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname24    ${CClear}"
-      printf '%s\n' "$section_output"
-      echo ""
-    fi
-  else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 2.4GHz              ${CDkGray}[                    ${CRed} Disabled                                                    ${CDkGray}]${CClear}"
-    echo ""
-  fi
+################################################################################
+# CONSTANTS AND CONFIGURATION
+################################################################################
+NVRAM="nvram"
+WL="wl"
+ARP="arp"
+IFCONFIG="ifconfig"
+CAT="cat"
 
-  # --- Local 5.0 GHz: only show if clients on base iface ---
-  #Testing
-  #MaxSpeed5GhzNow=0 #testing
-  #w5updown="UP" #testing
-  if [ "$MaxSpeed5GhzNow" != "0" ]; then
-    section_output="$(attachedwificlients "$ifname5")"
-    if [ -n "$section_output" ] && \
-       ! echo "$section_output" | grep -q "No Devices Connected"; then
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname5    ${CClear}"
-      printf '%s\n' "$section_output"
-      echo ""
-    fi
-  else
-    echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz              ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
-    echo ""
-  fi
+# Color definitions
+#InvGreen="\e[42m"
+#InvDkGray="\e[100m"
+#CWhite="\e[97m"
+#CGreen="\e[92m"
+#CDkGray="\e[90m"
+#CClear="\e[0m"
 
-  # --- Local 5.0 GHz (2): only show if clients on base iface ---
-  #Testing
-  #FourBandCustom55624="True" #testing
-  #MaxSpeed52GhzNow=0 #testing
-  #w52updown="UP" #testing
-  if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    if [ "$MaxSpeed52GhzNow" != "0" ]; then
-      section_output="$(attachedwificlients "$ifname52")"
-      if [ -n "$section_output" ] && \
-         ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)           ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname52    ${CClear}"
-        printf '%s\n' "$section_output"
-        echo ""
-      fi
-    else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 5.0GHz (2)          ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
-      echo ""
-    fi
-  fi
+# Temporary files for client tracking and deduplication
+PROCESSED_CLIENTS="/tmp/netmon_processed_clients_$$.txt"
+PROCESSED_VLAN_CLIENTS="/tmp/netmon_processed_vlan_clients_$$.txt"
 
-  # --- Local 6.0 GHz: only show if clients on base iface ---
-  #Testing
-  #ThreeBand2456="True" #testing
-  #MaxSpeed6GhzNow=1 #testing
-  #w6updown="UP" #testing
-  if [ "$FourBandCustom55624" == "True" ] || \
-     [ "$ThreeBand2456" == "True" ]   || \
-     [ "$FourBandCustom56624" == "True" ]; then
-    if [ "$MaxSpeed6GhzNow" != "0" ]; then
-      section_output="$(attachedwificlients "$ifname6")"
-      if [ -n "$section_output" ] && \
-         ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz               ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname6    ${CClear}"
-        printf '%s\n' "$section_output"
-        echo ""
-      fi
-    else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz              ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
-      echo ""
-    fi
-  fi
+# Sorting Configuration
+# Options: "Name", "IP", "MAC"
+# Default: "Name" (alphabetical sorting by hostname)
+#SortbyOpt="Name"
 
-  # --- Local 6.0 GHz (2): only show if clients on base iface ---
-  #Testing
-  #FourBandCustom56624="True" #testing
-  #MaxSpeed62GhzNow=0 #testing
-  #w62updown="UP" #testing
-  if [ "$FourBandCustom56624" == "True" ]; then
-    if [ "$MaxSpeed62GhzNow" != "0" ]; then
-      section_output="$(attachedwificlients "$ifname62")"
-      if [ -n "$section_output" ] && \
-         ! echo "$section_output" | grep -q "No Devices Connected"; then
-        echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)           ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $ifname62    ${CClear}"
-        printf '%s\n' "$section_output"
-        echo ""
-      fi
-    else
-      echo -e "${InvRed} ${CClear}${InvDkGray} ${CWhite}Local 6.0GHz (2)          ${CDkGray}[                    ${CRed} Disabled                                                     ${CDkGray}]${CClear}"
-      echo ""
-    fi
-  fi
+# Display width for formatted headers
+HEADER_WIDTH=120
 
-  # Guest Network Clients - Thanks to @ColinTaylor for this methodology of stepping through legit guest network interfaces
-  cp -f /jffs/addons/rtrmon.d/temparp.txt /jffs/addons/rtrmon.d/temparpvlan.txt
+# Radio configuration variables
+IFNAME_24=""
+IFNAME_5=""
+IFNAME_5_2=""
+IFNAME_6=""
+IFNAME_6_2=""
 
-  for guestiface in $(nvram get wl0_vifs) $(nvram get wl1_vifs) \
-                     $(nvram get wl2_vifs) $(nvram get wl3_vifs)
-  do
-      guestssid=$(nvram get ${guestiface}_ssid 2>/dev/null)
-      # Skip VIFs with no SSID at all
-      [ -z "$guestssid" ] && continue
+################################################################################
+# ROUTER MODEL DETECTION AND INTERFACE MAPPING
+################################################################################
 
-      bridge_name=""
-      # Find which bridge this VIF is enslaved to by checking /sys/class/net/br*/brif
-      for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
-          if [ -d "/sys/class/net/$br/brif/$guestiface" ]; then
-              bridge_name="$br"
-              break
-          fi
-      done
+# Detect router model and configure interface mappings
+detect_router_model() {
+    local router_model=$(${NVRAM} get productid 2>/dev/null)
+    [ -z "${router_model}" ] && router_model=$(${NVRAM} get model 2>/dev/null)
 
-      if [ -n "$bridge_name" ] && [ "$bridge_name" != "br0" ]; then
-          guestlabel="Guest Wi-Fi"
-      else
-          guestlabel="Local Wi-Fi"
-      fi
+    #echo "Detected Router Model: ${router_model}" >&2
 
-      echo -en "${InvGreen} ${CClear}${InvDkGray} ${CWhite}${guestlabel}: ${CGreen}"
-      printf "%-32s" ${guestssid}
-      echo -e "${CWhite} ${CDkGray}[ ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $guestiface   ${CClear}"
+    # Determine radio configuration based on router model
+    case "${router_model}" in
+        # Four-band routers: 5GHz, 5GHz, 6GHz, 2.4GHz (wl0=5, wl1=5, wl2=6, wl3=2.4)
+        GT-AXE16000|GT-BE98)
+            IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5_2=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
+            ;;
 
-      attachedguestclients "$guestiface"
-      echo ""
-  done
+        # Four-band routers: 5GHz, 6GHz, 6GHz, 2.4GHz (wl0=5, wl1=6, wl2=6, wl3=2.4)
+        GT-BE98_PRO)
+            IFNAME_5=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            IFNAME_24=$(${NVRAM} get wl3_ifname 2>/dev/null)
+            ;;
 
-  for vlanlabels in $(nvram get apg_ifnames)
-  do
-      echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local VLAN/AiMesh VLAN     ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: $vlanlabels    ${CClear}"
-      attachedvlanclients "$vlanlabels"
-      echo ""
-  done
+        # Three-band routers: 2.4GHz, 5GHz, 6GHz (wl0=2.4, wl1=5, wl2=6)
+        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            ;;
 
-  echo -e "${InvGreen} ${CClear}${InvDkGray} ${CWhite}Local LAN/Non-VLAN AiMesh  ${CDkGray}[                    ${CWhite}Enabled                                     ${CDkGray}] ${InvDkGray}${CWhite}IFace: br0     ${CClear}"
-  #Remove non-LAN records
-  sed -i -e '/eth0/d' /jffs/addons/rtrmon.d/temparp.txt
-  sed -i -e '/IP address/d' /jffs/addons/rtrmon.d/temparp.txt
-  sed -i -e '/00:00:00:00:00:00/d' /jffs/addons/rtrmon.d/temparp.txt
-  sed -i -e '/0x0/d' /jffs/addons/rtrmon.d/temparp.txt
-  attachedlanclients
-  rm -f /jffs/addons/rtrmon.d/processed_clients.txt
-  rm -f /jffs/addons/rtrmon.d/processed_vlanclients.txt
-  rm -f /jffs/addons/rtrmon.d/temparp.txt
+        # Three-band routers: 2.4GHz, 5GHz, 5GHz (wl0=2.4, wl1=5, wl2=5)
+        GT-AX11000_PRO|GT-AX11000|ZenWiFi_Pro_XT12|ZenWiFi_XT8)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            IFNAME_5_2=$(${NVRAM} get wl2_ifname 2>/dev/null)
+            ;;
 
-  #Testing
-  #FourBandCustom55624="False" #testing
-  #MaxSpeed52GhzNow=0 #testing
-  #w52updown="UP" #testing
-  #ThreeBand2456="False" #testing
-  #MaxSpeed6GhzNow=0 #testing
-  #w6updown="UP" #testing
-  #FourBandCustom56624="False" #testing
-  #MaxSpeed62GhzNow=0 #testing
-  #w62updown="UP" #testing
+        # Default two-band routers: 2.4GHz, 5GHz (wl0=2.4, wl1=5)
+        *)
+            IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
+            IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
+            ;;
+    esac
+
+    # Log detected interfaces
+    #echo "Interface Mapping:" >&2
+    #[ -n "${IFNAME_24}" ] && echo "  2.4GHz: ${IFNAME_24}" >&2
+    #[ -n "${IFNAME_5}" ] && echo "  5.0GHz: ${IFNAME_5}" >&2
+    #[ -n "${IFNAME_5_2}" ] && echo "  5.0GHz-2: ${IFNAME_5_2}" >&2
+    #[ -n "${IFNAME_6}" ] && echo "  6.0GHz: ${IFNAME_6}" >&2
+    #[ -n "${IFNAME_6_2}" ] && echo "  6.0GHz-2: ${IFNAME_6_2}" >&2
 }
 
-# -------------------------------------------------------------------------------------------------------------------------
-# multiple DHCP lists can exist. Read through all lists and compile into a single list.
+################################################################################
+# MLO/MLD AWARENESS FUNCTIONS
+################################################################################
 
+# Read all DHCP lease files including merged leases for MLO/MLD support
 read_all_dhcp_leases() {
-  # Include the merged lease file if it exists
-  local lease_files="/var/lib/misc/dnsmasq-*.leases /var/lib/misc/dnsmasq.leases"
-  if [ -f "/tmp/dnsmasq-merged.leases" ]; then
-    lease_files="$lease_files /tmp/dnsmasq-merged.leases"
-  fi
-  local all_leases
-  all_leases=$(cat $lease_files 2>/dev/null)
-  echo "$all_leases"
+    # Include the merged lease file if it exists (for MLO/MLD clients)
+    local lease_files="/var/lib/misc/dnsmasq-*.leases /var/lib/misc/dnsmasq.leases"
+    if [ -f "/tmp/dnsmasq-merged.leases" ]; then
+        lease_files="${lease_files} /tmp/dnsmasq-merged.leases"
+    fi
+    local all_leases=""
+    all_leases=$(${CAT} ${lease_files} 2>/dev/null)
+    echo "${all_leases}"
 }
 
 # Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
 # determine the lookup MAC (which may be the MLD MAC if present).
+# For WiFi 7 / MLO clients the MAC used by 'wl assoclist' may NOT be the same MAC
+# that appears in ARP/DHCP. This function finds the correct MAC to use for lookups.
 get_lookup_mac() {
-  local maclower="$1"
-  local leases="$2"
-  local lookup_mac="$maclower"
-  local mld_line field_count mld_mac
-  mld_line=$(echo "$leases" | grep -i "$maclower" | head -n1)
-  if [ -n "$mld_line" ]; then
-    field_count=$(echo "$mld_line" | awk '{print NF; exit}')
-    if [ "$field_count" -ge 5 ]; then
-      mld_mac=$(echo "$mld_line" | awk '{print $5; exit}')
-      if [ -n "$mld_mac" ] && [ "$mld_mac" != "*" ]; then
-        lookup_mac=$(echo "$mld_mac" | awk '{print tolower($0)}')
-      fi
+    local maclower="$1"
+    local leases="$2"
+    local lookup_mac="${maclower}"
+    local mld_line=""
+    local field_count=""
+    local mld_mac=""
+
+    mld_line=$(echo "${leases}" | grep -i "${maclower}" | head -n1)
+    if [ -n "${mld_line}" ]; then
+        field_count=$(echo "${mld_line}" | awk '{print NF; exit}')
+        if [ "${field_count}" -ge 5 ]; then
+            mld_mac=$(echo "${mld_line}" | awk '{print $5; exit}')
+            if [ -n "${mld_mac}" ] && [ "${mld_mac}" != "*" ]; then
+                lookup_mac=$(echo "${mld_mac}" | awk '{print tolower($0)}')
+            fi
+        fi
     fi
-  fi
-  echo "$lookup_mac"
+    echo "${lookup_mac}"
 }
 
-# attachedwificlients pulls connected client info from wl, arp and nvram
-attachedwificlients ()
-{
-    iface="$1"
-    rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-    wl -i $iface assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt 2>/dev/null
-    maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-    rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
-    dhcpleases="$(read_all_dhcp_leases)"
-    local clients
-    clients="$(nvram get custom_clientlist)"
-    # Number of '<...>' entries = NF - 1 (first field is empty before first '<')
-    local maxextractcount
-    maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
+################################################################################
+# UTILITY FUNCTIONS
+################################################################################
 
-    local clientcount=0
-    while [ $clientcount -le $maxclientcount ]
-    do
-        clientname=""
-        conntime=""
-        clientip=""
-        paddedclientip=""
+# Get the bridge name that an interface is enslaved to
+get_bridge_for_interface() {
+    local iface="$1"
+    local bridge_name=""
 
-        clientcount=$((clientcount+1))
-        local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
-
-        [ -z "$clientmac" ] && continue
-
-        networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
-        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
-        txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
-        rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
-        txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
-        rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
-        sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
-        chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
-
-        maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-
-        # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
-        # the same MAC that appears in ARP/DHCP. Start with the assoc MAC
-        # as canonical, then override if we find a better ARP match.
-        canonical_mac="$clientmac"
-        canonlower="$maclower"
-
-        # --- MLD / dnsmasq lookup helper ---
-        lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
-
-        # 1) Try to find IPs for this MAC directly in the temp ARP table
-        ips=$(awk -v mac="$maclower" '
-            BEGIN{IGNORECASE=1}
-            tolower($4)==mac {print $1}
-        ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
-
-        # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
-        if [ -z "$ips" ]; then
-            mac_mid4=$(echo "$maclower" | awk -F: '{print $2":"$3":"$4":"$5}')
-            if [ -n "$mac_mid4" ]; then
-                arp_line=$(awk -v mid="$mac_mid4" '
-                    BEGIN{IGNORECASE=1}
-                    index(tolower($4), mid) > 0 {print; exit}
-                ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
-                if [ -n "$arp_line" ]; then
-                    clientip=$(echo "$arp_line"  | awk '{print $1}')
-                    canonical_mac=$(echo "$arp_line" | awk '{print $4}')
-                    canonlower=$(echo "$canonical_mac" | awk '{print tolower($0)}')
-                fi
-            fi
-        fi
-
-        # 3) If we had multiple IPs from a direct match, prefer one that is REACHABLE/DELAY
-        if [ -z "$clientip" ] && [ -n "$ips" ]; then
-            for ip in $ips; do
-                arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-                if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-                    [ -z "$sigstrength" ] && conntime="STALE"
-                    continue
-                else
-                    clientip="$ip"
-                    break
-                fi
-            done
-            [ -z "$clientip" ] && clientip=$(echo "$ips" | tail -n 1)
-        fi
-
-        # 4) Final fallback: /proc/net/arp using the canonical MAC
-        if [ -z "$clientip" ]; then
-            clientip=$(awk -v mac="$canonlower" '
-                BEGIN{IGNORECASE=1}
-                tolower($4)==mac {print $1}
-            ' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
-        fi
-
-        paddedclientip=$(echo "${clientip}" | \
-            grep -o -E '([0-9]*\.|[0-9]*)' | \
-            awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-
-        # Traffic/rate conversions
-        txtotalgb=$(echo $txtotalbytes | awk -v txb=$txtotalbytes 'BEGIN{printf "%0.2f\n", txb/1024/1024/1024}') 2>/dev/null
-        rxtotalgb=$(echo $rxtotalbytes | awk -v rxb=$rxtotalbytes 'BEGIN{printf "%0.2f\n", rxb/1024/1024/1024}') 2>/dev/null
-        txratembps=$(echo $txratekbps | awk -v txm=$txratekbps 'BEGIN{printf "%0.1f\n", txm/1000}') 2>/dev/null
-        rxratembps=$(echo $rxratekbps | awk -v rxm=$rxratekbps 'BEGIN{printf "%0.1f\n", rxm/1000}') 2>/dev/null
-
-        # Try custom_clientlist first (match either assoc MAC or canonical ARP MAC)
-        local found=0
-        local counter=2
-        canonupper=$(echo "$canonical_mac" | tr 'a-f' 'A-F')
-        while [ $counter -le $maxextractcount ]
-        do
-            local clientextract
-            clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
-
-            [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
-
-            local client
-            local mac
-            client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
-            mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
-
-            if [ "$mac" = "$clientmac" ] || [ "$mac" = "$canonupper" ]; then
-                clientname="$client"
-                found=1
-                break
-            fi
-
-            counter=$((counter+1))
-        done
-
-        # Fallback: name from dnsmasq leases using lookup_mac
-        if [ $found -ne 1 ]; then
-            clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
-            if [ -z "$clientname" ] || [ "$clientname" = "*" ]; then
-                clientname="UNKNOWN"
-            fi
-        fi
-
-        if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-            # Track by canonical MAC so the same device won't show again under LAN
-            if grep -qi "$canonupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
-                continue
-            else
-                echo "$canonupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
-            fi
-
-            # Remove this canonical MAC from the temp ARP table
-            sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
-
-            echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" \
-                >> /jffs/addons/rtrmon.d/clientlist$iface.txt
-        fi
-    done
-
-    if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
-      if [ $maxclientcount -ge 1 ]; then
-          sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-          column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
-      else
-          echo -e "  No Devices Connected"
-      fi
-    else
-      echo -e "  No Devices Connected"
-    fi
-}
-
-
-# -------------------------------------------------------------------------------------------------------------------------
-# attachedguestclients pulls connected client info from wl, arp and nvram
-##------------------------------------------##
-## Modified by ExtremeFiretop [2025-Dec-03] ##
-##------------------------------------------##
-# attachedguestclients pulls connected client info from wl, arp and nvram
-##------------------------------------------##
-## Modified by ExtremeFiretop [2025-Dec-04] ##
-##------------------------------------------##
-attachedguestclients() {
-  iface="$1"
-  rm -f /jffs/addons/rtrmon.d/wificlients$iface.txt
-  wl -i "$iface" assoclist > /jffs/addons/rtrmon.d/wificlients$iface.txt 2>/dev/null
-  maxclientcount=$(cat /jffs/addons/rtrmon.d/wificlients$iface.txt | wc -l)
-  rm -f /jffs/addons/rtrmon.d/clientlist$iface.txt
-  dhcpleases="$(read_all_dhcp_leases)"
-  local clients
-  clients="$(nvram get custom_clientlist)"
-  local maxextractcount
-  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
-
-  local clientcount=0
-  while [ $clientcount -le $maxclientcount ]
-  do
-    clientname=""
-    conntime=""
-    clientip=""
-    paddedclientip=""
-    clientcount=$((clientcount+1))
-    local clientmac=$(awk 'NR=='$clientcount' {print $2}' /jffs/addons/rtrmon.d/wificlients$iface.txt)
-
-    if [ -z "$clientmac" ]; then
-      continue
-    fi
-
-    networktime=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
-    conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
-    txtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
-    rxtotalbytes=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
-    txratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
-    rxratekbps=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
-    sigstrength=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
-    chanspec=$(wl -i $iface sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
-    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-
-    # Start with assoc MAC as canonical, may override with ARP MAC (WiFi7 / MLO case).
-    canonical_mac="$clientmac"
-    canonlower="$maclower"
-
-    # 1) Try ARP in temparp.txt for canonical MAC.
-    ips=$(awk -v mac="$canonlower" '
-      BEGIN{IGNORECASE=1}
-      tolower($4)==mac {print $1}
-    ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
-
-    # 2) If no direct ARP match, try fuzzy match on middle 4 bytes.
-    if [ -z "$ips" ]; then
-      mac_mid4=$(echo "$maclower" | awk -F: '{print $2":"$3":"$4":"$5}')
-      if [ -n "$mac_mid4" ]; then
-        arp_line=$(awk -v mid="$mac_mid4" '
-          BEGIN{IGNORECASE=1}
-          index(tolower($4), mid) > 0 {print; exit}
-        ' /jffs/addons/rtrmon.d/temparp.txt 2>/dev/null)
-        if [ -n "$arp_line" ]; then
-          clientip=$(echo "$arp_line"  | awk '{print $1}')
-          canonical_mac=$(echo "$arp_line" | awk '{print $4}')
-          canonlower=$(echo "$canonical_mac" | awk '{print tolower($0)}')
-        fi
-      fi
-    fi
-
-    # 3) If we had a set of ARP IPs from direct match, choose REACHABLE/DELAY if possible.
-    if [ -z "$clientip" ] && [ -n "$ips" ]; then
-      for ip in $ips; do
-        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-          [ -z "$sigstrength" ] && conntime="STALE"
-          continue
-        else
-          clientip="$ip"
-          break
-        fi
-      done
-      [ -z "$clientip" ] && clientip=$(echo "$ips" | tail -n 1)
-    fi
-
-    # 4) Final ARP fallback: /proc/net/arp with canonical MAC.
-    if [ -z "$clientip" ]; then
-      clientip=$(awk -v mac="$canonlower" '
-        BEGIN{IGNORECASE=1}
-        tolower($4)==mac {print $1}
-      ' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
-    fi
-
-    # 5) NEW: If ARP could not give us an IP (guest VLAN case),
-    #    fall back to dnsmasq leases for this canonical MAC.
-    if [ -z "$clientip" ]; then
-      lease_line=$(echo "$dhcpleases" | awk -v mac="$canonlower" '
-        BEGIN{IGNORECASE=1}
-        tolower($2)==mac {print; exit}
-      ')
-      if [ -n "$lease_line" ]; then
-        clientip=$(echo "$lease_line" | awk '{print $3}')
-      fi
-    fi
-
-    paddedclientip=$(echo "${clientip}" | \
-      grep -o -E '([0-9]*\.|[0-9]*)' | \
-      awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-
-    # Conversions
-    txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
-    rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
-    txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
-    rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
-
-    # Resolve client name from custom_clientlist (assoc MAC OR canonical ARP MAC).
-    local found=0
-    local counter=2
-    canonupper=$(echo "$canonical_mac" | tr 'a-f' 'A-F')
-    while [ $counter -le $maxextractcount ]
-    do
-      local clientextract
-      clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
-
-      [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
-
-      local client
-      local mac
-      client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
-      mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
-
-      if [ "$mac" = "$clientmac" ] || [ "$mac" = "$canonupper" ]; then
-        clientname="$client"
-        found=1
-        break
-      fi
-
-      counter=$((counter+1))
-    done
-
-    # Fallback: name from dnsmasq leases for canonical MAC.
-    if [ $found -ne 1 ]; then
-      lookup_mac="$canonlower"
-      clientname=$(echo "$dhcpleases" | awk -v mac="$lookup_mac" '
-        BEGIN{IGNORECASE=1}
-        tolower($2)==mac {print $4; exit}
-      ') 2>/dev/null
-      if [ -z "$clientname" ] || [ "$clientname" = "*" ]; then
-        clientname="UNKNOWN"
-      fi
-    fi
-
-    if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-      # Mark canonical MAC as processed so it won't also show under LAN.
-      if grep -qi "$canonupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
-        continue
-      else
-        echo "$canonupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
-      fi
-
-      # Prefer to remove from temparp.txt by IP (handles cases where ARP MAC != client MAC).
-      if [ -n "$clientip" ]; then
-        sed -i -e "/^$clientip[[:space:]]/d" /jffs/addons/rtrmon.d/temparp.txt
-      else
-        sed -i -e '/'$canonlower'/d' /jffs/addons/rtrmon.d/temparp.txt
-      fi
-
-      echo "$clientname,$paddedclientip,$canonupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" \
-        >> /jffs/addons/rtrmon.d/clientlist$iface.txt
-    fi
-  done
-
-  if [ -f "/jffs/addons/rtrmon.d/clientlist$iface.txt" ]; then
-    if [ $maxclientcount -ge 1 ]; then
-      sort -f -d -o /jffs/addons/rtrmon.d/clientlist$iface.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlist$iface.txt 2>/dev/null
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/clientlist$iface.txt | sed 's/^/  /'
-    else
-      echo -e "  No Devices Connected"
-    fi
-  else
-    echo -e "  No Devices Connected"
-  fi
-}
-
-
-# -------------------------------------------------------------------------------------------------------------------------
-# attachedvlanclients pulls connected client info from wl, arp and nvram
-
-# attachedvlanclients pulls connected client info from wl, arp and nvram
-attachedvlanclients() {
-  iface="$1"
-  vlansfound=1
-  maxclientcount=$(cat /jffs/addons/rtrmon.d/temparpvlan.txt | wc -l)
-  maxclientcount=$((maxclientcount-1)) #To account for header row
-  rm -f /jffs/addons/rtrmon.d/vlanclients$iface.txt
-  dhcpleases="$(read_all_dhcp_leases)"
-  local clients
-  clients="$(nvram get custom_clientlist)"
-  local maxextractcount
-  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
-
-  local clientcount=1 #Increased to 1 from 0, to account for header row
-  while [ $clientcount -le $maxclientcount ]
-  do
-    clientname=""
-    conntime=""
-    clientip=""
-    paddedclientip=""
-    interface_name=""
-    clientcount=$((clientcount+1)) #This would make it start on row 2, skipping header row
-    local clientmac=$(awk 'NR=='$clientcount' {print $4}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
-
-    if [ -z "$clientmac" ]; then
-      continue
-    fi
-
-    macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
-    macprefix=$(echo "$macupper" | awk -F ':' '{print $1":"$2":"$3":"$4":"$5}') 2>/dev/null
-    clientbridgeid=$(awk 'NR=='$clientcount' {print $6}' /jffs/addons/rtrmon.d/temparpvlan.txt | xargs)
-    if [ -z "$clientbridgeid" ] || [ "$clientbridgeid" != "$iface" ]; then
-      continue
-    else
-      vlansfound=0
-    fi
-
-    interfaces=$(ip link show | grep -E 'wl|wlan' | awk -F: '{print $2}' | tr -d ' ')
-    for wirelessface in $interfaces; do
-        if wl -i "$wirelessface" assoclist 2>/dev/null | grep -iq "$macprefix"; then
-            interface_name="$wirelessface"
-            continue
-        fi
-    done
-
-    networktime=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/in network/ {print $3}') 2>/dev/null
-    if [ -z "$networktime" ]; then
-        conntime="AiMesh"
-    else
-        conntime=$(date -d@$networktime -u +%Hh:%Mm) 2>/dev/null
-    fi
-    txtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/tx total bytes:/ {print $4}') 2>/dev/null
-    rxtotalbytes=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rx data bytes:/ {print $4}') 2>/dev/null
-    txratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last tx pkt:/ {print $6}') 2>/dev/null
-    rxratekbps=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/rate of last rx pkt:/ {print $6}') 2>/dev/null
-    sigstrength=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/smoothed rssi:/ {print $3}') 2>/dev/null
-    chanspec=$(wl -i $interface_name sta_info $clientmac | awk -F ' ' '/chanspec/ {print $2}') 2>/dev/null
-
-    maclower=$(echo "$clientmac" | awk '{print tolower($0)}') 2>/dev/null
-    lookup_mac=$(get_lookup_mac "$maclower" "$dhcpleases")
-
-    ips=$(grep "$clientmac" "/jffs/addons/rtrmon.d/temparp.txt" | awk '{print $1}') 2>/dev/null
-
-    for ip in $ips; do
-        arp_status=$(ip neigh show | grep -w "$ip" | awk '{print $NF}') 2>/dev/null
-        if [ -z "$arp_status" ] || { [ "$arp_status" != "REACHABLE" ] && [ "$arp_status" != "DELAY" ]; }; then
-            if [ -z "$sigstrength" ]; then
-                conntime="STALE"
-            fi
-            continue
-        else
-            clientip="$ip"
+    for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
+        if [ -d "/sys/class/net/${br}/brif/${iface}" ]; then
+            bridge_name="${br}"
             break
         fi
     done
 
-    if [ -z "$clientip" ]; then
-        clientip=$(cat /proc/net/arp | grep "$clientmac" | awk '{print $1}' | sort | uniq | tail -n 1) 2>/dev/null
-    fi
-
-    paddedclientip=$(echo "$clientip" | awk -F '.' '{printf "%03d.%03d.%03d.%03d\n", $1, $2, $3, $4}') 2>/dev/null
-
-    txtotalgb=$(echo $txtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
-    rxtotalgb=$(echo $rxtotalbytes | awk '{printf "%0.2f", $1/1024/1024/1024}') 2>/dev/null
-    txratembps=$(echo $txratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
-    rxratembps=$(echo $rxratekbps | awk '{printf "%0.1f", $1/1000}') 2>/dev/null
-
-    local found=0
-    local counter=2
-    while [ $counter -le $maxextractcount ]
-    do
-      local clientextract
-      clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
-
-      [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
-
-      local client
-      local mac
-      client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
-      mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
-
-      if [ "$mac" = "$macupper" ]; then
-        clientname="$client"
-        found=1
-        break
-      fi
-
-      counter=$((counter+1))
-    done
-
-    if [ $found -ne 1 ]; then
-        clientname=$(echo "$dhcpleases" | grep -i "$lookup_mac" | awk '{print $4}') 2>/dev/null
-        if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-            clientname="UNKNOWN"
-        fi
-    fi
-
-    if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-        if grep -q "$macupper" /jffs/addons/rtrmon.d/processed_vlanclients.txt && [ "$conntime" = "STALE" ]; then
-            continue
-        else
-            echo "$macupper" >> /jffs/addons/rtrmon.d/processed_vlanclients.txt
-        fi
-        sed -i -e '/'$clientmac'/d' /jffs/addons/rtrmon.d/temparp.txt
-        if [ "$conntime" = "AiMesh" ]; then
-            echo "$clientname,$paddedclientip,$macupper,$conntime" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
-        else
-            echo "$clientname,$paddedclientip,$macupper,$conntime,$txtotalgb,$rxtotalgb,$txratembps,$rxratembps,$sigstrength,$chanspec" >> /jffs/addons/rtrmon.d/vlanclients$iface.txt
-        fi
-    fi
-  done
-
-  if [ -f "/jffs/addons/rtrmon.d/vlanclients$iface.txt" ]; then
-    if [ $vlansfound -eq 0 ]; then
-      sort -f -d -t ',' -k "$SortbyNum" -k 4,4 /jffs/addons/rtrmon.d/vlanclients$iface.txt 2>/dev/null | \
-      awk -F',' -v OFS=',' '{if ($4 ~ /AiMesh/) {a[i++]=$0} else {print $0}} END {for (j=0; j<i; j++) print a[j]}' > /tmp/vlanclients_sorted.txt
-      mv /tmp/vlanclients_sorted.txt /jffs/addons/rtrmon.d/vlanclients$iface.txt
-      column -t -s',' -o' | ' -N Name,IP,MAC,Uptime,"TX GB","RX GB","TX Mbps","RX Mbps","Sig","Band" /jffs/addons/rtrmon.d/vlanclients$iface.txt | sed 's/^/  /'
-    else
-      echo -e "  No Devices Connected"
-    fi
-  else
-    echo -e "  No Devices Connected"
-  fi
+    echo "${bridge_name}"
 }
 
-
-# -------------------------------------------------------------------------------------------------------------------------
-# attachedlanclients pulls connected client info from wl, arp and nvram
-
-# attachedlanclients pulls connected client info from wl, arp and nvram
-attachedlanclients ()
-{
-  maxclientcount=$(cat /jffs/addons/rtrmon.d/temparp.txt | wc -l)
-  rm -f /jffs/addons/rtrmon.d/clientlistbr0.txt
-  dhcpleases="$(read_all_dhcp_leases)"
-  local clients
-  clients="$(nvram get custom_clientlist)"
-  local maxextractcount
-  maxextractcount=$(echo "$clients" | awk -F'<' '{print NF}')
-
-  local clientcount=0
-  while [ $clientcount -le $maxclientcount ]
-  do
-      clientname=""
-      paddedclientip=""
-      clientcount=$((clientcount+1))
-      local clientmac=$(cat /jffs/addons/rtrmon.d/temparp.txt | awk 'NR=='$clientcount' {print $4}') 2>/dev/null
-
-      if [ -z "$clientmac" ]; then
-          continue
-      fi
-
-      local macupper=$(echo "$clientmac" | tr 'a-f' 'A-F')
-
-      if grep -qi "$macupper" /jffs/addons/rtrmon.d/processed_clients.txt 2>/dev/null; then
-          continue
-      else
-          echo "$macupper" >> /jffs/addons/rtrmon.d/processed_clients.txt
-      fi
-
-      local counter=2
-      local found=0
-      while [ $counter -le $maxextractcount ]
-      do
-          local clientextract
-          clientextract="$(echo "$clients" | cut -d "<" -f"$counter" | cut -d ">" -f1,2)"
-
-          [ -z "$clientextract" ] && { counter=$((counter+1)); continue; }
-
-          clientip=$(cat /jffs/addons/rtrmon.d/temparp.txt | grep $clientmac | awk '{print $1; exit}') 2>/dev/null
-          paddedclientip=$(echo "${clientip}" | grep -o -E '([0-9]*\.|[0-9]*)' | awk '{printf( "%03d\n", $1)}' | tr '\n' '.' | sed 's/.$//') 2>/dev/null
-          if [ -z "$paddedclientip" ]; then paddedclientip="000.000.000.000"; fi
-
-          local client
-          local mac
-          client="$(echo "$clientextract" | awk -F ">" '{print $1}')"
-          mac="$(echo "$clientextract"    | awk -F ">" '{print $2}')"
-
-          if [ "$mac" = "$macupper" ]; then
-              clientname="$client"
-              found=1
-              break
-          fi
-
-          counter=$((counter+1))
-      done
-
-      if [ $found -ne 1 ]; then
-            clientname=$(echo "$dhcpleases" | grep -i "$clientmac" | awk '{print $4}')
-            if [ -z "$clientname" ] || [ "$clientname" == "*" ]; then
-                clientname="UNKNOWN"
-            fi
-      fi
-      if [ -n "$paddedclientip" ] && [ "$paddedclientip" != "000.000.000.000" ]; then
-          echo "$clientname,$paddedclientip,$macupper" >> /jffs/addons/rtrmon.d/clientlistbr0.txt
-      fi
-  done
-
-  if [ -f "/jffs/addons/rtrmon.d/clientlistbr0.txt" ]; then
-    if [ $maxclientcount -ge 1 ]; then
-      sort -f -d -o /jffs/addons/rtrmon.d/clientlistbr0.txt -k "$SortbyNum" -t , /jffs/addons/rtrmon.d/clientlistbr0.txt 2>/dev/null
-      column -t -s',' -o' | ' -N Name,IP,MAC /jffs/addons/rtrmon.d/clientlistbr0.txt | sed 's/^/  /'
-    else
-      echo -e "  No Devices Connected"
+# Get list of VLAN/AiMesh bridge interfaces from apg_ifnames
+get_vlan_bridges() {
+    local apg_ifnames=$(${NVRAM} get apg_ifnames 2>/dev/null)
+    if [ -n "${apg_ifnames}" ]; then
+        echo "${apg_ifnames}"
     fi
-  else
-    echo -e "  No Devices Connected"
-  fi
+}
+
+# Check if IP is a local/private address
+is_local_ip() {
+    local ip="$1"
+
+    # Check for private IP ranges
+    case "${ip}" in
+        10.*) return 0 ;;
+        192.168.*) return 0 ;;
+        172.1[6-9].*) return 0 ;;
+        172.2[0-9].*) return 0 ;;
+        172.3[0-1].*) return 0 ;;
+        169.254.*) return 0 ;;
+        127.*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Get all active wireless interfaces including VIFs (guest networks)
+get_wireless_interfaces() {
+    local temp_file="/tmp/wireless_ifaces_$$.tmp"
+
+    # Get main wireless interfaces
+    ${IFCONFIG} | grep '^eth[0-9]\|^wl[0-9]' | awk '{print $1}' | while read iface; do
+        if ${WL} -i "${iface}" status >/dev/null 2>&1; then
+            echo "${iface}"
+        fi
+    done > "${temp_file}"
+
+    # Get VIFs (virtual interfaces for guest networks) from nvram
+    for wl_unit in 0 1 2 3; do
+        local vifs=$(${NVRAM} get wl${wl_unit}_vifs 2>/dev/null)
+        if [ -n "${vifs}" ]; then
+            for vif in ${vifs}; do
+                # Check if VIF has an SSID configured (indicates it's active)
+                local vif_ssid=$(${NVRAM} get ${vif}_ssid 2>/dev/null)
+                if [ -n "${vif_ssid}" ] && [ "${vif_ssid}" != " " ]; then
+                    # Verify the interface exists and is up
+                    if ${IFCONFIG} "${vif}" >/dev/null 2>&1; then
+                        echo "${vif}"
+                    fi
+                fi
+            done
+        fi
+    done >> "${temp_file}"
+
+    # Sort and deduplicate
+    sort -u "${temp_file}"
+    rm -f "${temp_file}"
+}
+
+# Get band name from interface name based on detected configuration
+get_band_from_interface() {
+    local iface="$1"
+
+    if [ "${iface}" = "${IFNAME_24}" ]; then
+        echo "2.4GHz"
+    elif [ "${iface}" = "${IFNAME_5}" ]; then
+        echo "5.0GHz"
+    elif [ -n "${IFNAME_5_2}" ] && [ "${iface}" = "${IFNAME_5_2}" ]; then
+        echo "5.0GHz-2"
+    elif [ -n "${IFNAME_6}" ] && [ "${iface}" = "${IFNAME_6}" ]; then
+        echo "6.0GHz"
+    elif [ -n "${IFNAME_6_2}" ] && [ "${iface}" = "${IFNAME_6_2}" ]; then
+        echo "6.0GHz-2"
+    else
+        echo ""
+    fi
+}
+
+# Get SSID for a main wireless interface
+get_ssid_for_interface() {
+    local iface="$1"
+    local ssid=""
+    
+    # Find the wl unit number for this interface
+    for wl_unit in 0 1 2 3; do
+        local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+        if [ "${unit_iface}" = "${iface}" ]; then
+            ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
+            break
+        fi
+    done
+    
+    echo "${ssid}"
+}
+
+# Pagination control function
+# Manages output display with optional row limiting
+handle_pagination() {
+    local line_count=0
+    local total_lines=0
+    
+    # If pagination is disabled, just output everything
+    if [ "${PreventScrolling}" -eq 0 ]; then
+        cat
+        return
+    fi
+    
+    # Count total lines first
+    local temp_file="/tmp/netmon_paginate_$$.tmp"
+    cat > "${temp_file}"
+    total_lines=$(wc -l < "${temp_file}")
+    
+    # If total lines is less than MaxRows, just display everything
+    if [ ${total_lines} -le ${MaxRows} ]; then
+        cat "${temp_file}"
+        rm -f "${temp_file}"
+        return
+    fi
+    
+    # Display with pagination - stop at MaxRows
+    while IFS= read -r line; do
+        echo "${line}"
+        line_count=$((line_count + 1))
+        
+        if [ ${line_count} -ge ${MaxRows} ]; then
+            local remaining=$((total_lines - line_count))
+            if [ ${remaining} -gt 0 ]; then
+                echo ""
+                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
+                rm -f "${temp_file}"
+                return
+            fi
+        fi
+    done < "${temp_file}"
+    
+    rm -f "${temp_file}"
+}
+
+# Get interface type and band information
+# Uses bridge membership to accurately determine guest vs local Wi-Fi
+get_interface_info() {
+    local iface="$1"
+    local band=""
+    local type=""
+    local guest_ssid=""
+    local bridge_name=""
+
+    # Check if this is a guest/VIF interface by looking for it in bridge interfaces
+    # Find which bridge this interface is enslaved to
+    for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
+        if [ -d "/sys/class/net/${br}/brif/${iface}" ]; then
+            bridge_name="${br}"
+            break
+        fi
+    done
+
+    # Determine if it's a VIF (virtual interface) by checking nvram wlX_vifs
+    local is_vif=0
+    for wl_unit in 0 1 2 3; do
+        local vifs=$(${NVRAM} get wl${wl_unit}_vifs 2>/dev/null)
+        if [ -n "${vifs}" ]; then
+            for vif in ${vifs}; do
+                if [ "${vif}" = "${iface}" ]; then
+                    is_vif=1
+                    # Get the base interface to determine band
+                    local base_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+                    band=$(get_band_from_interface "${base_iface}")
+
+                    # Get SSID for this VIF
+                    guest_ssid=$(${NVRAM} get ${iface}_ssid 2>/dev/null)
+                    if [ -z "${guest_ssid}" ] || [ "${guest_ssid}" = " " ]; then
+                        guest_ssid="Guest Network"
+                    fi
+                    break 2
+                fi
+            done
+        fi
+    done
+
+    # Determine type based on bridge membership and VIF status
+    if [ ${is_vif} -eq 1 ]; then
+        # It's a VIF - check which bridge it's on
+        if [ -n "${bridge_name}" ] && [ "${bridge_name}" != "br0" ]; then
+            type="guest"
+        else
+            # VIF on br0 is treated as local Wi-Fi
+            type="main"
+        fi
+        echo "${type}|${band}|${guest_ssid}"
+        return
+    fi
+
+    # Not a VIF - determine band for main interfaces
+    band=$(get_band_from_interface "${iface}")
+
+    if [ -n "${band}" ]; then
+        type="main"
+    elif [ "${iface}" = "br0" ]; then
+        type="lan"
+    else
+        type="unknown"
+    fi
+
+    echo "${type}|${band}|"
+}
+
+# Convert seconds to hours:minutes format
+format_uptime() {
+    local seconds="$1"
+    local hours=$((seconds / 3600))
+    local minutes=$(((seconds % 3600) / 60))
+    printf "%02dh:%02dm" "${hours}" "${minutes}"
+}
+
+# Convert bytes to GB
+bytes_to_gb() {
+    local bytes="$1"
+    if [ "${bytes}" -eq 0 ] 2>/dev/null; then
+        echo "0.00"
+    else
+        echo "${bytes}" | awk '{printf "%.2f", $1/1024/1024/1024}'
+    fi
+}
+
+# Get IP address for a MAC from ARP table with MLO/MLD awareness
+# Prefers IPs with REACHABLE or DELAY neighbor state for more reliable mapping
+get_ip_from_mac() {
+    local mac="$1"
+    local dhcp_leases="$2"
+    local ip=""
+    local mac_normalized=""
+    mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
+
+    # Get the lookup MAC (may be MLD MAC for WiFi 7 clients)
+    local lookup_mac=$(get_lookup_mac "${mac_normalized}" "${dhcp_leases}")
+
+    # Try to find all IPs for this MAC in ARP table
+    local ips=""
+    if [ -f /proc/net/arp ]; then
+        ips=$(awk -v mac="${mac_normalized}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null)
+    fi
+
+    # If we have multiple IPs, prefer one that is REACHABLE or DELAY
+    if [ -n "${ips}" ]; then
+        for candidate_ip in ${ips}; do
+            local arp_status=$(ip neigh show | grep -w "${candidate_ip}" | awk '{print $NF}' 2>/dev/null)
+            if [ -n "${arp_status}" ] && { [ "${arp_status}" = "REACHABLE" ] || [ "${arp_status}" = "DELAY" ]; }; then
+                ip="${candidate_ip}"
+                break
+            fi
+        done
+        # If no REACHABLE/DELAY found, use the last IP as fallback
+        [ -z "${ip}" ] && ip=$(echo "${ips}" | tail -n 1)
+    fi
+
+    # Try DHCP leases using lookup_mac if no IP found
+    if [ -z "${ip}" ]; then
+        if [ -f /var/lib/misc/dnsmasq.leases ]; then
+            ip=$(awk -v mac="${lookup_mac}" '{if (tolower($2) == mac) {print $3; exit}}' /var/lib/misc/dnsmasq.leases 2>/dev/null)
+        fi
+    fi
+
+    # Fallback to arp command
+    if [ -z "${ip}" ]; then
+        ip=$(${ARP} -n 2>/dev/null | grep -i "${mac}" | awk '{print $1}' | head -n1)
+    fi
+
+    if [ -z "${ip}" ] || [ "${ip}" = "?" ]; then
+        echo "Unknown"
+    else
+        echo "${ip}"
+    fi
+}
+
+# Get hostname from dnsmasq leases and nvram - MAC-specific with MLO/MLD support
+get_hostname() {
+    local mac="$1"
+    local ip="$2"
+    local dhcp_leases="$3"
+    local hostname=""
+    local mac_normalized=""
+    mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
+
+    # Get the lookup MAC (may be MLD MAC for WiFi 7 clients)
+    local lookup_mac=$(get_lookup_mac "${mac_normalized}" "${dhcp_leases}")
+
+    # Try custom_clientlist first
+    local custom_clients=$(${NVRAM} get custom_clientlist 2>/dev/null)
+    if [ -n "${custom_clients}" ]; then
+        local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
+        hostname=$(echo "${custom_clients}" | grep -o "<[^>]*>${mac_upper}" | sed 's/^<\([^>]*\)>.*/\1/' | head -n1)
+    fi
+
+    # Try dnsmasq leases using lookup_mac
+    if [ -z "${hostname}" ] || [ "${hostname}" = " " ]; then
+        hostname=$(echo "${dhcp_leases}" | grep -i "${lookup_mac}" | awk '{print $4}' | head -n1)
+    fi
+
+    # Try static DHCP reservations
+    if [ -z "${hostname}" ] || [ "${hostname}" = " " ] || [ "${hostname}" = "*" ]; then
+        local dhcp_staticlist=$(${NVRAM} get dhcp_staticlist 2>/dev/null)
+        if [ -n "${dhcp_staticlist}" ]; then
+            hostname=$(echo "${dhcp_staticlist}" | grep -i "${lookup_mac}" | cut -d'>' -f1 | sed 's/.*<//' | head -n1)
+        fi
+    fi
+
+    # Fallback to reverse DNS lookup
+    if [ -z "${hostname}" ] || [ "${hostname}" = " " ] || [ "${hostname}" = "*" ]; then
+        if [ -n "${ip}" ] && [ "${ip}" != "Unknown" ]; then
+            hostname=$(nslookup "${ip}" 2>/dev/null | grep 'name =' | awk '{print $4}' | sed 's/\.$//')
+        fi
+    fi
+
+    # Final fallback
+    if [ -z "${hostname}" ] || [ "${hostname}" = " " ] || [ "${hostname}" = "*" ]; then
+        hostname="Unknown"
+    fi
+
+    echo "${hostname}"
+}
+
+get_wireless_clients() {
+    local iface="$1"
+    ${WL} -i "${iface}" assoclist 2>/dev/null | awk '{print $2}' | tr 'A-F' 'a-f'
+}
+
+get_wireless_client_details() {
+    local iface="$1"
+    local mac="$2"
+    local dhcp_leases="$3"
+    local mac_normalized=""
+    local mac_upper=""
+    local clientip=""
+    local hostname=""
+    local uptime=""
+    local tx_bytes=""
+    local rx_bytes=""
+    local tx_rate=""
+    local rx_rate=""
+    local rssi=""
+    local chanspec=""
+
+    mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
+    mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
+
+    # Get the lookup MAC for WiFi 7 / MLO clients
+    local lookup_mac=$(get_lookup_mac "${mac_normalized}" "${dhcp_leases}")
+
+    # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
+    # the same MAC that appears in ARP/DHCP. Start with the assoc MAC
+    # as canonical, then override if we find a better ARP match.
+    local canonical_mac="${mac}"
+    local canonlower="${mac_normalized}"
+    local canonupper="${mac_upper}"
+
+    # Get client statistics from wl
+    local sta_info=$(${WL} -i "${iface}" sta_info "${mac}" 2>/dev/null)
+
+    if [ -n "${sta_info}" ]; then
+        local network_time=$(echo "${sta_info}" | awk '/in network/ {print $3}')
+        if [ -n "${network_time}" ]; then
+            uptime=$(format_uptime "${network_time}")
+        else
+            uptime="Unknown"
+        fi
+
+        tx_bytes=$(echo "${sta_info}" | awk '/tx total bytes:/ {print $4}')
+        rx_bytes=$(echo "${sta_info}" | awk '/rx data bytes:/ {print $4}')
+        tx_rate=$(echo "${sta_info}" | awk '/rate of last tx pkt:/ {print $6}')
+        rx_rate=$(echo "${sta_info}" | awk '/rate of last rx pkt:/ {print $6}')
+        rssi=$(echo "${sta_info}" | awk '/smoothed rssi:/ {print $3}')
+        chanspec=$(echo "${sta_info}" | awk '/chanspec/ {print $2}')
+    fi
+
+    # Try to find IP for this MAC using MLO/MLD aware lookup
+    # 1) Try direct match in ARP table - collect all IPs
+    local ips=""
+    if [ -f /proc/net/arp ]; then
+        ips=$(awk -v mac="${mac_normalized}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null)
+
+        # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
+        if [ -z "${ips}" ]; then
+            local mac_mid4=$(echo "${mac_normalized}" | awk -F: '{print $2":"$3":"$4":"$5}')
+            if [ -n "${mac_mid4}" ]; then
+                local arp_line=$(awk -v mid="${mac_mid4}" 'BEGIN{IGNORECASE=1} index(tolower($4), mid) > 0 {print; exit}' /proc/net/arp 2>/dev/null)
+                if [ -n "${arp_line}" ]; then
+                    clientip=$(echo "${arp_line}" | awk '{print $1}')
+                    canonical_mac=$(echo "${arp_line}" | awk '{print $4}')
+                    canonlower=$(echo "${canonical_mac}" | tr 'A-F' 'a-f')
+                    canonupper=$(echo "${canonical_mac}" | tr 'a-f' 'A-F')
+                fi
+            fi
+        fi
+
+        # 3) If we had multiple IPs from direct match, prefer one that is REACHABLE/DELAY
+        if [ -z "${clientip}" ] && [ -n "${ips}" ]; then
+            for ip in ${ips}; do
+                local arp_status=$(ip neigh show | grep -w "${ip}" | awk '{print $NF}' 2>/dev/null)
+                if [ -z "${arp_status}" ] || { [ "${arp_status}" != "REACHABLE" ] && [ "${arp_status}" != "DELAY" ]; }; then
+                    # Mark as stale if we have no signal strength
+                    [ -z "${rssi}" ] && uptime="STALE"
+                    continue
+                else
+                    clientip="${ip}"
+                    break
+                fi
+            done
+            # If no REACHABLE/DELAY found, use the last IP as fallback
+            [ -z "${clientip}" ] && clientip=$(echo "${ips}" | tail -n 1)
+        fi
+    fi
+
+    # 4) Final fallback using canonical MAC
+    if [ -z "${clientip}" ]; then
+        clientip=$(awk -v mac="${canonlower}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
+    fi
+
+    # If still no IP, try DHCP leases with lookup_mac
+    if [ -z "${clientip}" ]; then
+        clientip=$(echo "${dhcp_leases}" | grep -i "${lookup_mac}" | awk '{print $3}' | head -n1)
+    fi
+
+    # For isolated guest networks, client may not appear in main ARP table
+    # Still display the client with "Unknown" IP if we have wireless stats
+    if [ -z "${clientip}" ]; then
+        if [ -n "${rssi}" ]; then
+            # Client is actively connected via wireless, just no IP visible
+            clientip="Unknown"
+        else
+            # No IP and no wireless stats - skip this client
+            return
+        fi
+    fi
+
+    # Check if this canonical MAC has already been processed
+    # This prevents the same device from appearing in both Wi-Fi and LAN sections
+    if [ -f "${PROCESSED_CLIENTS}" ]; then
+        if grep -qi "^${canonupper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
+            return
+        fi
+    fi
+
+    # Track this canonical MAC as processed
+    echo "${canonupper}" >> "${PROCESSED_CLIENTS}"
+
+    # Get hostname using MLO/MLD aware lookup
+    hostname=$(get_hostname "${canonical_mac}" "${clientip}" "${dhcp_leases}")
+
+    # Convert traffic values
+    local tx_gb=$(bytes_to_gb "${tx_bytes:-0}")
+    local rx_gb=$(bytes_to_gb "${rx_bytes:-0}")
+    local tx_mbps=$(echo "${tx_rate:-0}" | awk '{printf "%.1f", $1/1000}')
+    local rx_mbps=$(echo "${rx_rate:-0}" | awk '{printf "%.1f", $1/1000}')
+
+    # Determine detailed band information (NSS and bandwidth)
+    local bandwidth=""
+    local bw_mhz=""
+    local nss=""
+
+    # Try to extract bandwidth from various fields in sta_info
+    # Method 1: Check for "link bandwidth" line
+    local link_bw_line=$(echo "${sta_info}" | grep -i 'link bandwidth')
+    if [ -n "${link_bw_line}" ]; then
+        bw_mhz=$(echo "${link_bw_line}" | grep -o '[0-9]\{2,3\}' | head -n1)
+    fi
+
+    # Method 2: Extract from chanspec if bandwidth not found
+    if [ -z "${bw_mhz}" ] && [ -n "${chanspec}" ]; then
+        local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
+        if [ -n "${chanspec_line}" ]; then
+            # Extract bandwidth from chanspec (format: "100/160" where 160 is the bandwidth)
+            if echo "${chanspec_line}" | grep '/' >/dev/null 2>&1; then
+                bw_mhz=$(echo "${chanspec_line}" | sed 's/.*\/\([0-9]\{2,3\}\).*/\1/')
+            else
+                bw_mhz=$(echo "${chanspec_line}" | grep -o '[0-9]\{2,3\}' | tail -n1)
+            fi
+        fi
+    fi
+
+    # Method 3: Try OMI line for bandwidth
+    if [ -z "${bw_mhz}" ]; then
+        local omi_line=$(echo "${sta_info}" | grep 'OMI')
+        if [ -n "${omi_line}" ]; then
+            bw_mhz=$(echo "${omi_line}" | grep -o '[0-9]\{2,3\}[Mm][Hh][Zz]' | grep -o '[0-9]\{2,3\}')
+        fi
+    fi
+
+    # Extract NSS (Number of Spatial Streams)
+    # Method 1: Check OMI line
+    local omi_line=$(echo "${sta_info}" | grep 'OMI')
+    if [ -n "${omi_line}" ]; then
+        nss=$(echo "${omi_line}" | grep -o 'tx=[0-9]ss' | grep -o '[0-9]' | head -n1)
+    fi
+
+    # Method 2: Check nrate line if NSS not found
+    if [ -z "${nss}" ]; then
+        local nrate_line=$(echo "${sta_info}" | grep 'tx nrate\|rx nrate' | head -n1)
+        if [ -n "${nrate_line}" ]; then
+            nss=$(echo "${nrate_line}" | grep -o 'Nss [0-9]' | grep -o '[0-9]')
+        fi
+    fi
+
+    # Method 3: Check VHT SET if NSS still not found
+    if [ -z "${nss}" ]; then
+        local vht_line=$(echo "${sta_info}" | grep 'VHT SET' -A 1 | tail -n1)
+        if [ -n "${vht_line}" ]; then
+            nss=$(echo "${vht_line}" | grep -o '[0-9]x[0-9]' | head -n1 | cut -d'x' -f1)
+        fi
+    fi
+
+    # Format bandwidth display
+    if [ -n "${bw_mhz}" ]; then
+        if [ -n "${nss}" ]; then
+            bandwidth="${nss}x${nss}:${bw_mhz}"
+        else
+            bandwidth="0x0:${bw_mhz}"
+        fi
+    else
+        # Fallback to basic band from interface or chanspec
+        if [ -n "${chanspec}" ]; then
+            case "${chanspec}" in
+                *6g*) bandwidth="6G" ;;
+                *5g*) bandwidth="5G" ;;
+                *2g*) bandwidth="2.4G" ;;
+                *) bandwidth=$(get_band_from_interface "${iface}" | sed 's/GHz//; s/\.0//; s/-2$/2/') ;;
+            esac
+        else
+            bandwidth=$(get_band_from_interface "${iface}" | sed 's/GHz//; s/\.0//; s/-2$/2/')
+        fi
+
+        # If still no bandwidth info, mark as unknown
+        [ -z "${bandwidth}" ] && bandwidth="?"
+    fi
+
+    # Output in pipe-delimited format for sorting: name|ip|mac|other_fields
+    printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
+        "${hostname:0:16}" "${clientip}" "${canonupper}" "${uptime}" \
+        "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi:--}" "${bandwidth}"
+}
+
+# Sort and format wireless client output
+sort_wireless_clients() {
+    local temp_file="$1"
+    local sort_field="$2"
+    
+    if [ ! -s "${temp_file}" ]; then
+        return
+    fi
+    
+    # Sort by the specified field (1=Name, 2=IP, 3=MAC)
+    sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
+        printf "  %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+            "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
+    done
+}
+
+get_lan_clients() {
+    local dhcp_leases="$1"
+    local sort_field="$2"
+    local temp_file="/tmp/lan_clients_$$.tmp"
+    local temp_output="/tmp/lan_output_$$.tmp"
+
+    if [ -f /proc/net/arp ]; then
+        ${CAT} /proc/net/arp | awk 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" {print $1, $4}' > "${temp_file}"
+    else
+        ${ARP} -n 2>/dev/null | awk 'NR>1 && $1!="?" {print $1, $3}' > "${temp_file}"
+    fi
+
+    # Group IPs by MAC to handle multiple IPs per MAC
+    local processed_macs_local=""
+    > "${temp_output}"
+
+    while read ip mac; do
+        [ -z "${mac}" ] || [ -z "${ip}" ] && continue
+        [ "${ip}" = "IP" ] && continue
+
+        if ! is_local_ip "${ip}"; then
+            continue
+        fi
+
+        local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
+        local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
+
+        # Skip if already processed this MAC in this function
+        echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
+
+        # Skip if this MAC was already shown in wireless section
+        if [ -f "${PROCESSED_CLIENTS}" ]; then
+            if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
+                continue
+            fi
+        fi
+
+        # Track this MAC as processed
+        echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
+
+        # Find all IPs for this MAC and prefer REACHABLE/DELAY
+        local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
+        local best_ip=""
+
+        if [ -n "${all_ips}" ]; then
+            for candidate_ip in ${all_ips}; do
+                local arp_status=$(ip neigh show | grep -w "${candidate_ip}" | awk '{print $NF}' 2>/dev/null)
+                if [ -n "${arp_status}" ] && { [ "${arp_status}" = "REACHABLE" ] || [ "${arp_status}" = "DELAY" ]; }; then
+                    best_ip="${candidate_ip}"
+                    break
+                fi
+            done
+            # Fallback to first IP if no REACHABLE/DELAY found
+            [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
+        else
+            best_ip="${ip}"
+        fi
+
+        local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
+        # Output in pipe-delimited format: name|ip|mac
+        printf "%s|%s|%s\n" "${hostname:0:16}" "${best_ip}" "${mac}" >> "${temp_output}"
+        processed_macs_local="${processed_macs_local} ${mac_normalized}"
+    done < "${temp_file}"
+
+    rm -f "${temp_file}"
+    
+    # Sort and format output
+    if [ -s "${temp_output}" ]; then
+        sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
+            printf "  %-16s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+        done
+    fi
+    
+    rm -f "${temp_output}"
+}
+
+get_primary_subnet() {
+    local br0_ip=$(${IFCONFIG} br0 2>/dev/null | grep 'inet addr:' | awk '{print $2}' | cut -d':' -f2)
+    if [ -z "${br0_ip}" ]; then
+        br0_ip=$(${IFCONFIG} br0 2>/dev/null | awk '/inet / {print $2}')
+    fi
+
+    if [ -n "${br0_ip}" ]; then
+        echo "${br0_ip}" | awk -F'.' '{print $1"."$2"."$3".0/24"}'
+    fi
+}
+
+# Get subnet for a specific bridge interface
+get_bridge_subnet() {
+    local bridge="$1"
+    local bridge_ip=$(${IFCONFIG} "${bridge}" 2>/dev/null | grep 'inet addr:' | awk '{print $2}' | cut -d':' -f2)
+    if [ -z "${bridge_ip}" ]; then
+        bridge_ip=$(${IFCONFIG} "${bridge}" 2>/dev/null | awk '/inet / {print $2}')
+    fi
+
+    if [ -n "${bridge_ip}" ]; then
+        echo "${bridge_ip}" | awk -F'.' '{print $1"."$2"."$3".0/24"}'
+    fi
+}
+
+get_bridge_clients() {
+    local bridge="$1"
+    local dhcp_leases="$2"
+    local sort_field="$3"
+    local temp_file="/tmp/bridge_clients_$$.tmp"
+    local temp_output="/tmp/bridge_output_$$.tmp"
+
+    # Get clients from ARP table that are on this specific bridge (Device column)
+    if [ -f /proc/net/arp ]; then
+        ${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge {print $1, $4, $6}' > "${temp_file}"
+    else
+        # Fallback: if arp command is used, we won't have bridge info
+        rm -f "${temp_file}"
+        return
+    fi
+
+    # Group IPs by MAC to handle multiple IPs per MAC
+    local processed_macs_local=""
+    > "${temp_output}"
+
+    while read ip mac device; do
+        [ -z "${mac}" ] || [ -z "${ip}" ] && continue
+
+        local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
+        local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
+
+        # Skip if already processed this MAC in this function
+        echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
+
+        # Skip if this MAC was already shown in wireless section
+        if [ -f "${PROCESSED_CLIENTS}" ]; then
+            if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
+                continue
+            fi
+        fi
+
+        # Track this MAC as processed
+        echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
+
+        # Find all IPs for this MAC on this bridge and prefer REACHABLE/DELAY
+        local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
+        local best_ip=""
+
+        if [ -n "${all_ips}" ]; then
+            for candidate_ip in ${all_ips}; do
+                local arp_status=$(ip neigh show | grep -w "${candidate_ip}" | awk '{print $NF}' 2>/dev/null)
+                if [ -n "${arp_status}" ] && { [ "${arp_status}" = "REACHABLE" ] || [ "${arp_status}" = "DELAY" ]; }; then
+                    best_ip="${candidate_ip}"
+                    break
+                fi
+            done
+            # Fallback to first IP if no REACHABLE/DELAY found
+            [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
+        else
+            best_ip="${ip}"
+        fi
+
+        local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
+        # Output in pipe-delimited format: name|ip|mac
+        printf "%s|%s|%s\n" "${hostname:0:16}" "${best_ip}" "${mac}" >> "${temp_output}"
+        processed_macs_local="${processed_macs_local} ${mac_normalized}"
+    done < "${temp_file}"
+
+    rm -f "${temp_file}"
+    
+    # Sort and format output
+    if [ -s "${temp_output}" ]; then
+        sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
+            printf "  %-16s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+        done
+    fi
+    
+    rm -f "${temp_output}"
+}
+
+################################################################################
+# MAIN DISPLAY ROUTINE
+################################################################################
+
+display_network_clients() {
+    local iface
+    local info_str
+    local iface_type
+    local band
+    local guest_ssid
+    local client_count
+
+    # Initialize processed client tracking files
+    > "${PROCESSED_CLIENTS}"
+    > "${PROCESSED_VLAN_CLIENTS}"
+
+    # Read DHCP leases once for MLO/MLD awareness
+    local dhcp_leases=$(read_all_dhcp_leases)
+
+    # Determine sort field based on SortbyOpt
+    local sort_field=1  # Default: Name
+    if [ "${SortbyOpt}" = "IP" ]; then
+        sort_field=2
+    elif [ "${SortbyOpt}" = "MAC" ]; then
+        sort_field=3
+    fi
+
+    printf "${InvGreen} ${CClear} %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+        "Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
+
+    for iface in $(get_wireless_interfaces); do
+        info_str=$(get_interface_info "${iface}")
+        iface_type=$(echo "${info_str}" | cut -d'|' -f1)
+        band=$(echo "${info_str}" | cut -d'|' -f2)
+        guest_ssid=$(echo "${info_str}" | cut -d'|' -f3)
+
+        [ "${iface_type}" = "unknown" ] && continue
+
+        client_count=0
+        client_list=$(get_wireless_clients "${iface}")
+
+        if [ -n "${client_list}" ]; then
+            client_count=$(echo "${client_list}" | wc -l)
+        fi
+
+        # Get bridge information for display
+        local bridge_name=$(get_bridge_for_interface "${iface}")
+        local bridge_info=""
+        if [ -n "${bridge_name}" ]; then
+            bridge_info=" (Bridge: ${bridge_name})"
+        fi
+
+        if [ "${iface_type}" = "guest" ]; then
+            local content=" Guest ${band} Wi-Fi: ${guest_ssid}${bridge_info} - IFace: ${iface}"
+            local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+            echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+        elif [ "${iface_type}" = "main" ]; then
+            # Get SSID for main wireless interfaces
+            local main_ssid=$(get_ssid_for_interface "${iface}")
+            if [ -n "${main_ssid}" ]; then
+                local content=" Local ${band} Wi-Fi: ${main_ssid}${bridge_info} - IFace: ${iface}"
+                local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+                echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+            else
+                local content=" Local ${band}${bridge_info} - IFace: ${iface}"
+                local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+                echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+            fi
+        fi
+
+        if [ "${iface_type}" = "main" ] || [ "${iface_type}" = "guest" ]; then
+            #printf "  %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+                #"Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
+
+            if [ -n "${client_list}" ]; then
+                local temp_output="/tmp/netmon_client_output_$$.tmp"
+                > "${temp_output}"
+
+                for mac in ${client_list}; do
+                    get_wireless_client_details "${iface}" "${mac}" "${dhcp_leases}" >> "${temp_output}"
+                done
+
+                if [ -s "${temp_output}" ]; then
+                    sort_wireless_clients "${temp_output}" "${sort_field}"
+                else
+                    echo "  No wireless clients connected"
+                fi
+                rm -f "${temp_output}"
+            else
+                echo "  No wireless clients connected"
+            fi
+            echo ""
+        fi
+    done
+
+    # Get VLAN/AiMesh bridges from apg_ifnames (more accurate than subnet detection)
+    local vlan_bridges=$(get_vlan_bridges)
+
+    if [ -n "${vlan_bridges}" ]; then
+        for bridge in ${vlan_bridges}; do
+            # Get subnet for this bridge if available
+            local bridge_subnet=$(get_bridge_subnet "${bridge}")
+
+            if [ -n "${bridge_subnet}" ]; then
+                local content=" Local VLAN/AiMesh VLAN ${bridge_subnet} - IFace: ${bridge}"
+                local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+                echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+            else
+                local content=" Local VLAN/AiMesh VLAN - IFace: ${bridge}"
+                local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+                echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+            fi
+
+            #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
+
+            # Use bridge-based client detection with sorting
+            local bridge_client_output=$(get_bridge_clients "${bridge}" "${dhcp_leases}" "${sort_field}")
+
+            if [ -n "${bridge_client_output}" ]; then
+                echo "${bridge_client_output}"
+            else
+                echo "  No wired clients found"
+            fi
+            echo ""
+        done
+    fi
+
+    local primary_subnet=$(get_primary_subnet)
+    local content=" Local LAN/Non-VLAN AiMesh - Subnet: ${primary_subnet} - IFace: br0"
+    local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
+    echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+    #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
+
+    # Use bridge-based detection for br0 clients with sorting
+    local br0_clients=$(get_bridge_clients "br0" "${dhcp_leases}" "${sort_field}")
+    if [ -n "${br0_clients}" ]; then
+        echo "${br0_clients}"
+    else
+        echo "  No wired clients found"
+    fi
+
+    # Cleanup tracking files
+    rm -f "${PROCESSED_CLIENTS}" "${PROCESSED_VLAN_CLIENTS}"
+}
+
+################################################################################
+# ENTRY POINT
+################################################################################
+
+detect_router_model
+
+display_network_clients | handle_pagination
+
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
