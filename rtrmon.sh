@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.0b4"
+Version="2.3.0b5"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -135,7 +135,7 @@ w52updown="UP"
 w6updown="UP"
 w62updown="UP"
 SortbyOpt="Name"
-PreventScrolling=1 # PreventScrolling: 0=Show all output, 1=Paginate output
+PreventScrolling=0 # PreventScrolling: 0=Show all output, 1=Paginate output
 MaxRows=24 # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
 
 ##-------------------------------------##
@@ -5393,7 +5393,7 @@ sort_wireless_clients() {
     
     # Sort by the specified field (1=Name, 2=IP, 3=MAC)
     sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
-        printf "  %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+        printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
             "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
     done
 }
@@ -5467,7 +5467,7 @@ get_lan_clients() {
     # Sort and format output
     if [ -s "${temp_output}" ]; then
         sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
-            printf "  %-16s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
         done
     fi
     
@@ -5566,7 +5566,7 @@ get_bridge_clients() {
     # Sort and format output
     if [ -s "${temp_output}" ]; then
         sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
-            printf "  %-16s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
         done
     fi
     
@@ -5600,7 +5600,7 @@ display_network_clients() {
         sort_field=3
     fi
 
-    printf "${InvGreen} ${CClear} %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+    printf "${InvGreen} ${CClear} %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
         "Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
 
     for iface in $(get_wireless_interfaces); do
