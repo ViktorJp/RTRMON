@@ -5378,7 +5378,7 @@ get_wireless_client_details() {
 
     # Output in pipe-delimited format for sorting: name|ip|mac|other_fields
     printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
-        "${hostname:0:16}" "${clientip}" "${canonupper}" "${uptime}" \
+        "${hostname:0:17}" "${clientip}" "${canonupper}" "${uptime}" \
         "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi:--}" "${bandwidth}"
 }
 
@@ -5458,7 +5458,7 @@ get_lan_clients() {
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
         # Output in pipe-delimited format: name|ip|mac
-        printf "%s|%s|%s\n" "${hostname:0:16}" "${best_ip}" "${mac}" >> "${temp_output}"
+        printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
@@ -5557,7 +5557,7 @@ get_bridge_clients() {
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
         # Output in pipe-delimited format: name|ip|mac
-        printf "%s|%s|%s\n" "${hostname:0:16}" "${best_ip}" "${mac}" >> "${temp_output}"
+        printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
