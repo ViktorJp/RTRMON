@@ -1,4 +1,4 @@
-v2.3.0b4  - (TBA)
+v2.3.0b5  - (TBA)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
             firmware release that seemed to be causing some incorrect reporting on this page. Both these
