@@ -1,10 +1,26 @@
-v2.2.4b2  - (TBA)
+v2.3.0b4  - (TBA)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
             firmware release that seemed to be causing some incorrect reporting on this page. Both these
             guys stepped in, and were able to collaboratively knock it out of the park, and get this page
             to report things accurately again. RTRMON wouldn't be as awesome as it is without these two
             incredible gentlemen! :) Thank you!
+          - MINOR: The fixes above led to a complete rework of the wired/wireless client page in order to
+            streamline and make it easier to understand and troubleshoot. As @ExtremeFiretop explained,
+            the methodology he was going down was causing patch after bandaid after patch as requirements
+            continued to change over time. This gave us a reset using all the knowledge that @ExtremeFiretop
+            had amassed thusfar into a new working version. Again, HUGE THANKS to both @ExtremeFiretop for
+            his incredible knowledge and dedication to making sure this all works as best as it can, and
+            for @visortgw for his relentless testing and feedback using the massively large and complex
+            network he has at his disposal for running RTRMON through the ringer! :) This page 7 has now
+            been officially "Dedicated to @ExtremeFiretop and @visortgw" for their hard work on this!
+          - PATCH: The new wired/wireless page 7 has column headers moved to the top of the page, instead
+            of at the top of each interface to reduce page draws and size.
+          - PATCH: The new wired/wireless page 7 now has a page run-off limiter set to 24 rows, and will
+            indicate if more rows are available. Pressing the (A) key will show ALL rows through each
+            refresh cycle, until you press (A) again to limit run-off. This prevents clutter for those
+            who are running large networks and would rather not deal with the constant run-off screen 
+            refreshes.
           - PATCH: Thanks to a CPU temperature issue report from @fr0s7, it was found that the normal
             methods of finding CPU temp readings were no longer working on the RT-BE92U. @dave14305 came
             to the rescue, and was able to find the correct file for a temp reading. Thank you both!
@@ -20,6 +36,12 @@ v2.2.4b2  - (TBA)
             I blame the OCD.
           - PATCH: Added the wireless channel spec to the table output list per @visortgw request. We
             may need to start widening the UI here soon! :)
+          - PATCH: All screens have now been widened by 10 characters to accomodate for the slightly
+            wider table sizes under the wired/wireless client page 7.
+          - PATCH: Column 1 under the wired/wireless client table is limited to 16 characters, and will
+            trim any client names > 16 characters.
+          - PATCH: NMAP results on the Network Diagnotics Page 6 are now indented by 3 characters to show
+            better placement under the various interfaces it is reporting on.
 
 v2.2.3    - (November 16, 2025)
           - PATCH: Modified how the memory stats are being captured, and is now more in line with the 
