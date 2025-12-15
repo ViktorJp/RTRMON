@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-14
+# Last Modified: 2025-Dec-15
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.0b5"
+Version="2.3.0b6"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -543,7 +543,7 @@ progressbaroverride()
         then
            case "$key_press" in
                [Aa]) if [ "$PreventScrolling" = "1" ]; then PreventScrolling=0; elif [ "$PreventScrolling" = "0" ]; then PreventScrolling=1; fi;
-               		   timerReset=1;;
+                     timerReset=1;;
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
                      sleep 1; NextPage=6; timerReset=1
@@ -4937,6 +4937,22 @@ get_ssid_for_interface() {
     echo "${ssid}"
 }
 
+# Sort IP addresses numerically by converting to zero-padded format
+sort_by_ip() {
+    local temp_file="$1"
+    
+    # Add zero-padded IP as first field for sorting, then sort, then remove it
+    awk -F'|' '{
+        split($2, octets, "."); # Split IP address into octets (field 2 is the IP)
+        if (octets[1] != "" && octets[2] != "" && octets[3] != "" && octets[4] != "") {  
+            padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]); # Create zero-padded version for sorting (e.g., 192.168.050.002)
+        } else {
+            padded_ip = "999.999.999.999"; # Handle "Unknown" or malformed IPs - sort them last
+        }
+        print padded_ip "|" $0;
+    }' "${temp_file}" | sort -t'|' -k1,1 | cut -d'|' -f2-
+}
+
 # Pagination control function
 # Manages output display with optional row limiting
 handle_pagination() {
@@ -5378,8 +5394,8 @@ get_wireless_client_details() {
 
     # Output in pipe-delimited format for sorting: name|ip|mac|other_fields
     printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
-        "${hostname:0:17}" "${clientip}" "${canonupper}" "${uptime}" \
-        "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi:--}" "${bandwidth}"
+        "${hostname:0:17}" "${clientip}" "${canonupper}" "${uptime:0:8}" \
+        "${tx_gb:0:5}" "${rx_gb:0:5}" "${tx_mbps:0:7}" "${rx_mbps:0:7}" "${rssi:0:3}" "${bandwidth:0:7}"
 }
 
 # Sort and format wireless client output
@@ -5392,10 +5408,19 @@ sort_wireless_clients() {
     fi
     
     # Sort by the specified field (1=Name, 2=IP, 3=MAC)
-    sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
-        printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
-            "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
-    done
+    if [ "${sort_field}" -eq 2 ]; then
+        # IP sorting - use custom IP sort for proper numeric ordering
+        sort_by_ip "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
+            printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+                "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
+        done
+    else
+        # Name or MAC sorting - use regular sort
+        sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
+            printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+                "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
+        done
+    fi
 }
 
 get_lan_clients() {
@@ -5466,9 +5491,17 @@ get_lan_clients() {
     
     # Sort and format output
     if [ -s "${temp_output}" ]; then
-        sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
-            printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
-        done
+        if [ "${sort_field}" -eq 2 ]; then
+            # IP sorting - use custom IP sort
+            sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
+                printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            done
+        else
+            # Name or MAC sorting - use regular sort
+            sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
+                printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            done
+        fi
     fi
     
     rm -f "${temp_output}"
@@ -5565,9 +5598,17 @@ get_bridge_clients() {
     
     # Sort and format output
     if [ -s "${temp_output}" ]; then
-        sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
-            printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
-        done
+        if [ "${sort_field}" -eq 2 ]; then
+            # IP sorting - use custom IP sort
+            sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
+                printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            done
+        else
+            # Name or MAC sorting - use regular sort
+            sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
+                printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
+            done
+        fi
     fi
     
     rm -f "${temp_output}"
@@ -5744,7 +5785,7 @@ GetVPNWGIPCITY()
     NVRAMVPN1IP=$(ping -c 1 -w 1 $NVRAMVPN1ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ]; then
-    	if [ "$VPNSite2Site" == "1" ]; then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldvpn1ip=$NVRAMVPN1IP
       else
         oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
@@ -5781,7 +5822,7 @@ GetVPNWGIPCITY()
     NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN2ADDR" != "$oldvpn2ADDR" ]; then
-    	if [ "$VPNSite2Site" == "1" ]; then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldvpn2ip=$NVRAMVPN2IP
       else
         oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com)
@@ -5818,7 +5859,7 @@ GetVPNWGIPCITY()
     NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN3ADDR" != "$oldvpn3ADDR" ]; then
-    	if [ "$VPNSite2Site" == "1" ]; then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldvpn3ip=$NVRAMVPN3IP
       else
         oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com)
@@ -5892,7 +5933,7 @@ GetVPNWGIPCITY()
     NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
     if [ "$NVRAMVPN5ADDR" != "$oldvpn5ADDR" ]; then
-    	if [ "$VPNSite2Site" == "1" ]; then
+      if [ "$VPNSite2Site" == "1" ]; then
         oldvpn5ip=$NVRAMVPN5IP
       else
         oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com)
