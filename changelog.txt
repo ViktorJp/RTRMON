@@ -1,4 +1,4 @@
-v2.3.0b5  - (TBA)
+v2.3.0b6  - (TBA)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
             firmware release that seemed to be causing some incorrect reporting on this page. Both these
@@ -45,6 +45,8 @@ v2.3.0b5  - (TBA)
           - PATCH: Per suggestions from @visortgw, changed defaults to disable screen run-off limiter,
             and can be enabled anytime using (A). Also, extended column 1 that shows the device name from
             16 chars to 17 chars. Thank you!
+          - PATCH: Added a better way to sort IP addresses, so they are accurately sorting from low to high.
+            Thanks to @CaptainSTX for the nudge! :)
 
 v2.2.3    - (November 16, 2025)
           - PATCH: Modified how the memory stats are being captured, and is now more in line with the 
