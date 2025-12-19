@@ -745,17 +745,16 @@ timerReset=1
 
 trimlogs()
 {
-
   if [ "$LOGSIZE" -gt 0 ]
   then
-      currlogsize=$(wc -l $LOGFILE | awk '{ print $1 }' ) # Determine the number of rows in the log
+      currlogsize="$(wc -l "$LOGFILE" | awk '{ print $1 }')" # Determine the number of rows in the log
 
       if [ "$currlogsize" -gt "$LOGSIZE" ] # If it's bigger than the max allowed, tail/trim it!
-        then
-          echo "$(tail -$LOGSIZE $LOGFILE)" > $LOGFILE
-          echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Trimmed the log file down to $LOGSIZE lines" >> $LOGFILE
+      then
+          tail -"$LOGSIZE" "$LOGFILE" > "${LOGFILE}.tmp"
+          mv "${LOGFILE}.tmp" "$LOGFILE"
+          echo "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Trimmed the log file down to $LOGSIZE lines" >> "$LOGFILE"
       fi
-
   fi
 }
 
