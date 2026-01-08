@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RTRMON - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2025
+# RTRMON - Asus-Merlin Router Monitor by Viktor Jaep, 2022-2026
 #
 # RTRMON is a shell script that provides near-realtime stats about your Asus-Merlin firmware router. Instead of having to
 # find this information on various different screens or apps, this tool was built to bring all this info together in one
@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2025-Dec-15
+# Last Modified: 2026-Jan-7
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.0b6"
+Version="2.3.0b7"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -2175,27 +2175,41 @@ calculatestats()
 
   # Network - Wifi - Traffic
   # Standard Dual Band
-  new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+  #new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+
+  new24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  new24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
+  new5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  new5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
 
   # Tri or Quad Band 5GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-     new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+     #new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+     #new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
+     new52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+     new52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   # Tri or Quad Band 6GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-     new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+     #new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+     #new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
+     new6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+     new6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-     new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+     #new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+     #new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
+     new62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+     new62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
 
   # Network - LAN - Traffic
@@ -4923,7 +4937,7 @@ get_band_from_interface() {
 get_ssid_for_interface() {
     local iface="$1"
     local ssid=""
-    
+
     # Find the wl unit number for this interface
     for wl_unit in 0 1 2 3; do
         local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
@@ -4932,18 +4946,18 @@ get_ssid_for_interface() {
             break
         fi
     done
-    
+
     echo "${ssid}"
 }
 
 # Sort IP addresses numerically by converting to zero-padded format
 sort_by_ip() {
     local temp_file="$1"
-    
+
     # Add zero-padded IP as first field for sorting, then sort, then remove it
     awk -F'|' '{
         split($2, octets, "."); # Split IP address into octets (field 2 is the IP)
-        if (octets[1] != "" && octets[2] != "" && octets[3] != "" && octets[4] != "") {  
+        if (octets[1] != "" && octets[2] != "" && octets[3] != "" && octets[4] != "") {
             padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]); # Create zero-padded version for sorting (e.g., 192.168.050.002)
         } else {
             padded_ip = "999.999.999.999"; # Handle "Unknown" or malformed IPs - sort them last
@@ -4957,30 +4971,30 @@ sort_by_ip() {
 handle_pagination() {
     local line_count=0
     local total_lines=0
-    
+
     # If pagination is disabled, just output everything
     if [ "${PreventScrolling}" -eq 0 ]; then
         cat
         return
     fi
-    
+
     # Count total lines first
     local temp_file="/tmp/netmon_paginate_$$.tmp"
     cat > "${temp_file}"
     total_lines=$(wc -l < "${temp_file}")
-    
+
     # If total lines is less than MaxRows, just display everything
     if [ ${total_lines} -le ${MaxRows} ]; then
         cat "${temp_file}"
         rm -f "${temp_file}"
         return
     fi
-    
+
     # Display with pagination - stop at MaxRows
     while IFS= read -r line; do
         echo "${line}"
         line_count=$((line_count + 1))
-        
+
         if [ ${line_count} -ge ${MaxRows} ]; then
             local remaining=$((total_lines - line_count))
             if [ ${remaining} -gt 0 ]; then
@@ -4991,7 +5005,7 @@ handle_pagination() {
             fi
         fi
     done < "${temp_file}"
-    
+
     rm -f "${temp_file}"
 }
 
@@ -5401,11 +5415,11 @@ get_wireless_client_details() {
 sort_wireless_clients() {
     local temp_file="$1"
     local sort_field="$2"
-    
+
     if [ ! -s "${temp_file}" ]; then
         return
     fi
-    
+
     # Sort by the specified field (1=Name, 2=IP, 3=MAC)
     if [ "${sort_field}" -eq 2 ]; then
         # IP sorting - use custom IP sort for proper numeric ordering
@@ -5487,7 +5501,7 @@ get_lan_clients() {
     done < "${temp_file}"
 
     rm -f "${temp_file}"
-    
+
     # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
@@ -5502,7 +5516,7 @@ get_lan_clients() {
             done
         fi
     fi
-    
+
     rm -f "${temp_output}"
 }
 
@@ -5594,7 +5608,7 @@ get_bridge_clients() {
     done < "${temp_file}"
 
     rm -f "${temp_file}"
-    
+
     # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
@@ -5609,7 +5623,7 @@ get_bridge_clients() {
             done
         fi
     fi
-    
+
     rm -f "${temp_output}"
 }
 
@@ -6783,21 +6797,36 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
   fi
 
-  old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+
+  old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
+  old5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
+
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-    old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
+    old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-    old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-    old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
+    old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
-    old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-    old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
+    old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
@@ -6904,21 +6933,36 @@ do
     oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
   fi
-  old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+
+  old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
+  old5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+  old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
+
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-    old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
+    old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-    old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-    old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
+    old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
-    old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-    old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
+    old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
+    old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   oldlanrxbytes="$(cat /sys/class/net/br0/statistics/rx_bytes)"
   oldlantxbytes="$(cat /sys/class/net/br0/statistics/tx_bytes)"
