@@ -814,7 +814,7 @@ vconfig()
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(11)${CClear} : WAN0 Interface Override?                     : ${CGreen}$WANOverride"
 
       if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
-      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(12)${CClear} : Mark Router As iMesh Node/Repeater/Bridge?   : ${CGreen}$WAN0AltModesdisp"
+      echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(12)${CClear} : Mark Router As AiMesh Node/Repeater/Bridge?  : ${CGreen}$WAN0AltModesdisp"
       if [ "$VPNSite2Site" == "0" ]; then VPNSite2Sitedisp="No"; else VPNSite2Sitedisp="Yes"; fi
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(13)${CClear} : Mark Router As VPN Site-To-Site Only?        : ${CGreen}$VPNSite2Sitedisp"
       echo -e "${InvGreen} ${CClear} ${InvDkGray}${CWhite}(14)${CClear} : Custom Event Log Size?                       : ${CGreen}$LOGSIZE"
@@ -1207,10 +1207,10 @@ vconfig()
 
             12) # -----------------------------------------------------------------------------------------
               clear
-              echo -e "${InvGreen} ${InvDkGray}${CWhite} Mark Router As iMesh Node/Repeater/Bridge                                             ${CClear}"
+              echo -e "${InvGreen} ${InvDkGray}${CWhite} Mark Router As AiMesh Node/Repeater/Bridge                                            ${CClear}"
               echo -e "${InvGreen} ${CClear}"
               echo -e "${InvGreen} ${CClear} Please indicate if you would like to mark that this router is being used as an${CClear}"
-              echo -e "${InvGreen} ${CClear} iMesh Node, Repeater or Bridge operating mode. In cases like this, the WAN0${CClear}"
+              echo -e "${InvGreen} ${CClear} AiMesh Node, Repeater or Bridge operating mode. In cases like this, the WAN0${CClear}"
               echo -e "${InvGreen} ${CClear} interface will be non-functional, and will be omitted from being captured by${CClear}"
               echo -e "${InvGreen} ${CClear} RTRMON's stats.${CClear}"
               echo -e "${InvGreen} ${CClear}"
@@ -1220,10 +1220,10 @@ vconfig()
               if [ "$WAN0AltModes" == "0" ]; then WAN0AltModesdisp="No"; else WAN0AltModesdisp="Yes"; fi
               echo -e "${CClear}Current: ${CGreen}$WAN0AltModesdisp${CClear}"
               echo ""
-              echo -e "Is this router an iMesh Node/Repeater/Bridge?${CClear}"
+              echo -e "Is this router an AiMesh Node/Repeater/Bridge?${CClear}"
               if promptyn "[y/n]: "; then
                 WAN0AltModes=1
-                echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: This device's operating mode was marked as an iMesh Node/AP/Repeater/Bridge." >> $LOGFILE
+                echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: This device's operating mode was marked as an AiMesh Node/AP/Repeater/Bridge." >> $LOGFILE
               else
                 WAN0AltModes=0
                 echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: This device's operating mode was marked as a Router." >> $LOGFILE
@@ -6497,7 +6497,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
     echo " -uninstall (uninstall utility)"
     echo " -screen (normal router monitoring using the screen utility)"
     echo " -monitor (normal router monitoring operations)"
-    echo " -screen/-monitor X (X = display screen 1-6 upon execution)"
+    echo " -screen/-monitor X (X = display screen 1-7 upon execution)"
     echo " -screen -now (bypass screen instructions and 5 sec timer)"
     echo ""
     echo " Examples:"
