@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.0b7"
-Beta=1
+Version="2.3.0"
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -721,7 +721,7 @@ updatecheck () {
       elif [ "$DLVersion" != "$Version" ]; then
         DLVersionPF=$(printf "%-8s" $DLVersion)
         VersionPF=$(printf "%-8s" $Version)
-        UpdateNotify="${InvYellow} ${InvDkGray}${CWhite} Update available: v$VersionPF -> v$DLVersionPF                                                                     ${CClear}"
+        UpdateNotify="${InvYellow} ${InvDkGray}${CWhite} Update available: v$VersionPF -> v$DLVersionPF                                                                               ${CClear}"
         echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: A new update (v$DLVersion) is available to download" >> $LOGFILE
       else
         UpdateNotify=0
@@ -6591,7 +6591,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
           echo ""
           if [ $# -lt 2 ] || [ -z "$2" ]; then
             screen -dmS "rtrmon" $APPPATH -monitor
-          elif [ "$2" -ge 1 ] && [ "$2" -le 7 ]; then
+          elif [ "$2" -ge 1 ] && [ "$2" -le 6 ]; then
             screen -dmS "rtrmon" $APPPATH -monitor $2
           else
             screen -dmS "rtrmon" $APPPATH -monitor
