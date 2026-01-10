@@ -1,7 +1,7 @@
-# RTRMON v2.2.3
-Asus-Merlin Router Monitor by Viktor Jaep, 2022-2025
+# RTRMON v2.3.0
+Asus-Merlin Router Monitor by Viktor Jaep, 2022-2026
 
-Updated on 2025-Nov-16
+Updated on 2026-Jan-10
 
 ---
 
