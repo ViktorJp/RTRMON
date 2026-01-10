@@ -6591,7 +6591,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
           echo ""
           if [ $# -lt 2 ] || [ -z "$2" ]; then
             screen -dmS "rtrmon" $APPPATH -monitor
-          elif [ "$2" -ge 1 ] && [ "$2" -le 6 ]; then
+          elif [ "$2" -ge 1 ] && [ "$2" -le 7 ]; then
             screen -dmS "rtrmon" $APPPATH -monitor $2
           else
             screen -dmS "rtrmon" $APPPATH -monitor
