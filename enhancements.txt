@@ -3,6 +3,8 @@ Future Enhancements (Possible/Planned)
 * AMTM Email notifications on certain events (like 80% disk usage)
 * Perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 * WAN down functionality to put RTRMON in standby if the WAN isn't working, or at least show interface down.
+* Working on the timing of the counter vs. the accuracy of the stats when flipping between pages
+* Optionally hide empty ranges on page 7 to reduce clutter
 
 Completed:
 ----------
