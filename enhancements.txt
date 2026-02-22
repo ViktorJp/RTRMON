@@ -5,6 +5,7 @@ Future Enhancements (Possible/Planned)
 * WAN down functionality to put RTRMON in standby if the WAN isn't working, or at least show interface down.
 * Working on the timing of the counter vs. the accuracy of the stats when flipping between pages
 * Optionally hide empty ranges on page 7 to reduce clutter
+* Use WLAN names instead of long GUID
 
 Completed:
 ----------
