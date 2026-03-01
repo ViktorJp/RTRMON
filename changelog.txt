@@ -8,6 +8,9 @@ v2.3.1b1  - (March 1, 2026)
             networks would also have 0 clients connected to them, however @Visortgw has shown that other
             routers (or clients) do connect to them as bridges or backhaul. All in all, the interface now
             looks less cluttered and less confusing. Hope this is helpful!
+          - PATCH: Added some more logic to ensure that the timer is being utilized correctly when
+            rendering the bar charts across the screen. More accuracy now when moving between screens and
+            separate counters being used to render CPU/Memory vs. wired/wireless transfer stats.
 
 v2.3.0    - (January 10, 2026)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
