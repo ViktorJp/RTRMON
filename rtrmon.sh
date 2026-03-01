@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Jan-7
+# Last Modified: 2026-Mar-1
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.0"
-Beta=0
+Version="2.3.1b1"
+Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -137,6 +137,7 @@ w62updown="UP"
 SortbyOpt="Name"
 PreventScrolling=0 # PreventScrolling: 0=Show all output, 1=Paginate output
 MaxRows=24 # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
+HideNetworks=1 #HideNetworks: 0=Show all output, 1=Hide networks with 0 connected clients
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-04] ##
@@ -543,6 +544,8 @@ progressbaroverride()
         then
            case "$key_press" in
                [Aa]) if [ "$PreventScrolling" = "1" ]; then PreventScrolling=0; elif [ "$PreventScrolling" = "0" ]; then PreventScrolling=1; fi;
+                     timerReset=1;;
+               [Bb]) if [ "$HideNetworks" = "1" ]; then HideNetworks=0; elif [ "$HideNetworks" = "0" ]; then HideNetworks=1; fi;
                      timerReset=1;;
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
@@ -4691,13 +4694,13 @@ DisplayPage7()
   echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                         (Dedicated to @ExtremeFiretop and @visortgw) ${CClear}"
   if [ "$SortbyOpt" = "Name" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
   elif [ "$SortbyOpt" = "IP" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
   elif [ "$SortbyOpt" = "MAC" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
   fi
   echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
 
@@ -4710,22 +4713,9 @@ ARP="arp"
 IFCONFIG="ifconfig"
 CAT="cat"
 
-# Color definitions
-#InvGreen="\e[42m"
-#InvDkGray="\e[100m"
-#CWhite="\e[97m"
-#CGreen="\e[92m"
-#CDkGray="\e[90m"
-#CClear="\e[0m"
-
 # Temporary files for client tracking and deduplication
 PROCESSED_CLIENTS="/tmp/netmon_processed_clients_$$.txt"
 PROCESSED_VLAN_CLIENTS="/tmp/netmon_processed_vlan_clients_$$.txt"
-
-# Sorting Configuration
-# Options: "Name", "IP", "MAC"
-# Default: "Name" (alphabetical sorting by hostname)
-#SortbyOpt="Name"
 
 # Display width for formatted headers
 HEADER_WIDTH=120
@@ -4745,8 +4735,6 @@ IFNAME_6_2=""
 detect_router_model() {
     local router_model=$(${NVRAM} get productid 2>/dev/null)
     [ -z "${router_model}" ] && router_model=$(${NVRAM} get model 2>/dev/null)
-
-    #echo "Detected Router Model: ${router_model}" >&2
 
     # Determine radio configuration based on router model
     case "${router_model}" in
@@ -4786,14 +4774,6 @@ detect_router_model() {
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             ;;
     esac
-
-    # Log detected interfaces
-    #echo "Interface Mapping:" >&2
-    #[ -n "${IFNAME_24}" ] && echo "  2.4GHz: ${IFNAME_24}" >&2
-    #[ -n "${IFNAME_5}" ] && echo "  5.0GHz: ${IFNAME_5}" >&2
-    #[ -n "${IFNAME_5_2}" ] && echo "  5.0GHz-2: ${IFNAME_5_2}" >&2
-    #[ -n "${IFNAME_6}" ] && echo "  6.0GHz: ${IFNAME_6}" >&2
-    #[ -n "${IFNAME_6_2}" ] && echo "  6.0GHz-2: ${IFNAME_6_2}" >&2
 }
 
 ################################################################################
@@ -4812,10 +4792,7 @@ read_all_dhcp_leases() {
     echo "${all_leases}"
 }
 
-# Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
-# determine the lookup MAC (which may be the MLD MAC if present).
-# For WiFi 7 / MLO clients the MAC used by 'wl assoclist' may NOT be the same MAC
-# that appears in ARP/DHCP. This function finds the correct MAC to use for lookups.
+# Unified MLD MAC retrieval logic
 get_lookup_mac() {
     local maclower="$1"
     local leases="$2"
@@ -4934,20 +4911,53 @@ get_band_from_interface() {
 }
 
 # Get SSID for a main wireless interface
+# Returns the actual SSID, not the alphanumeric hash
+# For OWE/Enhanced security networks, attempts to derive friendly name from VIF
 get_ssid_for_interface() {
     local iface="$1"
     local ssid=""
 
-    # Find the wl unit number for this interface
-    for wl_unit in 0 1 2 3; do
-        local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
-        if [ "${unit_iface}" = "${iface}" ]; then
-            ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
-            break
-        fi
-    done
+    # Method 1: Try to get SSID directly from wl status command
+    # This is more reliable than nvram for getting the actual broadcast SSID
+    ssid=$(${WL} -i "${iface}" status 2>/dev/null | grep "^SSID:" | sed 's/^SSID: "\(.*\)"$/\1/')
 
-    echo "${ssid}"
+    # Method 2: Fallback to nvram if wl status didn't work
+    if [ -z "${ssid}" ]; then
+        # Find the wl unit number for this interface
+        for wl_unit in 0 1 2 3; do
+            local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+            if [ "${unit_iface}" = "${iface}" ]; then
+                ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
+                break
+            fi
+        done
+    fi
+
+    # Check if SSID is a 32-character hex hash (OWE/Enhanced security)
+    if [ -n "${ssid}" ] && [ ${#ssid} -eq 32 ] && echo "${ssid}" | grep -q '^[0-9A-F]\{32\}$'; then
+        # Try to find a friendly name from VIFs on the same radio
+        local friendly_name=""
+        for wl_unit in 0 1 2 3; do
+            local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+            if [ "${unit_iface}" = "${iface}" ]; then
+                # Check first VIF for this radio
+                local first_vif=$(${NVRAM} get wl${wl_unit}_vifs 2>/dev/null | awk '{print $1}')
+                if [ -n "${first_vif}" ]; then
+                    friendly_name=$(${NVRAM} get ${first_vif}_ssid 2>/dev/null)
+                fi
+                break
+            fi
+        done
+        
+        # If we found a friendly name from VIF, use it with [Enhanced] tag
+        if [ -n "${friendly_name}" ] && [ "${friendly_name}" != " " ]; then
+            echo "${friendly_name} [Enhanced]"
+        else
+            echo "[Enhanced Security]"
+        fi
+    else
+        echo "${ssid}"
+    fi
 }
 
 # Sort IP addresses numerically by converting to zero-padded format
@@ -4956,18 +4966,17 @@ sort_by_ip() {
 
     # Add zero-padded IP as first field for sorting, then sort, then remove it
     awk -F'|' '{
-        split($2, octets, "."); # Split IP address into octets (field 2 is the IP)
+        split($2, octets, ".");
         if (octets[1] != "" && octets[2] != "" && octets[3] != "" && octets[4] != "") {
-            padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]); # Create zero-padded version for sorting (e.g., 192.168.050.002)
+            padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]);
         } else {
-            padded_ip = "999.999.999.999"; # Handle "Unknown" or malformed IPs - sort them last
+            padded_ip = "999.999.999.999";
         }
         print padded_ip "|" $0;
     }' "${temp_file}" | sort -t'|' -k1,1 | cut -d'|' -f2-
 }
 
 # Pagination control function
-# Manages output display with optional row limiting
 handle_pagination() {
     local line_count=0
     local total_lines=0
@@ -4999,7 +5008,7 @@ handle_pagination() {
             local remaining=$((total_lines - line_count))
             if [ ${remaining} -gt 0 ]; then
                 echo ""
-                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
+                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
                 rm -f "${temp_file}"
                 return
             fi
@@ -5010,7 +5019,6 @@ handle_pagination() {
 }
 
 # Get interface type and band information
-# Uses bridge membership to accurately determine guest vs local Wi-Fi
 get_interface_info() {
     local iface="$1"
     local band=""
@@ -5018,7 +5026,6 @@ get_interface_info() {
     local guest_ssid=""
     local bridge_name=""
 
-    # Check if this is a guest/VIF interface by looking for it in bridge interfaces
     # Find which bridge this interface is enslaved to
     for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
         if [ -d "/sys/class/net/${br}/brif/${iface}" ]; then
@@ -5096,7 +5103,6 @@ bytes_to_gb() {
 }
 
 # Get IP address for a MAC from ARP table with MLO/MLD awareness
-# Prefers IPs with REACHABLE or DELAY neighbor state for more reliable mapping
 get_ip_from_mac() {
     local mac="$1"
     local dhcp_leases="$2"
@@ -5145,7 +5151,7 @@ get_ip_from_mac() {
     fi
 }
 
-# Get hostname from dnsmasq leases and nvram - MAC-specific with MLO/MLD support
+# Get hostname from dnsmasq leases and nvram
 get_hostname() {
     local mac="$1"
     local ip="$2"
@@ -5219,8 +5225,7 @@ get_wireless_client_details() {
     # Get the lookup MAC for WiFi 7 / MLO clients
     local lookup_mac=$(get_lookup_mac "${mac_normalized}" "${dhcp_leases}")
 
-    # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
-    # the same MAC that appears in ARP/DHCP. Start with the assoc MAC
+    # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be the same MAC that appears in ARP/DHCP. Start with the assoc MAC
     # as canonical, then override if we find a better ARP match.
     local canonical_mac="${mac}"
     local canonlower="${mac_normalized}"
@@ -5246,12 +5251,11 @@ get_wireless_client_details() {
     fi
 
     # Try to find IP for this MAC using MLO/MLD aware lookup
-    # 1) Try direct match in ARP table - collect all IPs
     local ips=""
     if [ -f /proc/net/arp ]; then
         ips=$(awk -v mac="${mac_normalized}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null)
 
-        # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
+        # If that fails, try a fuzzy match using the middle 4 bytes of the MAC
         if [ -z "${ips}" ]; then
             local mac_mid4=$(echo "${mac_normalized}" | awk -F: '{print $2":"$3":"$4":"$5}')
             if [ -n "${mac_mid4}" ]; then
@@ -5265,12 +5269,11 @@ get_wireless_client_details() {
             fi
         fi
 
-        # 3) If we had multiple IPs from direct match, prefer one that is REACHABLE/DELAY
+        # If we had multiple IPs from direct match, prefer one that is REACHABLE/DELAY
         if [ -z "${clientip}" ] && [ -n "${ips}" ]; then
             for ip in ${ips}; do
                 local arp_status=$(ip neigh show | grep -w "${ip}" | awk '{print $NF}' 2>/dev/null)
                 if [ -z "${arp_status}" ] || { [ "${arp_status}" != "REACHABLE" ] && [ "${arp_status}" != "DELAY" ]; }; then
-                    # Mark as stale if we have no signal strength
                     [ -z "${rssi}" ] && uptime="STALE"
                     continue
                 else
@@ -5278,12 +5281,11 @@ get_wireless_client_details() {
                     break
                 fi
             done
-            # If no REACHABLE/DELAY found, use the last IP as fallback
             [ -z "${clientip}" ] && clientip=$(echo "${ips}" | tail -n 1)
         fi
     fi
 
-    # 4) Final fallback using canonical MAC
+    # Final fallback using canonical MAC
     if [ -z "${clientip}" ]; then
         clientip=$(awk -v mac="${canonlower}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
     fi
@@ -5294,19 +5296,15 @@ get_wireless_client_details() {
     fi
 
     # For isolated guest networks, client may not appear in main ARP table
-    # Still display the client with "Unknown" IP if we have wireless stats
     if [ -z "${clientip}" ]; then
         if [ -n "${rssi}" ]; then
-            # Client is actively connected via wireless, just no IP visible
             clientip="Unknown"
         else
-            # No IP and no wireless stats - skip this client
             return
         fi
     fi
 
     # Check if this canonical MAC has already been processed
-    # This prevents the same device from appearing in both Wi-Fi and LAN sections
     if [ -f "${PROCESSED_CLIENTS}" ]; then
         if grep -qi "^${canonupper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
             return
@@ -5316,7 +5314,7 @@ get_wireless_client_details() {
     # Track this canonical MAC as processed
     echo "${canonupper}" >> "${PROCESSED_CLIENTS}"
 
-    # Get hostname using MLO/MLD aware lookup
+    # Get hostname
     hostname=$(get_hostname "${canonical_mac}" "${clientip}" "${dhcp_leases}")
 
     # Convert traffic values
@@ -5331,17 +5329,14 @@ get_wireless_client_details() {
     local nss=""
 
     # Try to extract bandwidth from various fields in sta_info
-    # Method 1: Check for "link bandwidth" line
     local link_bw_line=$(echo "${sta_info}" | grep -i 'link bandwidth')
     if [ -n "${link_bw_line}" ]; then
         bw_mhz=$(echo "${link_bw_line}" | grep -o '[0-9]\{2,3\}' | head -n1)
     fi
 
-    # Method 2: Extract from chanspec if bandwidth not found
     if [ -z "${bw_mhz}" ] && [ -n "${chanspec}" ]; then
         local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
         if [ -n "${chanspec_line}" ]; then
-            # Extract bandwidth from chanspec (format: "100/160" where 160 is the bandwidth)
             if echo "${chanspec_line}" | grep '/' >/dev/null 2>&1; then
                 bw_mhz=$(echo "${chanspec_line}" | sed 's/.*\/\([0-9]\{2,3\}\).*/\1/')
             else
@@ -5350,7 +5345,6 @@ get_wireless_client_details() {
         fi
     fi
 
-    # Method 3: Try OMI line for bandwidth
     if [ -z "${bw_mhz}" ]; then
         local omi_line=$(echo "${sta_info}" | grep 'OMI')
         if [ -n "${omi_line}" ]; then
@@ -5358,14 +5352,12 @@ get_wireless_client_details() {
         fi
     fi
 
-    # Extract NSS (Number of Spatial Streams)
-    # Method 1: Check OMI line
+    # Extract NSS
     local omi_line=$(echo "${sta_info}" | grep 'OMI')
     if [ -n "${omi_line}" ]; then
         nss=$(echo "${omi_line}" | grep -o 'tx=[0-9]ss' | grep -o '[0-9]' | head -n1)
     fi
 
-    # Method 2: Check nrate line if NSS not found
     if [ -z "${nss}" ]; then
         local nrate_line=$(echo "${sta_info}" | grep 'tx nrate\|rx nrate' | head -n1)
         if [ -n "${nrate_line}" ]; then
@@ -5373,7 +5365,6 @@ get_wireless_client_details() {
         fi
     fi
 
-    # Method 3: Check VHT SET if NSS still not found
     if [ -z "${nss}" ]; then
         local vht_line=$(echo "${sta_info}" | grep 'VHT SET' -A 1 | tail -n1)
         if [ -n "${vht_line}" ]; then
@@ -5389,7 +5380,6 @@ get_wireless_client_details() {
             bandwidth="0x0:${bw_mhz}"
         fi
     else
-        # Fallback to basic band from interface or chanspec
         if [ -n "${chanspec}" ]; then
             case "${chanspec}" in
                 *6g*) bandwidth="6G" ;;
@@ -5400,12 +5390,10 @@ get_wireless_client_details() {
         else
             bandwidth=$(get_band_from_interface "${iface}" | sed 's/GHz//; s/\.0//; s/-2$/2/')
         fi
-
-        # If still no bandwidth info, mark as unknown
         [ -z "${bandwidth}" ] && bandwidth="?"
     fi
 
-    # Output in pipe-delimited format for sorting: name|ip|mac|other_fields
+    # Output in pipe-delimited format for sorting
     printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
         "${hostname:0:17}" "${clientip}" "${canonupper}" "${uptime:0:8}" \
         "${tx_gb:0:5}" "${rx_gb:0:5}" "${tx_mbps:0:7}" "${rx_mbps:0:7}" "${rssi:0:3}" "${bandwidth:0:7}"
@@ -5420,15 +5408,12 @@ sort_wireless_clients() {
         return
     fi
 
-    # Sort by the specified field (1=Name, 2=IP, 3=MAC)
     if [ "${sort_field}" -eq 2 ]; then
-        # IP sorting - use custom IP sort for proper numeric ordering
         sort_by_ip "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
             printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
                 "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
         done
     else
-        # Name or MAC sorting - use regular sort
         sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
             printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
                 "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
@@ -5448,7 +5433,6 @@ get_lan_clients() {
         ${ARP} -n 2>/dev/null | awk 'NR>1 && $1!="?" {print $1, $3}' > "${temp_file}"
     fi
 
-    # Group IPs by MAC to handle multiple IPs per MAC
     local processed_macs_local=""
     > "${temp_output}"
 
@@ -5463,20 +5447,16 @@ get_lan_clients() {
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
         local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
 
-        # Skip if already processed this MAC in this function
         echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
 
-        # Skip if this MAC was already shown in wireless section
         if [ -f "${PROCESSED_CLIENTS}" ]; then
             if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
                 continue
             fi
         fi
 
-        # Track this MAC as processed
         echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
 
-        # Find all IPs for this MAC and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
 
@@ -5488,29 +5468,24 @@ get_lan_clients() {
                     break
                 fi
             done
-            # Fallback to first IP if no REACHABLE/DELAY found
             [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
         else
             best_ip="${ip}"
         fi
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
-        # Output in pipe-delimited format: name|ip|mac
         printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
     rm -f "${temp_file}"
 
-    # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
-            # IP sorting - use custom IP sort
             sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
         else
-            # Name or MAC sorting - use regular sort
             sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
@@ -5531,7 +5506,6 @@ get_primary_subnet() {
     fi
 }
 
-# Get subnet for a specific bridge interface
 get_bridge_subnet() {
     local bridge="$1"
     local bridge_ip=$(${IFCONFIG} "${bridge}" 2>/dev/null | grep 'inet addr:' | awk '{print $2}' | cut -d':' -f2)
@@ -5551,16 +5525,13 @@ get_bridge_clients() {
     local temp_file="/tmp/bridge_clients_$$.tmp"
     local temp_output="/tmp/bridge_output_$$.tmp"
 
-    # Get clients from ARP table that are on this specific bridge (Device column)
     if [ -f /proc/net/arp ]; then
         ${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge {print $1, $4, $6}' > "${temp_file}"
     else
-        # Fallback: if arp command is used, we won't have bridge info
         rm -f "${temp_file}"
         return
     fi
 
-    # Group IPs by MAC to handle multiple IPs per MAC
     local processed_macs_local=""
     > "${temp_output}"
 
@@ -5570,20 +5541,16 @@ get_bridge_clients() {
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
         local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
 
-        # Skip if already processed this MAC in this function
         echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
 
-        # Skip if this MAC was already shown in wireless section
         if [ -f "${PROCESSED_CLIENTS}" ]; then
             if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
                 continue
             fi
         fi
 
-        # Track this MAC as processed
         echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
 
-        # Find all IPs for this MAC on this bridge and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
 
@@ -5595,29 +5562,24 @@ get_bridge_clients() {
                     break
                 fi
             done
-            # Fallback to first IP if no REACHABLE/DELAY found
             [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
         else
             best_ip="${ip}"
         fi
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
-        # Output in pipe-delimited format: name|ip|mac
         printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
     rm -f "${temp_file}"
 
-    # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
-            # IP sorting - use custom IP sort
             sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
         else
-            # Name or MAC sorting - use regular sort
             sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
@@ -5639,15 +5601,12 @@ display_network_clients() {
     local guest_ssid
     local client_count
 
-    # Initialize processed client tracking files
     > "${PROCESSED_CLIENTS}"
     > "${PROCESSED_VLAN_CLIENTS}"
 
-    # Read DHCP leases once for MLO/MLD awareness
     local dhcp_leases=$(read_all_dhcp_leases)
 
-    # Determine sort field based on SortbyOpt
-    local sort_field=1  # Default: Name
+    local sort_field=1
     if [ "${SortbyOpt}" = "IP" ]; then
         sort_field=2
     elif [ "${SortbyOpt}" = "MAC" ]; then
@@ -5672,7 +5631,11 @@ display_network_clients() {
             client_count=$(echo "${client_list}" | wc -l)
         fi
 
-        # Get bridge information for display
+        # Skip this network if HideNetworks=1 and there are no clients
+        if [ "${HideNetworks}" -eq 1 ] && [ ${client_count} -eq 0 ]; then
+            continue
+        fi
+
         local bridge_name=$(get_bridge_for_interface "${iface}")
         local bridge_info=""
         if [ -n "${bridge_name}" ]; then
@@ -5684,7 +5647,6 @@ display_network_clients() {
             local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
             echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
         elif [ "${iface_type}" = "main" ]; then
-            # Get SSID for main wireless interfaces
             local main_ssid=$(get_ssid_for_interface "${iface}")
             if [ -n "${main_ssid}" ]; then
                 local content=" Local ${band} Wi-Fi: ${main_ssid}${bridge_info} - IFace: ${iface}"
@@ -5698,9 +5660,6 @@ display_network_clients() {
         fi
 
         if [ "${iface_type}" = "main" ] || [ "${iface_type}" = "guest" ]; then
-            #printf "  %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
-                #"Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
-
             if [ -n "${client_list}" ]; then
                 local temp_output="/tmp/netmon_client_output_$$.tmp"
                 > "${temp_output}"
@@ -5722,13 +5681,23 @@ display_network_clients() {
         fi
     done
 
-    # Get VLAN/AiMesh bridges from apg_ifnames (more accurate than subnet detection)
     local vlan_bridges=$(get_vlan_bridges)
 
     if [ -n "${vlan_bridges}" ]; then
         for bridge in ${vlan_bridges}; do
-            # Get subnet for this bridge if available
             local bridge_subnet=$(get_bridge_subnet "${bridge}")
+
+            # Check if there are any clients on this bridge
+            local bridge_has_clients=0
+            if [ -f /proc/net/arp ]; then
+                local bridge_client_count=$(${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge' | wc -l)
+                [ ${bridge_client_count} -gt 0 ] && bridge_has_clients=1
+            fi
+
+            # Skip this bridge if HideNetworks=1 and there are no clients
+            if [ "${HideNetworks}" -eq 1 ] && [ ${bridge_has_clients} -eq 0 ]; then
+                continue
+            fi
 
             if [ -n "${bridge_subnet}" ]; then
                 local content=" Local VLAN/AiMesh VLAN ${bridge_subnet} - IFace: ${bridge}"
@@ -5740,9 +5709,6 @@ display_network_clients() {
                 echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
             fi
 
-            #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
-
-            # Use bridge-based client detection with sorting
             local bridge_client_output=$(get_bridge_clients "${bridge}" "${dhcp_leases}" "${sort_field}")
 
             if [ -n "${bridge_client_output}" ]; then
@@ -5758,9 +5724,7 @@ display_network_clients() {
     local content=" Local LAN/Non-VLAN AiMesh - Subnet: ${primary_subnet} - IFace: br0"
     local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
     echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
-    #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
 
-    # Use bridge-based detection for br0 clients with sorting
     local br0_clients=$(get_bridge_clients "br0" "${dhcp_leases}" "${sort_field}")
     if [ -n "${br0_clients}" ]; then
         echo "${br0_clients}"
@@ -5768,7 +5732,6 @@ display_network_clients() {
         echo "  No wired clients found"
     fi
 
-    # Cleanup tracking files
     rm -f "${PROCESSED_CLIENTS}" "${PROCESSED_VLAN_CLIENTS}"
 }
 
