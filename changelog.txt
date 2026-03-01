@@ -1,3 +1,13 @@
+v2.3.1b1  - (March 1, 2026)
+          - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
+            irking me. First, adding an option (b) that will now show/hide networks with no connected
+            clients. This will drastically reduce clutter for many of you. Second, instead of showing
+            a 32-character alphanumeric Enhanced Open or OWE Transition hash as an SSID, it now shows
+            the friendly SSID name along with [Enhanced]. Many times these networks would also have 0
+            clients connected to them, however @Visortgw has shown that other routers do connect to
+            them as bridges or backhaul. All in all, the interface now looks less cluttered and less
+            confusing. Hope this is helpful!
+
 v2.3.0    - (January 10, 2026)
           - PATCH: HUGE HUGE THANKS to both @ExtremeFiretop and @visortgw for their help getting the
             wired/wireless client page (#7) working again. Apparently something had broken between a
