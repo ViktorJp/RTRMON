@@ -1999,17 +1999,31 @@ calculatestats()
   RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
   [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
 
+  if [ -f "/jffs/addons/rtrmon.d/rtmstart.txt" ]
+  then
+    timerstart=$(cat "/jffs/addons/rtrmon.d/rtmstart.txt")
+    timernow=$(date +%s)
+    timerdiff=$((timernow-timerstart))
+    if [ "$INITIALBOOT" = "1" ]; then
+    	newtimer=10
+    else
+      newtimer=$timerdiff
+    fi
+  else
+    newtimer=$Interval
+  fi
+  
   # CPU - Usage
-  if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / Interval)); else cpuusr1=0; fi
-  if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / Interval)); else cpusys1=0; fi
-  if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / Interval)); else cpunice1=0; fi
-  if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / Interval)); else cpuidle1=0; fi
-  if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / Interval)); else cpuirq1=0; fi
-  if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
-  if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
-  if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
-  if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
-  if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
+  if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / currtimer)); else cpuusr1=0; fi
+  if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / currtimer)); else cpusys1=0; fi
+  if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / currtimer)); else cpunice1=0; fi
+  if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / currtimer)); else cpuidle1=0; fi
+  if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / currtimer)); else cpuirq1=0; fi
+  if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
+  if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
+  if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
+  if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
+  if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
 
   # CPU - Temp - borrowed from @Maverickcdn - thank you!
   if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
@@ -2021,11 +2035,11 @@ calculatestats()
   fi
 
   # Memory - Usage
-  if [ -n "$memused1" ]; then memused1=$((memused1 / Interval)); else memused1=0; fi
-  if [ -n "$memfree1" ]; then memfree1=$((memfree1 / Interval)); else memfree1=0; fi
-  if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / Interval)); else memshrd1=0; fi
-  if [ -n "$membuff1" ]; then membuff1=$((membuff1 / Interval)); else membuff1=0; fi
-  if [ -n "$memcach1" ]; then memcach1=$((memcach1 / Interval)); else memcach1=0; fi
+  if [ -n "$memused1" ]; then memused1=$((memused1 / currtimer)); else memused1=0; fi
+  if [ -n "$memfree1" ]; then memfree1=$((memfree1 / currtimer)); else memfree1=0; fi
+  if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / currtimer)); else memshrd1=0; fi
+  if [ -n "$membuff1" ]; then membuff1=$((membuff1 / currtimer)); else membuff1=0; fi
+  if [ -n "$memcach1" ]; then memcach1=$((memcach1 / currtimer)); else memcach1=0; fi
 
   totalphysmem="$totalmemory"
 
@@ -2176,13 +2190,6 @@ calculatestats()
      if [ -z $w62updown ]; then w62updown="UP"; fi
   fi
 
-  # Network - Wifi - Traffic
-  # Standard Dual Band
-  #new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  #new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  #new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  #new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-
   new24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   new24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   new5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
@@ -2191,26 +2198,17 @@ calculatestats()
   # Tri or Quad Band 5GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     #new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-     #new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
-
      new52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   # Tri or Quad Band 6GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     #new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-     #new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
-
      new6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     #new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-     #new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
-
      new62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -2406,237 +2404,237 @@ calculatestats()
   # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
   if [ "$WAN0AltModes" = "0" ] || [ "$OpsMode" = "1" ]
   then
-     wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wanrxmbrate=0
      wantxmbrate=0
   fi
 
-  w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w52rxmbrate=0
      w52txmbrate=0
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w6rxmbrate=0
      w6txmbrate=0
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w62rxmbrate=0
      w62txmbrate=0
   fi
   if [ "$vpn1on" == "True" ]
   then
-     vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpnrxmbrate=0
      vpntxmbrate=0
   fi
   if [ "$vpn2on" == "True" ]
   then
-     vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn2rxmbrate=0
      vpn2txmbrate=0
   fi
   if [ "$vpn3on" == "True" ]
   then
-     vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn3rxmbrate=0
      vpn3txmbrate=0
   fi
   if [ "$vpn4on" == "True" ]
   then
-     vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn4rxmbrate=0
      vpn4txmbrate=0
   fi
   if [ "$vpn5on" == "True" ]
   then
-     vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn5rxmbrate=0
      vpn5txmbrate=0
   fi
   if [ "$wg1on" == "True" ]
   then
-     wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg1rxmbrate=0
      wg1txmbrate=0
   fi
   if [ "$wg2on" == "True" ]
   then
-     wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg2rxmbrate=0
      wg2txmbrate=0
   fi
   if [ "$wg3on" == "True" ]
   then
-     wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg3rxmbrate=0
      wg3txmbrate=0
   fi
   if [ "$wg4on" == "True" ]
   then
-     wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg4rxmbrate=0
      wg4txmbrate=0
   fi
   if [ "$wg5on" == "True" ]
   then
-     wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg5rxmbrate=0
      wg5txmbrate=0
   fi
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
   then
-     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   fi
 
-  w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
-  lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-  lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+  w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+  w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+  w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+  w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+  lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+  lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w52rxmbratedisplay=""
      w52txmbratedisplay=""
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w6rxmbratedisplay=""
      w6txmbratedisplay=""
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w62rxmbratedisplay=""
      w62txmbratedisplay=""
   fi
   if [ "$vpn1on" == "True" ]
   then
-     vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpnrxmbratedisplay=""
      vpntxmbratedisplay=""
   fi
   if [ "$vpn2on" == "True" ]
   then
-     vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn2rxmbratedisplay=""
      vpn2txmbratedisplay=""
   fi
   if [ "$vpn3on" == "True" ]
   then
-     vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn3rxmbratedisplay=""
      vpn3txmbratedisplay=""
   fi
   if [ "$vpn4on" == "True" ]
   then
-     vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn4rxmbratedisplay=""
      vpn4txmbratedisplay=""
   fi
   if [ "$vpn5on" == "True" ]
   then
-     vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn5rxmbratedisplay=""
      vpn5txmbratedisplay=""
   fi
   if [ "$wg1on" == "True" ]
   then
-     wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg1rxmbratedisplay=""
      wg1txmbratedisplay=""
   fi
   if [ "$wg2on" == "True" ]
   then
-     wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg2rxmbratedisplay=""
      wg2txmbratedisplay=""
   fi
   if [ "$wg3on" == "True" ]
   then
-     wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg3rxmbratedisplay=""
      wg3txmbratedisplay=""
   fi
   if [ "$wg4on" == "True" ]
   then
-     wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg4rxmbratedisplay=""
      wg4txmbratedisplay=""
   fi
   if [ "$wg5on" == "True" ]
   then
-     wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg5rxmbratedisplay=""
      wg5txmbratedisplay=""
@@ -6791,34 +6789,20 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
   fi
 
-  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
-
   old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   old5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
-
     old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
-
     old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
-    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
-
     old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -6829,6 +6813,8 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   GetVPNWGIPCITY
   GetVPNWGStats
 
+  echo $(date +%s) > "/jffs/addons/rtrmon.d/rtmstart.txt"
+
   # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME="$(date +%s)"
@@ -6837,6 +6823,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   ## Modified by Martinski W. [2024-Nov-04] ##
   ##----------------------------------------##
   timer=0
+  currtimer=0
   lastTimerSec=0
   updateTimer=true
   savedInterval="$Interval"
@@ -6849,6 +6836,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       then
           updateTimer=false
           timer="$((timer+1))"
+          currtimer="$timer"
           lastTimerSec="$(date +%s)"
           gettopstats "$timer"
       fi
@@ -6927,10 +6915,6 @@ do
     oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
   fi
-  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
-  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
-  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
-  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
 
   old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
@@ -6938,23 +6922,14 @@ do
   old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
-    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
-    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
-
     old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
-    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
-    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
-
     old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
-    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
-    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
-
     old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -6969,6 +6944,7 @@ do
   printf "${CGreen}\r                                         "
   printf "${CGreen}\r"
 
+  echo $(date +%s) > "/jffs/addons/rtrmon.d/rtmstart.txt"
 
   # Run through the stats gathering loop based on the current interval
   RM_ELAPSED_TIME=0
@@ -6978,6 +6954,7 @@ do
   ## Modified by Martinski W. [2024-Nov-05] ##
   ##----------------------------------------##
   timer=0
+  currtimer=0
   lastTimerSec=0
   updateTimer=true
   pausedTimerEnabled=false
@@ -6990,6 +6967,7 @@ do
       then
           updateTimer=false
           timer="$((timer+1))"
+          currtimer="$timer"
           lastTimerSec="$(date +%s)"
           gettopstats "$timer"
       fi
