@@ -4910,8 +4910,7 @@ get_band_from_interface() {
     fi
 }
 
-# Get SSID for a main wireless interface
-# Returns the actual SSID, not the alphanumeric hash
+# Get SSID for a main wireless interface, returns the actual SSID, not the alphanumeric hash
 # For OWE/Enhanced security networks, attempts to derive friendly name from VIF
 get_ssid_for_interface() {
     local iface="$1"
@@ -4948,7 +4947,7 @@ get_ssid_for_interface() {
                 break
             fi
         done
-        
+
         # If we found a friendly name from VIF, use it with [Enhanced] tag
         if [ -n "${friendly_name}" ] && [ "${friendly_name}" != " " ]; then
             echo "${friendly_name} [Enhanced]"
@@ -5008,7 +5007,7 @@ handle_pagination() {
             local remaining=$((total_lines - line_count))
             if [ ${remaining} -gt 0 ]; then
                 echo ""
-                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
+                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}${CClear}"
                 rm -f "${temp_file}"
                 return
             fi
@@ -5616,6 +5615,9 @@ display_network_clients() {
     printf "${InvGreen} ${CClear} %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
         "Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
 
+    # Track bridges used by wireless interfaces (guest networks)
+    local wireless_bridges=""
+
     for iface in $(get_wireless_interfaces); do
         info_str=$(get_interface_info "${iface}")
         iface_type=$(echo "${info_str}" | cut -d'|' -f1)
@@ -5640,6 +5642,8 @@ display_network_clients() {
         local bridge_info=""
         if [ -n "${bridge_name}" ]; then
             bridge_info=" (Bridge: ${bridge_name})"
+            # Track this bridge as being used by a wireless interface
+            wireless_bridges="${wireless_bridges} ${bridge_name}"
         fi
 
         if [ "${iface_type}" = "guest" ]; then
@@ -5687,15 +5691,42 @@ display_network_clients() {
         for bridge in ${vlan_bridges}; do
             local bridge_subnet=$(get_bridge_subnet "${bridge}")
 
-            # Check if there are any clients on this bridge
-            local bridge_has_clients=0
+            # Check if there are any WIRED clients on this bridge (not already processed as wireless)
+            local bridge_has_wired_clients=0
             if [ -f /proc/net/arp ]; then
-                local bridge_client_count=$(${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge' | wc -l)
-                [ ${bridge_client_count} -gt 0 ] && bridge_has_clients=1
+                # Get all MACs on this bridge
+                local bridge_macs=$(${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge {print toupper($4)}')
+
+                # Count only MACs that are NOT in PROCESSED_CLIENTS (i.e., not wireless clients)
+                if [ -n "${bridge_macs}" ]; then
+                    for mac in ${bridge_macs}; do
+                        if [ -f "${PROCESSED_CLIENTS}" ]; then
+                            if ! grep -qi "^${mac}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
+                                # This MAC is on the bridge but NOT a wireless client - it's a wired client
+                                bridge_has_wired_clients=1
+                                break
+                            fi
+                        else
+                            # No processed clients yet, so this must be wired
+                            bridge_has_wired_clients=1
+                            break
+                        fi
+                    done
+                fi
             fi
 
-            # Skip this bridge if HideNetworks=1 and there are no clients
-            if [ "${HideNetworks}" -eq 1 ] && [ ${bridge_has_clients} -eq 0 ]; then
+            # Skip this bridge if it was already displayed as a wireless network AND has no wired clients
+            # This prevents duplicate empty sections, but allows showing wired clients on guest network bridges
+            if echo "${wireless_bridges}" | grep -q "${bridge}"; then
+                if [ ${bridge_has_wired_clients} -eq 0 ]; then
+                    # Bridge is used by wireless and has no wired clients - skip it
+                    continue
+                fi
+                # Bridge is used by wireless but HAS wired clients - show them
+            fi
+
+            # Skip this bridge if HideNetworks=1 and there are no wired clients
+            if [ "${HideNetworks}" -eq 1 ] && [ ${bridge_has_wired_clients} -eq 0 ]; then
                 continue
             fi
 
