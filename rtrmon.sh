@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Mar-1
+# Last Modified: 2026-Mar-8
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,8 +24,8 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.1b1"
-Beta=1
+Version="2.3.1"
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -711,7 +711,7 @@ converttemps () {
 updatecheck () {
 
   # Download the latest version file from the source repository
-  curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/version.txt" -o "/jffs/addons/rtrmon.d/version.txt"
+  curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/version.txt" -o "/jffs/addons/rtrmon.d/version.txt"
 
   if [ -f $DLVERPATH ]
     then
@@ -1091,12 +1091,12 @@ vconfig()
                   echo -e "Installing Ookla Speedtest binaries..."
                   echo ""
                   if [ "$(uname -m)" = "aarch64" ]; then
-                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
+                    curl --silent --fail --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtst64.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtst64.tgz
                   else
-                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
+                    curl --silent --fail --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtstel.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtstel.tgz
@@ -1402,7 +1402,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "Downloading RTRMON ${CGreen}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "Download successful!${CClear}"
         echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Successfully downloaded RTRMON v$DLVersion." >> $LOGFILE
@@ -1422,7 +1422,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "Download successful!${CClear}"
         echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Successfully downloaded RTRMON v$DLVersion." >> $LOGFILE
@@ -4060,7 +4060,7 @@ DisplayPage6()
           # Added based on suggestion from @ZebMcKayhan
           ip rule add from $NVRAMWGSLOTADDR lookup $WGTUN prio 10 >/dev/null 2>&1
 
-          icanhazwgip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN" --request GET --url https://ipv4.icanhazip.com"
+          icanhazwgip="curl --fail --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN" --request GET --url https://ipv4.icanhazip.com"
           icanhazwgip="$(eval $icanhazwgip)"
           if [ -z "$icanhazwgip" ] || echo "$icanhazwgip" | grep -qoE 'Internet|traffic|Error|error'
           then
@@ -5803,7 +5803,7 @@ GetVPNWGIPCITY()
       oldvpn1ip=$NVRAMVPN1IP
       oldvpn1city="Private Network"
     elif [ "$vpn1ip" != "$oldvpn1ip" ]; then
-      oldvpn1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
+      oldvpn1city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
       oldvpn1city="$(eval $oldvpn1city)"; if echo $oldvpn1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn1city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpn1ip ($oldvpn1city)" >> $LOGFILE
     fi
@@ -5840,7 +5840,7 @@ GetVPNWGIPCITY()
       oldvpn2ip=$NVRAMVPN2IP
       oldvpn2city="Private Network"
     elif [ "$vpn2ip" != "$oldvpn2ip" ]; then
-      oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+      oldvpn2city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
       oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
     fi
@@ -5877,7 +5877,7 @@ GetVPNWGIPCITY()
       oldvpn3ip=$NVRAMVPN3IP
       oldvpn3city="Private Network"
     elif [ "$vpn3ip" != "$oldvpn3ip" ]; then
-      oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+      oldvpn3city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
       oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
     fi
@@ -5914,7 +5914,7 @@ GetVPNWGIPCITY()
       oldvpn4ip=$NVRAMVPN4IP
       oldvpn4city="Private Network"
     elif [ "$vpn4ip" != "$oldvpn4ip" ]; then
-      oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+      oldvpn4city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
       oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
     fi
@@ -5951,7 +5951,7 @@ GetVPNWGIPCITY()
       oldvpn5ip=$NVRAMVPN5IP
       oldvpn5city="Private Network"
     elif [ "$vpn5ip" != "$oldvpn5ip" ]; then
-      oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+      oldvpn5city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
       oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
     fi
@@ -5980,7 +5980,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg1ip="$NVRAMWG1IP"
       else
-        oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+        oldwg1ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
         oldwg1ip="$(eval $oldwg1ip)"
         if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -5996,9 +5996,9 @@ GetVPNWGIPCITY()
       oldwg1ip="$NVRAMWG1IP"
       oldwg1city="Private Network"
     elif [ "$wg1ip" != "$oldwg1ip" ]; then
-      oldwg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
+      oldwg1city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
       oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
     fi
 
     wg1ip="$oldwg1ip"
@@ -6025,7 +6025,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
       else
-        oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+        oldwg2ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
         oldwg2ip="$(eval $oldwg2ip)"
         if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6041,9 +6041,9 @@ GetVPNWGIPCITY()
       oldwg2ip="$NVRAMWG2IP"
       oldwg2city="Private Network"
     elif [ "$wg2ip" != "$oldwg2ip" ]; then
-      oldwg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
+      oldwg2city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
       oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
     fi
 
     wg2ip="$oldwg2ip"
@@ -6070,7 +6070,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg3ip="$NVRAMWG3IP"
       else
-        oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+        oldwg3ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
         oldwg3ip="$(eval $oldwg3ip)"
         if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6086,9 +6086,9 @@ GetVPNWGIPCITY()
       oldwg3ip="$NVRAMWG3IP"
       oldwg3city="Private Network"
     elif [ "$wg3ip" != "$oldwg3ip" ]; then
-      oldwg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
+      oldwg3city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
       oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
     fi
 
     wg3ip="$oldwg3ip"
@@ -6115,7 +6115,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg4ip="$NVRAMWG4IP"
       else
-        oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+        oldwg4ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
         oldwg4ip="$(eval $oldwg4ip)"
         if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6131,9 +6131,9 @@ GetVPNWGIPCITY()
       oldwg4ip="$NVRAMWG4IP"
       oldwg4city="Private Network"
     elif [ "$wg4ip" != "$oldwg4ip" ]; then
-      oldwg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
+      oldwg4city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
       oldwg4city="$(eval $oldwg4city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
     fi
 
     wg4ip="$oldwg4ip"
@@ -6160,7 +6160,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
       else
-        oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+        oldwg5ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
         oldwg5ip="$(eval $oldwg5ip)"
         if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6176,9 +6176,9 @@ GetVPNWGIPCITY()
       oldwg5ip="$NVRAMWG5IP"
       oldwg5city="Private Network"
     elif [ "$wg5ip" != "$oldwg5ip" ]; then
-      oldwg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
+      oldwg5city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
       oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
     fi
 
     wg5ip="$oldwg5ip"
