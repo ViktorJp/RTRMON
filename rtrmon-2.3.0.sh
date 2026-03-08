@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Mar-8
+# Last Modified: 2026-Jan-7
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.3.1"
+Version="2.3.0"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -137,7 +137,6 @@ w62updown="UP"
 SortbyOpt="Name"
 PreventScrolling=0 # PreventScrolling: 0=Show all output, 1=Paginate output
 MaxRows=24 # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
-HideNetworks=1 #HideNetworks: 0=Show all output, 1=Hide networks with 0 connected clients
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-04] ##
@@ -545,8 +544,6 @@ progressbaroverride()
            case "$key_press" in
                [Aa]) if [ "$PreventScrolling" = "1" ]; then PreventScrolling=0; elif [ "$PreventScrolling" = "0" ]; then PreventScrolling=1; fi;
                      timerReset=1;;
-               [Bb]) if [ "$HideNetworks" = "1" ]; then HideNetworks=0; elif [ "$HideNetworks" = "0" ]; then HideNetworks=1; fi;
-                     timerReset=1;;
                [Cc]) QueueNetworkConn=1
                      echo -e "${CClear}[Queuing Network Connection Stats]                                       ";
                      sleep 1; NextPage=6; timerReset=1
@@ -711,7 +708,7 @@ converttemps () {
 updatecheck () {
 
   # Download the latest version file from the source repository
-  curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/version.txt" -o "/jffs/addons/rtrmon.d/version.txt"
+  curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/version.txt" -o "/jffs/addons/rtrmon.d/version.txt"
 
   if [ -f $DLVERPATH ]
     then
@@ -1091,12 +1088,12 @@ vconfig()
                   echo -e "Installing Ookla Speedtest binaries..."
                   echo ""
                   if [ "$(uname -m)" = "aarch64" ]; then
-                    curl --silent --fail --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
+                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-aarch64.tgz" -o "/jffs/addons/rtrmon.d/spdtst64.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtst64.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtst64.tgz
                   else
-                    curl --silent --fail --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
+                    curl --silent --retry 3 "https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux-armel.tgz" -o "/jffs/addons/rtrmon.d/spdtstel.tgz"
                     tar -zxf /jffs/addons/rtrmon.d/spdtstel.tgz -C /jffs/addons/rtrmon.d 2>/dev/null
                     chmod 0755 "/jffs/addons/rtrmon.d/speedtest"
                     rm /jffs/addons/rtrmon.d/spdtstel.tgz
@@ -1402,7 +1399,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "Downloading RTRMON ${CGreen}v$DLVersion${CClear}"
-        curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "Download successful!${CClear}"
         echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Successfully downloaded RTRMON v$DLVersion." >> $LOGFILE
@@ -1422,7 +1419,7 @@ vupdate () {
         echo ""
         echo ""
         echo -e "Downloading RTRMON ${CYellow}v$DLVersion${CClear}"
-        curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+        curl --silent --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
         echo ""
         echo -e "Download successful!${CClear}"
         echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: Successfully downloaded RTRMON v$DLVersion." >> $LOGFILE
@@ -1999,31 +1996,17 @@ calculatestats()
   RM_ELAPSED_TIME=$((RM_END_TIME - RM_START_TIME))
   [ "$RM_ELAPSED_TIME" -eq 0 ] && return 1
 
-  if [ -f "/jffs/addons/rtrmon.d/rtmstart.txt" ]
-  then
-    timerstart=$(cat "/jffs/addons/rtrmon.d/rtmstart.txt")
-    timernow=$(date +%s)
-    timerdiff=$((timernow-timerstart))
-    if [ "$INITIALBOOT" = "1" ]; then
-    	newtimer=10
-    else
-      newtimer=$timerdiff
-    fi
-  else
-    newtimer=$Interval
-  fi
-  
   # CPU - Usage
-  if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / currtimer)); else cpuusr1=0; fi
-  if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / currtimer)); else cpusys1=0; fi
-  if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / currtimer)); else cpunice1=0; fi
-  if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / currtimer)); else cpuidle1=0; fi
-  if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / currtimer)); else cpuirq1=0; fi
-  if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
-  if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
-  if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
-  if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
-  if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$currtimer 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
+  if [ -n "$cpuusr1" ]; then cpuusr1=$((cpuusr1 / Interval)); else cpuusr1=0; fi
+  if [ -n "$cpusys1" ]; then cpusys1=$((cpusys1 / Interval)); else cpusys1=0; fi
+  if [ -n "$cpunice1" ]; then cpunice1=$((cpunice1 / Interval)); else cpunice1=0; fi
+  if [ -n "$cpuidle1" ]; then cpuidle1=$((cpuidle1 / Interval)); else cpuidle1=0; fi
+  if [ -n "$cpuirq1" ]; then cpuirq1=$((cpuirq1 / Interval)); else cpuirq1=0; fi
+  if [ -n "$displaycpuusr1" ]; then displaycpuusr1=$(awk -v rb=$displaycpuusr1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuusr1=0; fi
+  if [ -n "$displaycpusys1" ]; then displaycpusys1=$(awk -v rb=$displaycpusys1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpusys1=0; fi
+  if [ -n "$displaycpunice1" ]; then displaycpunice1=$(awk -v rb=$displaycpunice1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpunice1=0; fi
+  if [ -n "$displaycpuidle1" ]; then displaycpuidle1=$(awk -v rb=$displaycpuidle1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuidle1=0; fi
+  if [ -n "$displaycpuirq1" ]; then displaycpuirq1=$(awk -v rb=$displaycpuirq1 -v intv=$Interval 'BEGIN{printf "%0.2f\n", rb/intv}'); else displaycpuirq1=0; fi
 
   # CPU - Temp - borrowed from @Maverickcdn - thank you!
   if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
@@ -2035,11 +2018,11 @@ calculatestats()
   fi
 
   # Memory - Usage
-  if [ -n "$memused1" ]; then memused1=$((memused1 / currtimer)); else memused1=0; fi
-  if [ -n "$memfree1" ]; then memfree1=$((memfree1 / currtimer)); else memfree1=0; fi
-  if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / currtimer)); else memshrd1=0; fi
-  if [ -n "$membuff1" ]; then membuff1=$((membuff1 / currtimer)); else membuff1=0; fi
-  if [ -n "$memcach1" ]; then memcach1=$((memcach1 / currtimer)); else memcach1=0; fi
+  if [ -n "$memused1" ]; then memused1=$((memused1 / Interval)); else memused1=0; fi
+  if [ -n "$memfree1" ]; then memfree1=$((memfree1 / Interval)); else memfree1=0; fi
+  if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / Interval)); else memshrd1=0; fi
+  if [ -n "$membuff1" ]; then membuff1=$((membuff1 / Interval)); else membuff1=0; fi
+  if [ -n "$memcach1" ]; then memcach1=$((memcach1 / Interval)); else memcach1=0; fi
 
   totalphysmem="$totalmemory"
 
@@ -2190,6 +2173,13 @@ calculatestats()
      if [ -z $w62updown ]; then w62updown="UP"; fi
   fi
 
+  # Network - Wifi - Traffic
+  # Standard Dual Band
+  #new24rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #new24txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #new5rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #new5txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+
   new24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   new24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   new5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
@@ -2198,17 +2188,26 @@ calculatestats()
   # Tri or Quad Band 5GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
+     #new52rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+     #new52txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
      new52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   # Tri or Quad Band 6GHz
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
+     #new6rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+     #new6txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
      new6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
+     #new62rxbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+     #new62txbytes="$($timeoutcmd$timeoutsec cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
      new62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
      new62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -2404,237 +2403,237 @@ calculatestats()
   # Network - Traffic - Results are further divided by the timer/interval to give Megabits/sec
   if [ "$WAN0AltModes" = "0" ] || [ "$OpsMode" = "1" ]
   then
-     wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wanrxmbrate=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wantxmbrate=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wanrxmbrate=0
      wantxmbrate=0
   fi
 
-  w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
-  lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-  lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  w24rxmbrate=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  w24txmbrate=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  w5rxmbrate=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  w5txmbrate=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+  lanrxmbrate=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+  lantxmbrate=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w52rxmbrate=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w52txmbrate=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w52rxmbrate=0
      w52txmbrate=0
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w6rxmbrate=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w6txmbrate=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w6rxmbrate=0
      w6txmbrate=0
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     w62rxmbrate=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     w62txmbrate=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      w62rxmbrate=0
      w62txmbrate=0
   fi
   if [ "$vpn1on" == "True" ]
   then
-     vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpnrxmbrate=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpntxmbrate=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpnrxmbrate=0
      vpntxmbrate=0
   fi
   if [ "$vpn2on" == "True" ]
   then
-     vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn2rxmbrate=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn2txmbrate=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn2rxmbrate=0
      vpn2txmbrate=0
   fi
   if [ "$vpn3on" == "True" ]
   then
-     vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn3rxmbrate=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn3txmbrate=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn3rxmbrate=0
      vpn3txmbrate=0
   fi
   if [ "$vpn4on" == "True" ]
   then
-     vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn4rxmbrate=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn4txmbrate=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn4rxmbrate=0
      vpn4txmbrate=0
   fi
   if [ "$vpn5on" == "True" ]
   then
-     vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     vpn5rxmbrate=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     vpn5txmbrate=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      vpn5rxmbrate=0
      vpn5txmbrate=0
   fi
   if [ "$wg1on" == "True" ]
   then
-     wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg1rxmbrate=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg1txmbrate=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg1rxmbrate=0
      wg1txmbrate=0
   fi
   if [ "$wg2on" == "True" ]
   then
-     wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg2rxmbrate=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg2txmbrate=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg2rxmbrate=0
      wg2txmbrate=0
   fi
   if [ "$wg3on" == "True" ]
   then
-     wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg3rxmbrate=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg3txmbrate=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg3rxmbrate=0
      wg3txmbrate=0
   fi
   if [ "$wg4on" == "True" ]
   then
-     wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg4rxmbrate=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg4txmbrate=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg4rxmbrate=0
      wg4txmbrate=0
   fi
   if [ "$wg5on" == "True" ]
   then
-     wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
-     wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$newtimer 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
+     wg5rxmbrate=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", rb/intv}' | cut -d . -f 1)
+     wg5txmbrate=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.2f\n", tb/intv}' | cut -d . -f 1)
   else
      wg5rxmbrate=0
      wg5txmbrate=0
   fi
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]
   then
-     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wanrxmbratedisplay=$(awk -v rb=$diffwanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wantxmbratedisplay=$(awk -v tb=$diffwantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   fi
 
-  w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
-  w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-  w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
-  lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-  lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+  w24rxmbratedisplay=$(awk -v rb=$diff24rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+  w24txmbratedisplay=$(awk -v tb=$diff24txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+  w5rxmbratedisplay=$(awk -v rb=$diff5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+  w5txmbratedisplay=$(awk -v tb=$diff5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
+  lanrxmbratedisplay=$(awk -v rb=$difflanrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+  lantxmbratedisplay=$(awk -v tb=$difflantxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]
   then
-     w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w52rxmbratedisplay=$(awk -v rb=$diff52rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w52txmbratedisplay=$(awk -v tb=$diff52txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w52rxmbratedisplay=""
      w52txmbratedisplay=""
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]
   then
-     w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w6rxmbratedisplay=$(awk -v rb=$diff6rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w6txmbratedisplay=$(awk -v tb=$diff6txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w6rxmbratedisplay=""
      w6txmbratedisplay=""
   fi
   if [ "$FourBandCustom56624" == "True" ]
   then
-     w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     w62rxmbratedisplay=$(awk -v rb=$diff62rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     w62txmbratedisplay=$(awk -v tb=$diff62txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      w62rxmbratedisplay=""
      w62txmbratedisplay=""
   fi
   if [ "$vpn1on" == "True" ]
   then
-     vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpnrxmbratedisplay=$(awk -v rb=$diffvpnrxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpntxmbratedisplay=$(awk -v tb=$diffvpntxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpnrxmbratedisplay=""
      vpntxmbratedisplay=""
   fi
   if [ "$vpn2on" == "True" ]
   then
-     vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn2rxmbratedisplay=$(awk -v rb=$diffvpn2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn2txmbratedisplay=$(awk -v tb=$diffvpn2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn2rxmbratedisplay=""
      vpn2txmbratedisplay=""
   fi
   if [ "$vpn3on" == "True" ]
   then
-     vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn3rxmbratedisplay=$(awk -v rb=$diffvpn3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn3txmbratedisplay=$(awk -v tb=$diffvpn3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn3rxmbratedisplay=""
      vpn3txmbratedisplay=""
   fi
   if [ "$vpn4on" == "True" ]
   then
-     vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn4rxmbratedisplay=$(awk -v rb=$diffvpn4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn4txmbratedisplay=$(awk -v tb=$diffvpn4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn4rxmbratedisplay=""
      vpn4txmbratedisplay=""
   fi
   if [ "$vpn5on" == "True" ]
   then
-     vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     vpn5rxmbratedisplay=$(awk -v rb=$diffvpn5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     vpn5txmbratedisplay=$(awk -v tb=$diffvpn5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      vpn5rxmbratedisplay=""
      vpn5txmbratedisplay=""
   fi
   if [ "$wg1on" == "True" ]
   then
-     wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg1rxmbratedisplay=$(awk -v rb=$diffwg1rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg1txmbratedisplay=$(awk -v tb=$diffwg1txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg1rxmbratedisplay=""
      wg1txmbratedisplay=""
   fi
   if [ "$wg2on" == "True" ]
   then
-     wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg2rxmbratedisplay=$(awk -v rb=$diffwg2rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg2txmbratedisplay=$(awk -v tb=$diffwg2txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg2rxmbratedisplay=""
      wg2txmbratedisplay=""
   fi
   if [ "$wg3on" == "True" ]
   then
-     wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg3rxmbratedisplay=$(awk -v rb=$diffwg3rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg3txmbratedisplay=$(awk -v tb=$diffwg3txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg3rxmbratedisplay=""
      wg3txmbratedisplay=""
   fi
   if [ "$wg4on" == "True" ]
   then
-     wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg4rxmbratedisplay=$(awk -v rb=$diffwg4rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg4txmbratedisplay=$(awk -v tb=$diffwg4txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg4rxmbratedisplay=""
      wg4txmbratedisplay=""
   fi
   if [ "$wg5on" == "True" ]
   then
-     wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", rb/intv}')
-     wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$newtimer 'BEGIN{printf "%0.1f\n", tb/intv}')
+     wg5rxmbratedisplay=$(awk -v rb=$diffwg5rxbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", rb/intv}')
+     wg5txmbratedisplay=$(awk -v tb=$diffwg5txbytes -v intv=$RM_ELAPSED_TIME 'BEGIN{printf "%0.1f\n", tb/intv}')
   else
      wg5rxmbratedisplay=""
      wg5txmbratedisplay=""
@@ -4060,7 +4059,7 @@ DisplayPage6()
           # Added based on suggestion from @ZebMcKayhan
           ip rule add from $NVRAMWGSLOTADDR lookup $WGTUN prio 10 >/dev/null 2>&1
 
-          icanhazwgip="curl --fail --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN" --request GET --url https://ipv4.icanhazip.com"
+          icanhazwgip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN" --request GET --url https://ipv4.icanhazip.com"
           icanhazwgip="$(eval $icanhazwgip)"
           if [ -z "$icanhazwgip" ] || echo "$icanhazwgip" | grep -qoE 'Internet|traffic|Error|error'
           then
@@ -4692,13 +4691,13 @@ DisplayPage7()
   echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Attached Wireless + Wired Clients                                         (Dedicated to @ExtremeFiretop and @visortgw) ${CClear}"
   if [ "$SortbyOpt" = "Name" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${InvDkGray}${CGreen} (!)${CWhite}Name ${CClear}${CWhite}  |  ${CGreen}(@)${CWhite}IP  |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   elif [ "$SortbyOpt" = "IP" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  | ${InvDkGray} ${CGreen}(@)${CWhite}IP ${CClear}${CWhite} |  ${CGreen}(#)${CWhite}MAC${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   elif [ "$SortbyOpt" = "MAC" ]; then
     echo -e "${InvGreen} ${CClear}"
-    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}"
+    echo -e "${InvGreen} ${CClear}${CWhite} Sort By: ${CGreen} (!)${CWhite}Name  |  ${CGreen}(@)${CWhite}IP  | ${InvDkGray} ${CGreen}(#)${CWhite}MAC ${CClear}  ${CWhite}|  ${CClear}[${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
   fi
   echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
 
@@ -4711,9 +4710,22 @@ ARP="arp"
 IFCONFIG="ifconfig"
 CAT="cat"
 
+# Color definitions
+#InvGreen="\e[42m"
+#InvDkGray="\e[100m"
+#CWhite="\e[97m"
+#CGreen="\e[92m"
+#CDkGray="\e[90m"
+#CClear="\e[0m"
+
 # Temporary files for client tracking and deduplication
 PROCESSED_CLIENTS="/tmp/netmon_processed_clients_$$.txt"
 PROCESSED_VLAN_CLIENTS="/tmp/netmon_processed_vlan_clients_$$.txt"
+
+# Sorting Configuration
+# Options: "Name", "IP", "MAC"
+# Default: "Name" (alphabetical sorting by hostname)
+#SortbyOpt="Name"
 
 # Display width for formatted headers
 HEADER_WIDTH=120
@@ -4733,6 +4745,8 @@ IFNAME_6_2=""
 detect_router_model() {
     local router_model=$(${NVRAM} get productid 2>/dev/null)
     [ -z "${router_model}" ] && router_model=$(${NVRAM} get model 2>/dev/null)
+
+    #echo "Detected Router Model: ${router_model}" >&2
 
     # Determine radio configuration based on router model
     case "${router_model}" in
@@ -4772,6 +4786,14 @@ detect_router_model() {
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             ;;
     esac
+
+    # Log detected interfaces
+    #echo "Interface Mapping:" >&2
+    #[ -n "${IFNAME_24}" ] && echo "  2.4GHz: ${IFNAME_24}" >&2
+    #[ -n "${IFNAME_5}" ] && echo "  5.0GHz: ${IFNAME_5}" >&2
+    #[ -n "${IFNAME_5_2}" ] && echo "  5.0GHz-2: ${IFNAME_5_2}" >&2
+    #[ -n "${IFNAME_6}" ] && echo "  6.0GHz: ${IFNAME_6}" >&2
+    #[ -n "${IFNAME_6_2}" ] && echo "  6.0GHz-2: ${IFNAME_6_2}" >&2
 }
 
 ################################################################################
@@ -4790,7 +4812,10 @@ read_all_dhcp_leases() {
     echo "${all_leases}"
 }
 
-# Unified MLD MAC retrieval logic
+# Unified MLD MAC retrieval logic: given the current dhcpleases and association MAC (in lowercase),
+# determine the lookup MAC (which may be the MLD MAC if present).
+# For WiFi 7 / MLO clients the MAC used by 'wl assoclist' may NOT be the same MAC
+# that appears in ARP/DHCP. This function finds the correct MAC to use for lookups.
 get_lookup_mac() {
     local maclower="$1"
     local leases="$2"
@@ -4908,53 +4933,21 @@ get_band_from_interface() {
     fi
 }
 
-# Get SSID for a main wireless interface, returns the actual SSID, not the alphanumeric hash
-# For OWE/Enhanced security networks, attempts to derive friendly name from VIF
+# Get SSID for a main wireless interface
 get_ssid_for_interface() {
     local iface="$1"
     local ssid=""
 
-    # Method 1: Try to get SSID directly from wl status command
-    # This is more reliable than nvram for getting the actual broadcast SSID
-    ssid=$(${WL} -i "${iface}" status 2>/dev/null | grep "^SSID:" | sed 's/^SSID: "\(.*\)"$/\1/')
-
-    # Method 2: Fallback to nvram if wl status didn't work
-    if [ -z "${ssid}" ]; then
-        # Find the wl unit number for this interface
-        for wl_unit in 0 1 2 3; do
-            local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
-            if [ "${unit_iface}" = "${iface}" ]; then
-                ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
-                break
-            fi
-        done
-    fi
-
-    # Check if SSID is a 32-character hex hash (OWE/Enhanced security)
-    if [ -n "${ssid}" ] && [ ${#ssid} -eq 32 ] && echo "${ssid}" | grep -q '^[0-9A-F]\{32\}$'; then
-        # Try to find a friendly name from VIFs on the same radio
-        local friendly_name=""
-        for wl_unit in 0 1 2 3; do
-            local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
-            if [ "${unit_iface}" = "${iface}" ]; then
-                # Check first VIF for this radio
-                local first_vif=$(${NVRAM} get wl${wl_unit}_vifs 2>/dev/null | awk '{print $1}')
-                if [ -n "${first_vif}" ]; then
-                    friendly_name=$(${NVRAM} get ${first_vif}_ssid 2>/dev/null)
-                fi
-                break
-            fi
-        done
-
-        # If we found a friendly name from VIF, use it with [Enhanced] tag
-        if [ -n "${friendly_name}" ] && [ "${friendly_name}" != " " ]; then
-            echo "${friendly_name} [Enhanced]"
-        else
-            echo "[Enhanced Security]"
+    # Find the wl unit number for this interface
+    for wl_unit in 0 1 2 3; do
+        local unit_iface=$(${NVRAM} get wl${wl_unit}_ifname 2>/dev/null)
+        if [ "${unit_iface}" = "${iface}" ]; then
+            ssid=$(${NVRAM} get wl${wl_unit}_ssid 2>/dev/null)
+            break
         fi
-    else
-        echo "${ssid}"
-    fi
+    done
+
+    echo "${ssid}"
 }
 
 # Sort IP addresses numerically by converting to zero-padded format
@@ -4963,17 +4956,18 @@ sort_by_ip() {
 
     # Add zero-padded IP as first field for sorting, then sort, then remove it
     awk -F'|' '{
-        split($2, octets, ".");
+        split($2, octets, "."); # Split IP address into octets (field 2 is the IP)
         if (octets[1] != "" && octets[2] != "" && octets[3] != "" && octets[4] != "") {
-            padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]);
+            padded_ip = sprintf("%03d.%03d.%03d.%03d", octets[1], octets[2], octets[3], octets[4]); # Create zero-padded version for sorting (e.g., 192.168.050.002)
         } else {
-            padded_ip = "999.999.999.999";
+            padded_ip = "999.999.999.999"; # Handle "Unknown" or malformed IPs - sort them last
         }
         print padded_ip "|" $0;
     }' "${temp_file}" | sort -t'|' -k1,1 | cut -d'|' -f2-
 }
 
 # Pagination control function
+# Manages output display with optional row limiting
 handle_pagination() {
     local line_count=0
     local total_lines=0
@@ -5005,7 +4999,7 @@ handle_pagination() {
             local remaining=$((total_lines - line_count))
             if [ ${remaining} -gt 0 ]; then
                 echo ""
-                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]  |  ${CClear}[${CGreen}b${CClear}=Show/Hide Empty Networks]${CClear}${CClear}"
+                echo -e "${InvGreen} ${CClear} More rows available (${remaining} remaining) [${CGreen}a${CClear}=Enable/Disable Screen Run-off]${CClear}"
                 rm -f "${temp_file}"
                 return
             fi
@@ -5016,6 +5010,7 @@ handle_pagination() {
 }
 
 # Get interface type and band information
+# Uses bridge membership to accurately determine guest vs local Wi-Fi
 get_interface_info() {
     local iface="$1"
     local band=""
@@ -5023,6 +5018,7 @@ get_interface_info() {
     local guest_ssid=""
     local bridge_name=""
 
+    # Check if this is a guest/VIF interface by looking for it in bridge interfaces
     # Find which bridge this interface is enslaved to
     for br in $(ls /sys/class/net 2>/dev/null | grep '^br'); do
         if [ -d "/sys/class/net/${br}/brif/${iface}" ]; then
@@ -5100,6 +5096,7 @@ bytes_to_gb() {
 }
 
 # Get IP address for a MAC from ARP table with MLO/MLD awareness
+# Prefers IPs with REACHABLE or DELAY neighbor state for more reliable mapping
 get_ip_from_mac() {
     local mac="$1"
     local dhcp_leases="$2"
@@ -5148,7 +5145,7 @@ get_ip_from_mac() {
     fi
 }
 
-# Get hostname from dnsmasq leases and nvram
+# Get hostname from dnsmasq leases and nvram - MAC-specific with MLO/MLD support
 get_hostname() {
     local mac="$1"
     local ip="$2"
@@ -5222,7 +5219,8 @@ get_wireless_client_details() {
     # Get the lookup MAC for WiFi 7 / MLO clients
     local lookup_mac=$(get_lookup_mac "${mac_normalized}" "${dhcp_leases}")
 
-    # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be the same MAC that appears in ARP/DHCP. Start with the assoc MAC
+    # For WiFi 7 / MLO clients the MAC used by wl (assoclist) may NOT be
+    # the same MAC that appears in ARP/DHCP. Start with the assoc MAC
     # as canonical, then override if we find a better ARP match.
     local canonical_mac="${mac}"
     local canonlower="${mac_normalized}"
@@ -5248,11 +5246,12 @@ get_wireless_client_details() {
     fi
 
     # Try to find IP for this MAC using MLO/MLD aware lookup
+    # 1) Try direct match in ARP table - collect all IPs
     local ips=""
     if [ -f /proc/net/arp ]; then
         ips=$(awk -v mac="${mac_normalized}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null)
 
-        # If that fails, try a fuzzy match using the middle 4 bytes of the MAC
+        # 2) If that fails, try a fuzzy match using the middle 4 bytes of the MAC
         if [ -z "${ips}" ]; then
             local mac_mid4=$(echo "${mac_normalized}" | awk -F: '{print $2":"$3":"$4":"$5}')
             if [ -n "${mac_mid4}" ]; then
@@ -5266,11 +5265,12 @@ get_wireless_client_details() {
             fi
         fi
 
-        # If we had multiple IPs from direct match, prefer one that is REACHABLE/DELAY
+        # 3) If we had multiple IPs from direct match, prefer one that is REACHABLE/DELAY
         if [ -z "${clientip}" ] && [ -n "${ips}" ]; then
             for ip in ${ips}; do
                 local arp_status=$(ip neigh show | grep -w "${ip}" | awk '{print $NF}' 2>/dev/null)
                 if [ -z "${arp_status}" ] || { [ "${arp_status}" != "REACHABLE" ] && [ "${arp_status}" != "DELAY" ]; }; then
+                    # Mark as stale if we have no signal strength
                     [ -z "${rssi}" ] && uptime="STALE"
                     continue
                 else
@@ -5278,11 +5278,12 @@ get_wireless_client_details() {
                     break
                 fi
             done
+            # If no REACHABLE/DELAY found, use the last IP as fallback
             [ -z "${clientip}" ] && clientip=$(echo "${ips}" | tail -n 1)
         fi
     fi
 
-    # Final fallback using canonical MAC
+    # 4) Final fallback using canonical MAC
     if [ -z "${clientip}" ]; then
         clientip=$(awk -v mac="${canonlower}" 'BEGIN{IGNORECASE=1} tolower($4)==mac {print $1}' /proc/net/arp 2>/dev/null | sort | uniq | tail -n 1)
     fi
@@ -5293,15 +5294,19 @@ get_wireless_client_details() {
     fi
 
     # For isolated guest networks, client may not appear in main ARP table
+    # Still display the client with "Unknown" IP if we have wireless stats
     if [ -z "${clientip}" ]; then
         if [ -n "${rssi}" ]; then
+            # Client is actively connected via wireless, just no IP visible
             clientip="Unknown"
         else
+            # No IP and no wireless stats - skip this client
             return
         fi
     fi
 
     # Check if this canonical MAC has already been processed
+    # This prevents the same device from appearing in both Wi-Fi and LAN sections
     if [ -f "${PROCESSED_CLIENTS}" ]; then
         if grep -qi "^${canonupper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
             return
@@ -5311,7 +5316,7 @@ get_wireless_client_details() {
     # Track this canonical MAC as processed
     echo "${canonupper}" >> "${PROCESSED_CLIENTS}"
 
-    # Get hostname
+    # Get hostname using MLO/MLD aware lookup
     hostname=$(get_hostname "${canonical_mac}" "${clientip}" "${dhcp_leases}")
 
     # Convert traffic values
@@ -5326,14 +5331,17 @@ get_wireless_client_details() {
     local nss=""
 
     # Try to extract bandwidth from various fields in sta_info
+    # Method 1: Check for "link bandwidth" line
     local link_bw_line=$(echo "${sta_info}" | grep -i 'link bandwidth')
     if [ -n "${link_bw_line}" ]; then
         bw_mhz=$(echo "${link_bw_line}" | grep -o '[0-9]\{2,3\}' | head -n1)
     fi
 
+    # Method 2: Extract from chanspec if bandwidth not found
     if [ -z "${bw_mhz}" ] && [ -n "${chanspec}" ]; then
         local chanspec_line=$(echo "${sta_info}" | grep 'chanspec')
         if [ -n "${chanspec_line}" ]; then
+            # Extract bandwidth from chanspec (format: "100/160" where 160 is the bandwidth)
             if echo "${chanspec_line}" | grep '/' >/dev/null 2>&1; then
                 bw_mhz=$(echo "${chanspec_line}" | sed 's/.*\/\([0-9]\{2,3\}\).*/\1/')
             else
@@ -5342,6 +5350,7 @@ get_wireless_client_details() {
         fi
     fi
 
+    # Method 3: Try OMI line for bandwidth
     if [ -z "${bw_mhz}" ]; then
         local omi_line=$(echo "${sta_info}" | grep 'OMI')
         if [ -n "${omi_line}" ]; then
@@ -5349,12 +5358,14 @@ get_wireless_client_details() {
         fi
     fi
 
-    # Extract NSS
+    # Extract NSS (Number of Spatial Streams)
+    # Method 1: Check OMI line
     local omi_line=$(echo "${sta_info}" | grep 'OMI')
     if [ -n "${omi_line}" ]; then
         nss=$(echo "${omi_line}" | grep -o 'tx=[0-9]ss' | grep -o '[0-9]' | head -n1)
     fi
 
+    # Method 2: Check nrate line if NSS not found
     if [ -z "${nss}" ]; then
         local nrate_line=$(echo "${sta_info}" | grep 'tx nrate\|rx nrate' | head -n1)
         if [ -n "${nrate_line}" ]; then
@@ -5362,6 +5373,7 @@ get_wireless_client_details() {
         fi
     fi
 
+    # Method 3: Check VHT SET if NSS still not found
     if [ -z "${nss}" ]; then
         local vht_line=$(echo "${sta_info}" | grep 'VHT SET' -A 1 | tail -n1)
         if [ -n "${vht_line}" ]; then
@@ -5377,6 +5389,7 @@ get_wireless_client_details() {
             bandwidth="0x0:${bw_mhz}"
         fi
     else
+        # Fallback to basic band from interface or chanspec
         if [ -n "${chanspec}" ]; then
             case "${chanspec}" in
                 *6g*) bandwidth="6G" ;;
@@ -5387,10 +5400,12 @@ get_wireless_client_details() {
         else
             bandwidth=$(get_band_from_interface "${iface}" | sed 's/GHz//; s/\.0//; s/-2$/2/')
         fi
+
+        # If still no bandwidth info, mark as unknown
         [ -z "${bandwidth}" ] && bandwidth="?"
     fi
 
-    # Output in pipe-delimited format for sorting
+    # Output in pipe-delimited format for sorting: name|ip|mac|other_fields
     printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
         "${hostname:0:17}" "${clientip}" "${canonupper}" "${uptime:0:8}" \
         "${tx_gb:0:5}" "${rx_gb:0:5}" "${tx_mbps:0:7}" "${rx_mbps:0:7}" "${rssi:0:3}" "${bandwidth:0:7}"
@@ -5405,12 +5420,15 @@ sort_wireless_clients() {
         return
     fi
 
+    # Sort by the specified field (1=Name, 2=IP, 3=MAC)
     if [ "${sort_field}" -eq 2 ]; then
+        # IP sorting - use custom IP sort for proper numeric ordering
         sort_by_ip "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
             printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
                 "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
         done
     else
+        # Name or MAC sorting - use regular sort
         sort -t'|' -k${sort_field},${sort_field} "${temp_file}" | while IFS='|' read name ip mac uptime tx_gb rx_gb tx_mbps rx_mbps rssi bandwidth; do
             printf "  %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
                 "${name}" "${ip}" "${mac}" "${uptime}" "${tx_gb}" "${rx_gb}" "${tx_mbps}" "${rx_mbps}" "${rssi}" "${bandwidth}"
@@ -5430,6 +5448,7 @@ get_lan_clients() {
         ${ARP} -n 2>/dev/null | awk 'NR>1 && $1!="?" {print $1, $3}' > "${temp_file}"
     fi
 
+    # Group IPs by MAC to handle multiple IPs per MAC
     local processed_macs_local=""
     > "${temp_output}"
 
@@ -5444,16 +5463,20 @@ get_lan_clients() {
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
         local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
 
+        # Skip if already processed this MAC in this function
         echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
 
+        # Skip if this MAC was already shown in wireless section
         if [ -f "${PROCESSED_CLIENTS}" ]; then
             if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
                 continue
             fi
         fi
 
+        # Track this MAC as processed
         echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
 
+        # Find all IPs for this MAC and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
 
@@ -5465,24 +5488,29 @@ get_lan_clients() {
                     break
                 fi
             done
+            # Fallback to first IP if no REACHABLE/DELAY found
             [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
         else
             best_ip="${ip}"
         fi
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
+        # Output in pipe-delimited format: name|ip|mac
         printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
     rm -f "${temp_file}"
 
+    # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
+            # IP sorting - use custom IP sort
             sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
         else
+            # Name or MAC sorting - use regular sort
             sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
@@ -5503,6 +5531,7 @@ get_primary_subnet() {
     fi
 }
 
+# Get subnet for a specific bridge interface
 get_bridge_subnet() {
     local bridge="$1"
     local bridge_ip=$(${IFCONFIG} "${bridge}" 2>/dev/null | grep 'inet addr:' | awk '{print $2}' | cut -d':' -f2)
@@ -5522,13 +5551,16 @@ get_bridge_clients() {
     local temp_file="/tmp/bridge_clients_$$.tmp"
     local temp_output="/tmp/bridge_output_$$.tmp"
 
+    # Get clients from ARP table that are on this specific bridge (Device column)
     if [ -f /proc/net/arp ]; then
         ${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge {print $1, $4, $6}' > "${temp_file}"
     else
+        # Fallback: if arp command is used, we won't have bridge info
         rm -f "${temp_file}"
         return
     fi
 
+    # Group IPs by MAC to handle multiple IPs per MAC
     local processed_macs_local=""
     > "${temp_output}"
 
@@ -5538,16 +5570,20 @@ get_bridge_clients() {
         local mac_normalized=$(echo "${mac}" | tr 'A-F' 'a-f')
         local mac_upper=$(echo "${mac}" | tr 'a-f' 'A-F')
 
+        # Skip if already processed this MAC in this function
         echo "${processed_macs_local}" | grep -q "${mac_normalized}" && continue
 
+        # Skip if this MAC was already shown in wireless section
         if [ -f "${PROCESSED_CLIENTS}" ]; then
             if grep -qi "^${mac_upper}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
                 continue
             fi
         fi
 
+        # Track this MAC as processed
         echo "${mac_upper}" >> "${PROCESSED_CLIENTS}"
 
+        # Find all IPs for this MAC on this bridge and prefer REACHABLE/DELAY
         local all_ips=$(grep -i "${mac}" "${temp_file}" | awk '{print $1}')
         local best_ip=""
 
@@ -5559,24 +5595,29 @@ get_bridge_clients() {
                     break
                 fi
             done
+            # Fallback to first IP if no REACHABLE/DELAY found
             [ -z "${best_ip}" ] && best_ip=$(echo "${all_ips}" | head -n1)
         else
             best_ip="${ip}"
         fi
 
         local hostname=$(get_hostname "${mac}" "${best_ip}" "${dhcp_leases}")
+        # Output in pipe-delimited format: name|ip|mac
         printf "%s|%s|%s\n" "${hostname:0:17}" "${best_ip}" "${mac}" >> "${temp_output}"
         processed_macs_local="${processed_macs_local} ${mac_normalized}"
     done < "${temp_file}"
 
     rm -f "${temp_file}"
 
+    # Sort and format output
     if [ -s "${temp_output}" ]; then
         if [ "${sort_field}" -eq 2 ]; then
+            # IP sorting - use custom IP sort
             sort_by_ip "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
         else
+            # Name or MAC sorting - use regular sort
             sort -t'|' -k${sort_field},${sort_field} "${temp_output}" | while IFS='|' read name ip mac; do
                 printf "  %-17s | %-15s | %s\n" "${name}" "${ip}" "${mac}"
             done
@@ -5598,12 +5639,15 @@ display_network_clients() {
     local guest_ssid
     local client_count
 
+    # Initialize processed client tracking files
     > "${PROCESSED_CLIENTS}"
     > "${PROCESSED_VLAN_CLIENTS}"
 
+    # Read DHCP leases once for MLO/MLD awareness
     local dhcp_leases=$(read_all_dhcp_leases)
 
-    local sort_field=1
+    # Determine sort field based on SortbyOpt
+    local sort_field=1  # Default: Name
     if [ "${SortbyOpt}" = "IP" ]; then
         sort_field=2
     elif [ "${SortbyOpt}" = "MAC" ]; then
@@ -5612,9 +5656,6 @@ display_network_clients() {
 
     printf "${InvGreen} ${CClear} %-17s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
         "Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
-
-    # Track bridges used by wireless interfaces (guest networks)
-    local wireless_bridges=""
 
     for iface in $(get_wireless_interfaces); do
         info_str=$(get_interface_info "${iface}")
@@ -5631,17 +5672,11 @@ display_network_clients() {
             client_count=$(echo "${client_list}" | wc -l)
         fi
 
-        # Skip this network if HideNetworks=1 and there are no clients
-        if [ "${HideNetworks}" -eq 1 ] && [ ${client_count} -eq 0 ]; then
-            continue
-        fi
-
+        # Get bridge information for display
         local bridge_name=$(get_bridge_for_interface "${iface}")
         local bridge_info=""
         if [ -n "${bridge_name}" ]; then
             bridge_info=" (Bridge: ${bridge_name})"
-            # Track this bridge as being used by a wireless interface
-            wireless_bridges="${wireless_bridges} ${bridge_name}"
         fi
 
         if [ "${iface_type}" = "guest" ]; then
@@ -5649,6 +5684,7 @@ display_network_clients() {
             local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
             echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
         elif [ "${iface_type}" = "main" ]; then
+            # Get SSID for main wireless interfaces
             local main_ssid=$(get_ssid_for_interface "${iface}")
             if [ -n "${main_ssid}" ]; then
                 local content=" Local ${band} Wi-Fi: ${main_ssid}${bridge_info} - IFace: ${iface}"
@@ -5662,6 +5698,9 @@ display_network_clients() {
         fi
 
         if [ "${iface_type}" = "main" ] || [ "${iface_type}" = "guest" ]; then
+            #printf "  %-16s | %-15s | %-17s | %-8s | %5s | %5s | %7s | %7s | %3s | %s\n" \
+                #"Name" "IP" "MAC" "Uptime" "TX GB" "RX GB" "TX Mbps" "RX Mbps" "Sig" "Band"
+
             if [ -n "${client_list}" ]; then
                 local temp_output="/tmp/netmon_client_output_$$.tmp"
                 > "${temp_output}"
@@ -5683,50 +5722,13 @@ display_network_clients() {
         fi
     done
 
+    # Get VLAN/AiMesh bridges from apg_ifnames (more accurate than subnet detection)
     local vlan_bridges=$(get_vlan_bridges)
 
     if [ -n "${vlan_bridges}" ]; then
         for bridge in ${vlan_bridges}; do
+            # Get subnet for this bridge if available
             local bridge_subnet=$(get_bridge_subnet "${bridge}")
-
-            # Check if there are any WIRED clients on this bridge (not already processed as wireless)
-            local bridge_has_wired_clients=0
-            if [ -f /proc/net/arp ]; then
-                # Get all MACs on this bridge
-                local bridge_macs=$(${CAT} /proc/net/arp | awk -v bridge="${bridge}" 'NR>1 && $3!="0x0" && $4!="00:00:00:00:00:00" && $6==bridge {print toupper($4)}')
-
-                # Count only MACs that are NOT in PROCESSED_CLIENTS (i.e., not wireless clients)
-                if [ -n "${bridge_macs}" ]; then
-                    for mac in ${bridge_macs}; do
-                        if [ -f "${PROCESSED_CLIENTS}" ]; then
-                            if ! grep -qi "^${mac}$" "${PROCESSED_CLIENTS}" 2>/dev/null; then
-                                # This MAC is on the bridge but NOT a wireless client - it's a wired client
-                                bridge_has_wired_clients=1
-                                break
-                            fi
-                        else
-                            # No processed clients yet, so this must be wired
-                            bridge_has_wired_clients=1
-                            break
-                        fi
-                    done
-                fi
-            fi
-
-            # Skip this bridge if it was already displayed as a wireless network AND has no wired clients
-            # This prevents duplicate empty sections, but allows showing wired clients on guest network bridges
-            if echo "${wireless_bridges}" | grep -q "${bridge}"; then
-                if [ ${bridge_has_wired_clients} -eq 0 ]; then
-                    # Bridge is used by wireless and has no wired clients - skip it
-                    continue
-                fi
-                # Bridge is used by wireless but HAS wired clients - show them
-            fi
-
-            # Skip this bridge if HideNetworks=1 and there are no wired clients
-            if [ "${HideNetworks}" -eq 1 ] && [ ${bridge_has_wired_clients} -eq 0 ]; then
-                continue
-            fi
 
             if [ -n "${bridge_subnet}" ]; then
                 local content=" Local VLAN/AiMesh VLAN ${bridge_subnet} - IFace: ${bridge}"
@@ -5738,6 +5740,9 @@ display_network_clients() {
                 echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
             fi
 
+            #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
+
+            # Use bridge-based client detection with sorting
             local bridge_client_output=$(get_bridge_clients "${bridge}" "${dhcp_leases}" "${sort_field}")
 
             if [ -n "${bridge_client_output}" ]; then
@@ -5753,7 +5758,9 @@ display_network_clients() {
     local content=" Local LAN/Non-VLAN AiMesh - Subnet: ${primary_subnet} - IFace: br0"
     local padded_content=$(printf "%-${HEADER_WIDTH}s" "${content}")
     echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite}${padded_content}${CClear}"
+    #printf "  %-16s | %-15s | %s\n" "Name" "IP" "MAC"
 
+    # Use bridge-based detection for br0 clients with sorting
     local br0_clients=$(get_bridge_clients "br0" "${dhcp_leases}" "${sort_field}")
     if [ -n "${br0_clients}" ]; then
         echo "${br0_clients}"
@@ -5761,6 +5768,7 @@ display_network_clients() {
         echo "  No wired clients found"
     fi
 
+    # Cleanup tracking files
     rm -f "${PROCESSED_CLIENTS}" "${PROCESSED_VLAN_CLIENTS}"
 }
 
@@ -5803,7 +5811,7 @@ GetVPNWGIPCITY()
       oldvpn1ip=$NVRAMVPN1IP
       oldvpn1city="Private Network"
     elif [ "$vpn1ip" != "$oldvpn1ip" ]; then
-      oldvpn1city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
+      oldvpn1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn1ip | jq --raw-output .city"
       oldvpn1city="$(eval $oldvpn1city)"; if echo $oldvpn1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn1city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn1slot: $oldvpn1ip ($oldvpn1city)" >> $LOGFILE
     fi
@@ -5840,7 +5848,7 @@ GetVPNWGIPCITY()
       oldvpn2ip=$NVRAMVPN2IP
       oldvpn2city="Private Network"
     elif [ "$vpn2ip" != "$oldvpn2ip" ]; then
-      oldvpn2city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
+      oldvpn2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn2ip | jq --raw-output .city"
       oldvpn2city="$(eval $oldvpn2city)"; if echo $oldvpn2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn2city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn2slot: $oldvpn2ip ($oldvpn2city)" >> $LOGFILE
     fi
@@ -5877,7 +5885,7 @@ GetVPNWGIPCITY()
       oldvpn3ip=$NVRAMVPN3IP
       oldvpn3city="Private Network"
     elif [ "$vpn3ip" != "$oldvpn3ip" ]; then
-      oldvpn3city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
+      oldvpn3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn3ip | jq --raw-output .city"
       oldvpn3city="$(eval $oldvpn3city)"; if echo $oldvpn3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn3city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn3slot: $oldvpn3ip ($oldvpn3city)" >> $LOGFILE
     fi
@@ -5914,7 +5922,7 @@ GetVPNWGIPCITY()
       oldvpn4ip=$NVRAMVPN4IP
       oldvpn4city="Private Network"
     elif [ "$vpn4ip" != "$oldvpn4ip" ]; then
-      oldvpn4city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
+      oldvpn4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn4ip | jq --raw-output .city"
       oldvpn4city="$(eval $oldvpn4city)"; if echo $oldvpn4city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn4city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn4slot: $oldvpn4ip ($oldvpn4city)" >> $LOGFILE
     fi
@@ -5951,7 +5959,7 @@ GetVPNWGIPCITY()
       oldvpn5ip=$NVRAMVPN5IP
       oldvpn5city="Private Network"
     elif [ "$vpn5ip" != "$oldvpn5ip" ]; then
-      oldvpn5city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
+      oldvpn5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldvpn5ip | jq --raw-output .city"
       oldvpn5city="$(eval $oldvpn5city)"; if echo $oldvpn5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldvpn5city="Undetermined"; fi
       echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of VPN$vpn5slot: $oldvpn5ip ($oldvpn5city)" >> $LOGFILE
     fi
@@ -5980,7 +5988,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg1ip="$NVRAMWG1IP"
       else
-        oldwg1ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+        oldwg1ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
         oldwg1ip="$(eval $oldwg1ip)"
         if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -5996,9 +6004,9 @@ GetVPNWGIPCITY()
       oldwg1ip="$NVRAMWG1IP"
       oldwg1city="Private Network"
     elif [ "$wg1ip" != "$oldwg1ip" ]; then
-      oldwg1city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
+      oldwg1city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg1ip | jq --raw-output .city"
       oldwg1city="$(eval $oldwg1city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg1city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg1slot: $oldwg1ip ($oldwg1city)" >> $LOGFILE
     fi
 
     wg1ip="$oldwg1ip"
@@ -6025,7 +6033,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
       else
-        oldwg2ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+        oldwg2ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
         oldwg2ip="$(eval $oldwg2ip)"
         if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6041,9 +6049,9 @@ GetVPNWGIPCITY()
       oldwg2ip="$NVRAMWG2IP"
       oldwg2city="Private Network"
     elif [ "$wg2ip" != "$oldwg2ip" ]; then
-      oldwg2city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
+      oldwg2city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg2ip | jq --raw-output .city"
       oldwg2city="$(eval $oldwg2city)"; if echo $oldwg2city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg2city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg2slot: $oldwg2ip ($oldwg2city)" >> $LOGFILE
     fi
 
     wg2ip="$oldwg2ip"
@@ -6070,7 +6078,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg3ip="$NVRAMWG3IP"
       else
-        oldwg3ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+        oldwg3ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
         oldwg3ip="$(eval $oldwg3ip)"
         if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6086,9 +6094,9 @@ GetVPNWGIPCITY()
       oldwg3ip="$NVRAMWG3IP"
       oldwg3city="Private Network"
     elif [ "$wg3ip" != "$oldwg3ip" ]; then
-      oldwg3city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
+      oldwg3city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg3ip | jq --raw-output .city"
       oldwg3city="$(eval $oldwg3city)"; if echo $oldwg3city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg3city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg3slot: $oldwg3ip ($oldwg3city)" >> $LOGFILE
     fi
 
     wg3ip="$oldwg3ip"
@@ -6115,7 +6123,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg4ip="$NVRAMWG4IP"
       else
-        oldwg4ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+        oldwg4ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
         oldwg4ip="$(eval $oldwg4ip)"
         if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6131,9 +6139,9 @@ GetVPNWGIPCITY()
       oldwg4ip="$NVRAMWG4IP"
       oldwg4city="Private Network"
     elif [ "$wg4ip" != "$oldwg4ip" ]; then
-      oldwg4city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
+      oldwg4city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg4ip | jq --raw-output .city"
       oldwg4city="$(eval $oldwg4city)"; if echo $oldwg1city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg4city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg4slot: $oldwg4ip ($oldwg4city)" >> $LOGFILE
     fi
 
     wg4ip="$oldwg4ip"
@@ -6160,7 +6168,7 @@ GetVPNWGIPCITY()
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
       else
-        oldwg5ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+        oldwg5ip="curl --silent --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
         oldwg5ip="$(eval $oldwg5ip)"
         if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
         then
@@ -6176,9 +6184,9 @@ GetVPNWGIPCITY()
       oldwg5ip="$NVRAMWG5IP"
       oldwg5city="Private Network"
     elif [ "$wg5ip" != "$oldwg5ip" ]; then
-      oldwg5city="curl --silent --fail --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
+      oldwg5city="curl --silent --retry 3 --request GET --url http://ip-api.com/json/$oldwg5ip | jq --raw-output .city"
       oldwg5city="$(eval $oldwg5city)"; if echo $oldwg5city | grep -qoE '\b(error.*:.*True.*|Undefined)\b'; then oldwg5city="Undetermined"; fi
-      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
+      echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - API call made to determine geolocation of WG$wg5slot: $oldwg5ip ($oldwg5city)" >> $LOGFILE
     fi
 
     wg5ip="$oldwg5ip"
@@ -6789,20 +6797,34 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
     ifname5=$($timeoutcmd$timeoutsec nvram get wl1_ifname)
   fi
 
+  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
+
   old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   old5rxbytes="$(wl -i $ifname5 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
     old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
+    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
     old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
+    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
     old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -6813,8 +6835,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   GetVPNWGIPCITY
   GetVPNWGStats
 
-  echo $(date +%s) > "/jffs/addons/rtrmon.d/rtmstart.txt"
-
   # Get initial TOP stats to average across the interval period
   RM_ELAPSED_TIME=0
   RM_START_TIME="$(date +%s)"
@@ -6823,7 +6843,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   ## Modified by Martinski W. [2024-Nov-04] ##
   ##----------------------------------------##
   timer=0
-  currtimer=0
   lastTimerSec=0
   updateTimer=true
   savedInterval="$Interval"
@@ -6836,7 +6855,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
       then
           updateTimer=false
           timer="$((timer+1))"
-          currtimer="$timer"
           lastTimerSec="$(date +%s)"
           gettopstats "$timer"
       fi
@@ -6915,6 +6933,10 @@ do
     oldwanrxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/rx_bytes)"
     oldwantxbytes="$(cat /sys/class/net/$WANIFNAME/statistics/tx_bytes)"
   fi
+  #old24rxbytes="$(cat /sys/class/net/$ifname24/statistics/rx_bytes)"
+  #old24txbytes="$(cat /sys/class/net/$ifname24/statistics/tx_bytes)"
+  #old5rxbytes="$(cat /sys/class/net/$ifname5/statistics/rx_bytes)"
+  #old5txbytes="$(cat /sys/class/net/$ifname5/statistics/tx_bytes)"
 
   old24rxbytes="$(wl -i $ifname24 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
   old24txbytes="$(wl -i $ifname24 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
@@ -6922,14 +6944,23 @@ do
   old5txbytes="$(wl -i $ifname5 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
 
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2455" == "True" ]; then
+    #old52rxbytes="$(cat /sys/class/net/$ifname52/statistics/rx_bytes)"
+    #old52txbytes="$(cat /sys/class/net/$ifname52/statistics/tx_bytes)"
+
     old52rxbytes="$(wl -i $ifname52 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old52txbytes="$(wl -i $ifname52 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom55624" == "True" ] || [ "$ThreeBand2456" == "True" ] || [ "$FourBandCustom56624" == "True" ]; then
+    #old6rxbytes="$(cat /sys/class/net/$ifname6/statistics/rx_bytes)"
+    #old6txbytes="$(cat /sys/class/net/$ifname6/statistics/tx_bytes)"
+
     old6rxbytes="$(wl -i $ifname6 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old6txbytes="$(wl -i $ifname6 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
   if [ "$FourBandCustom56624" == "True" ]; then
+    #old62rxbytes="$(cat /sys/class/net/$ifname62/statistics/rx_bytes)"
+    #old62txbytes="$(cat /sys/class/net/$ifname62/statistics/tx_bytes)"
+
     old62rxbytes="$(wl -i $ifname62 counters | grep -o 'rxbyte [0-9]*' | cut -d' ' -f2)"
     old62txbytes="$(wl -i $ifname62 counters | grep -o 'txbyte [0-9]*' | cut -d' ' -f2)"
   fi
@@ -6944,7 +6975,6 @@ do
   printf "${CGreen}\r                                         "
   printf "${CGreen}\r"
 
-  echo $(date +%s) > "/jffs/addons/rtrmon.d/rtmstart.txt"
 
   # Run through the stats gathering loop based on the current interval
   RM_ELAPSED_TIME=0
@@ -6954,7 +6984,6 @@ do
   ## Modified by Martinski W. [2024-Nov-05] ##
   ##----------------------------------------##
   timer=0
-  currtimer=0
   lastTimerSec=0
   updateTimer=true
   pausedTimerEnabled=false
@@ -6967,7 +6996,6 @@ do
       then
           updateTimer=false
           timer="$((timer+1))"
-          currtimer="$timer"
           lastTimerSec="$(date +%s)"
           gettopstats "$timer"
       fi
