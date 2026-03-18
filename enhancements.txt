@@ -1,5 +1,6 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Check to see if DIG is installed, prompt for warning or possible install if not present - @info_dan
 * AMTM Email notifications on certain events (like 80% disk usage)
 * Perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 * WAN down functionality to put RTRMON in standby if the WAN isn't working, or at least show interface down.
