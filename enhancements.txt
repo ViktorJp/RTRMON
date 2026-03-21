@@ -1,5 +1,6 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
+* Add page 8 - syslog!
 * Check to see if DIG is installed, prompt for warning or possible install if not present - @info_dan
 * I do like this script but it would be even better if it supported Dual Wan, especially for the Speed Test and the page where it shows
   your WAN and VPN download\upload traffic speeds. Currently it can pick either WAN Interface. @PhunkyPhil
