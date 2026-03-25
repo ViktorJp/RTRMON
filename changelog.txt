@@ -1,3 +1,11 @@
+v2.4.0b2  - (TBA)
+          - MINOR: Implemented page #8 - Syslog! RTRMON will now display a scrollable syslog, showing
+            the latest events by default in a condensed view. You have the option to scroll up, down,
+            look at the expanded view or refresh the log to see the latest items on the log.
+          - PATCH: Fixed the Diagnostics page to indicate "skipped" if the dig command is not found.
+            It will show install instructions along the side for those who want to install the dig tool
+            so that it will complete the network diagnostics test in its entirety.
+
 v2.3.1    - (March 8, 2026)
           - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
             irking me. First, adding an option (b) that will now show/hide networks with no connected
