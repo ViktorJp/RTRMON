@@ -4,7 +4,8 @@ v2.4.0b2  - (TBA)
             look at the expanded view or refresh the log to see the latest items on the log.
           - PATCH: Fixed the Diagnostics page to indicate "skipped" if the dig command is not found.
             It will show install instructions along the side for those who want to install the dig tool
-            so that it will complete the network diagnostics test in its entirety.
+            so that it will complete the network diagnostics test in its entirety. Huge thanks to
+            @info_dan for this suggestion!
 
 v2.3.1    - (March 8, 2026)
           - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
