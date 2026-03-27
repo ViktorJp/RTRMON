@@ -6,6 +6,8 @@ v2.4.0b2  - (TBA)
             It will show install instructions along the side for those who want to install the dig tool
             so that it will complete the network diagnostics test in its entirety. Huge thanks to
             @info_dan for this suggestion!
+          - PATCH: RTRMON as of this version is now compatible wiht the new GT-BE19000AI thanks to
+            @jzchen for his help pulling the wireless interface assignments from his unit! :)
 
 v2.3.1    - (March 8, 2026)
           - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
