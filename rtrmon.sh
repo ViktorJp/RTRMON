@@ -3977,7 +3977,7 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
         WANnmap=$(nmap $oldwan0ip | grep "open" | sed 's/^/   /')
         if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open" | sed 's/^/   /'; fi
         echo ""
@@ -3985,13 +3985,15 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANnmap=$(nmap $oldlanip | grep "open" | sed 's/^/   /')
       if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open" | sed 's/^/   /'; fi
+      echo ""
+      echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
     elif [ "$PSView" == "UDP" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
         WANUnmap=$(nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /')
         if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /'; fi
       echo ""
@@ -3999,6 +4001,8 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANUnmap=$(nmap -sU $oldlanip | grep "open" | sed 's/^/   /')
       if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open" | sed 's/^/   /'; fi
+      echo ""
+      echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
     fi
 
   { echo 'Lastruntime="'"$(date)"'"'
@@ -4087,7 +4091,7 @@ else
       oldwan0ip="12.34.56.78" #demo
     fi
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
       if [ ! -f $NMAPWANRESPATH ]; then
         echo "None"
       else
@@ -4103,13 +4107,15 @@ else
       LANnmap=$(cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /')
       if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
+    echo ""
+    echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
   elif [ "$PSView" == "UDP" ]; then
     echo -e "${InvGreen} ${CClear}"
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
       if [ ! -f $NMAPUWANRESPATH ]; then
         echo "None"
       else
@@ -4125,6 +4131,8 @@ else
       LANUnmap=$(cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /')
       if [ -z "$LANUnmap" ]; then echo "None"; else cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
+    echo ""
+    echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
   fi
 fi
 }
