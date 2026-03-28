@@ -1,13 +1,13 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
-* I do like this script but it would be even better if it supported Dual Wan, especially for the Speed Test and the page where it shows
-  your WAN and VPN download\upload traffic speeds. Currently it can pick either WAN Interface. @PhunkyPhil
 * AMTM Email notifications on certain events (like 80% disk usage)
 * Perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 * WAN down functionality to put RTRMON in standby if the WAN isn't working, or at least show interface down.
 
 Completed:
 ----------
+* I do like this script but it would be even better if it supported Dual Wan, especially for the Speed Test and the page where it shows
+  your WAN and VPN download\upload traffic speeds. Currently it can pick either WAN Interface. @PhunkyPhil
 * Add page 8 - syslog!
 * Check to see if DIG is installed, prompt for warning or possible install if not present - @info_dan
 * Use WLAN names instead of long GUID
