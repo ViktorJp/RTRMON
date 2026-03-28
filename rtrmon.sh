@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Mar-27
+# Last Modified: 2026-Mar-28
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.0b2"
+Version="2.4.0b3"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -564,13 +564,17 @@ progressbaroverride()
                      ;;
                [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0
                      ;;
+               [Ff]) QueueSpdTest=1
+                     echo -e "${CClear}[Queuing WAN1 Speedtest]                                                  ";
+                     sleep 1; UseWAN1=1; NextPage=4; timerReset=1
+                     ;;
                [Gg]) NCView="WG"; NextPage=6; timerReset=1
                      ;;
                [Hh]) hideoptions=1 ; [ "$hideoptions" != "$prevHideOpts" ] && timerReset=1
                      ;;
                [Ii]) QueueSpdTest=1
-                     echo -e "${CClear}[Queuing WAN Speedtest]                                                  ";
-                     sleep 1; NextPage=4; timerReset=1
+                     echo -e "${CClear}[Queuing WAN0 Speedtest]                                                  ";
+                     sleep 1; UseWAN0=1; NextPage=4; timerReset=1
                      ;;
                [Jj]) page=$(( page + 1 )); timerReset=1 # Move to OLDER entries (higher page index)
                      ;; 
@@ -1000,7 +1004,7 @@ vconfig()
                 echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: A new 6GHz Bandwidth speed ($MaxSpeed6Ghz Mbps) has been selected." >> $LOGFILE
               else
                 echo -e "${CRed}This item is currently only available for router models:"
-                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U, RT-BE92U and GT-BE98_Pro"
+                echo -e "GT-BE19000AI, GT-AXE11000, GT-AXE16000, RT-BE96U, RT-BE92U and GT-BE98_Pro"
                 echo ""
                 sleep 3
               fi
@@ -1770,6 +1774,90 @@ get_wan_setting() {
   fi
   printf "%s" "${varval}"
 } # get_wan_setting
+
+# Separated these out to get the ifname for a dual-wan/failover situation where both WAN connections are on
+get_wan_setting0()
+{
+  local varname varval
+  varname="${1}"
+  prefixes="wan0_"
+
+  if [ "$($timeoutcmd$timeoutsec nvram get wans_mode)" = "lb" ] ; then
+      for prefix in $prefixes; do
+          state="$($timeoutcmd$timeoutsec nvram get "${prefix}"state_t)"
+          sbstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"sbstate_t)"
+          auxstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"auxstate_t)"
+
+          # is_wan_connect()
+          [ "${state}" = "2" ] || continue
+          [ "${sbstate}" = "0" ] || continue
+          [ "${auxstate}" = "0" ] || [ "${auxstate}" = "2" ] || continue
+
+          # get_wan_ifname()
+          proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
+          if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
+              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
+          else
+              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
+          fi
+      done
+  else
+      for prefix in $prefixes; do
+          primary="$($timeoutcmd$timeoutsec nvram get "${prefix}"primary)"
+          [ "${primary}" = "1" ] && break
+      done
+
+      proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
+      if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
+          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
+      else
+          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
+      fi
+  fi
+  printf "%s" "${varval}"
+}
+
+# Separated these out to get the ifname for a dual-wan/failover situation where both WAN connections are on
+get_wan_setting1()
+{
+  local varname varval
+  varname="${1}"
+  prefixes="wan1_"
+
+  if [ "$($timeoutcmd$timeoutsec nvram get wans_mode)" = "lb" ] ; then
+      for prefix in $prefixes; do
+          state="$($timeoutcmd$timeoutsec nvram get "${prefix}"state_t)"
+          sbstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"sbstate_t)"
+          auxstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"auxstate_t)"
+
+          # is_wan_connect()
+          [ "${state}" = "2" ] || continue
+          [ "${sbstate}" = "0" ] || continue
+          [ "${auxstate}" = "0" ] || [ "${auxstate}" = "2" ] || continue
+
+          # get_wan_ifname()
+          proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
+          if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
+              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
+          else
+              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
+          fi
+      done
+  else
+      for prefix in $prefixes; do
+          primary="$($timeoutcmd$timeoutsec nvram get "${prefix}"primary)"
+          [ "${primary}" = "1" ] && break
+      done
+
+      proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
+      if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
+          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
+      else
+          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
+      fi
+  fi
+  printf "%s" "${varval}"
+}
 
 # -------------------------------------------------------------------------------------------------------------------------
 
@@ -3432,8 +3520,23 @@ DisplaySpdtst()
 
   if [ "$QueueSpdTest" = "1" ]
   then
+    #Determine which interface
+    if [ "$UseWAN0" = "1" ]
+    then
+      if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting0 ifname); else WANIFNAME=$WANOverride; fi
+      if [ -z $WANIFNAME ]; then WANmsg="WAN0 Interface not found | "; WANIFNAME="eth0"; fi
+      UseWAN0=0
+    fi
+    
+    if [ "$UseWAN1" = "1" ]
+    then
+      WANIFNAME=$(get_wan_setting1 ifname)
+      if [ -z $WANIFNAME ]; then WANmsg="WAN1 Not Active | "; WANIFNAME="eth0"; fi
+      UseWAN1=0
+    fi
+  	
     #run speedtest and save Results
-    printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WAN Speedtest]"
+  printf "\r${InvGreen} ${CClear} ${CGreen}[${WANmsg}Initializing WAN Speedtest on $WANIFNAME]"
     #printf "${CGreen}\r[Initializing WAN Speedtest]"
     if [ $spdtestsvrID == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
@@ -3679,13 +3782,13 @@ DisplaySpdtst()
   fi
 
   if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)  ${CWhite} |   WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)  ${CWhite} |   ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
   elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)  ${CWhite} |   WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   else
-    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
+    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1${CClear}"
   fi
 
   echo ""
@@ -3711,6 +3814,11 @@ DisplaySpdtst()
   echo ""
   preparebar 89 "|"
   progressbar $SpdUpload $MaxSpeedInetUL " UL vs WAN " "Mbps" "Reverse" $SpdUpload $MaxSpeedInetUL
+  
+  #Reset WANIFNAME variable
+  if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
+  if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
+  WANmsg=""
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -4779,7 +4887,7 @@ detect_router_model() {
             ;;
 
         # Three-band routers: 2.4GHz, 5GHz, 6GHz (wl0=2.4, wl1=5, wl2=6)
-        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U)
+        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U|GT-BE19000AI)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
@@ -6612,7 +6720,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   if [ "$RouterModel" = "GT-BE98_Pro" ]; then
      FourBandCustom56624="True"
   fi
-  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ] || [ "$RouterModel" = "RT-BE92U" ]; then
+  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ] || [ "$RouterModel" = "RT-BE92U" ] || [ "$RouterModel" = "GT-BE19000AI" ]; then
      ThreeBand2456="True"
   fi
   if [ "$RouterModel" = "GT-AX11000_Pro" ] || [ "$RouterModel" = "GT-AX11000" ] || [ "$RouterModel" = "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" = "ZenWiFi_XT8" ]; then
