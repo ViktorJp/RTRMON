@@ -10,6 +10,10 @@ v2.4.0b3  - (TBA)
             @jzchen for his help pulling the wireless interface assignments from his unit! :)
           - PATCH: Based on feedback from @PhunkyPhil, the Speedtest functionality (page 4) is now able
             to test your bandwidth using either the WAN0 or WAN1 interfaces. Thank you!
+          - PATCH: Added the verbiage "**NOTE: NMAP WAN Results may be misleading. Please test thoroughly
+            with External Port Scan (ie. grc.com)" to the bottom of the Network Diagnostics page, to
+            indicate that the nmap results you get testing against the WAN interface locally are not what
+            is representative when doing this same test from an external device (outside the WAN).
 
 v2.3.1    - (March 8, 2026)
           - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
