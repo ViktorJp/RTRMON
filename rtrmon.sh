@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Mar-28
+# Last Modified: 2026-Apr-04
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -24,7 +24,7 @@ export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.0b3"
+Version="2.4.0b4"
 Beta=1
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -109,11 +109,13 @@ memfree1=0
 memshrd1=0
 membuff1=0
 memcach1=0
+memavai1=0
 memused2=0
 memfree2=0
 memshrd2=0
 membuff2=0
 memcach2=0
+memavai2=0
 cpuusr1=0
 cpusys1=0
 cpunice1=0
@@ -1876,7 +1878,7 @@ gettopstats ()
 
    #totalmemory based on the power of 2 to determine nearest estimated installed RAM
    memtotal="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
-   totalreportedphysmem=$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' / 1000) }')
+   totalreportedphysmem=$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' / 1024) }')
    next_power_of_2=$(awk -v num="$totalreportedphysmem" '
    BEGIN {
     if (num == 0) {
@@ -1894,14 +1896,16 @@ gettopstats ()
     print num;
     }
     ')
-   totalmemory="$next_power_of_2"
+   totalmemorydisp="$next_power_of_2"
+   totalmemory="$totalreportedphysmem"
 
    memfree="$(awk '/^MemFree:/ {print $2}' /proc/meminfo)"
    membuff="$(awk '/^Buffers:/ {print $2}' /proc/meminfo)"
    memcach="$(awk '/^Cached:/ {print $2}' /proc/meminfo)"
-   memfree="$(awk 'BEGIN { printf "%.0f", ('"$memfree"' + '"$membuff"' + '"$memcach"') }')"
+   memavai="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
    memshrd="$(awk '/^Shmem:/ {print $2}' /proc/meminfo)"
-   memused="$(awk 'BEGIN { printf "%.0f", ('"$totalmemory"' * 1000 - '"$memfree"') }')"
+   memreclaim="$(awk '/^SReclaimable:/ {print $2}' /proc/meminfo)"
+   memused="$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' - '"$memfree"' - '"$membuff"' - ('"$memcach"' + '"$memreclaim"' - '"$memshrd"') ) }')"
 
    cpuusr="$(echo $TotalMem | awk '{print $6}' | sed 's/%$//' | cut -d . -f 1)"
    cpusys="$(echo $TotalMem | awk '{print $7}' | sed 's/%$//' | cut -d . -f 1)"
@@ -1922,6 +1926,7 @@ gettopstats ()
    memshrd1="$((memshrd1 + memshrd))"
    membuff1="$((membuff1 + membuff))"
    memcach1="$((memcach1 + memcach))"
+   memavai1="$((memavai1 + memavai))"
    cpuusr1="$((cpuusr1 + cpuusr))"
    cpusys1="$((cpusys1 + cpusys))"
    cpunice1="$((cpunice1 + cpunice))"
@@ -1958,6 +1963,7 @@ oldstats()
   oldmemshrd2=$memshrd2
   oldmembuff2=$membuff2
   oldmemcach2=$memcach2
+  oldmemavai2=$memavai2
   oldtotalmemory=$totalmemory
   oldnvramfree=$nvramfree
   oldnvramused=$nvramused
@@ -2145,15 +2151,17 @@ calculatestats()
   if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / currtimer)); else memshrd1=0; fi
   if [ -n "$membuff1" ]; then membuff1=$((membuff1 / currtimer)); else membuff1=0; fi
   if [ -n "$memcach1" ]; then memcach1=$((memcach1 / currtimer)); else memcach1=0; fi
+  if [ -n "$memavai1" ]; then memavai1=$((memavai1 / currtimer)); else memavai1=0; fi  
 
   totalphysmem="$totalmemory"
 
-  memused2=$(awk 'BEGIN { printf "%.0f", ('"$memused1"' / 1000) }')
-  memfree2=$(awk 'BEGIN { printf "%.0f", ('"$memfree1"' / 1000) }')
-  memshrd2=$(awk 'BEGIN { printf "%.0f", ('"$memshrd1"' / 1000) }')
-  membuff2=$(awk 'BEGIN { printf "%.0f", ('"$membuff1"' / 1000) }')
-  memcach2=$(awk 'BEGIN { printf "%.0f", ('"$memcach1"' / 1000) }')
-
+  memused2=$(awk 'BEGIN { printf "%.0f", ('"$memused1"' / 1024) }')
+  memfree2=$(awk 'BEGIN { printf "%.0f", ('"$memfree1"' / 1024) }')
+  memshrd2=$(awk 'BEGIN { printf "%.0f", ('"$memshrd1"' / 1024) }')
+  membuff2=$(awk 'BEGIN { printf "%.0f", ('"$membuff1"' / 1024) }')
+  memcach2=$(awk 'BEGIN { printf "%.0f", ('"$memcach1"' / 1024) }')
+  memavai2=$(awk 'BEGIN { printf "%.0f", ('"$memavai1"' / 1024) }')
+  
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
   eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
   chmod 755 /tmp/size.txt
@@ -2171,15 +2179,15 @@ calculatestats()
   disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
   jffstotal="$(echo $disk_use | awk '{print $1}')"
   jffsused="$(echo $disk_use | awk '{print $2}')"
-  jffstotal=$(awk 'BEGIN { printf "%.0f", ('"$jffstotal"' / 1000) }')
-  jffsused=$(awk 'BEGIN { printf "%.0f", ('"$jffsused"' / 1000) }')
+  jffstotal=$(awk 'BEGIN { printf "%.0f", ('"$jffstotal"' / 1024) }')
+  jffsused=$(awk 'BEGIN { printf "%.0f", ('"$jffsused"' / 1024) }')
 
   # Disk - Swap file
   swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
   swaptotal="$(echo $swap_use | awk '{print $1}')"
   swapused="$(echo $swap_use | awk '{print $2}')"
-  swaptotal=$(awk 'BEGIN { printf "%.0f", ('"$swaptotal"' / 1000) }')
-  swapused=$(awk 'BEGIN { printf "%.0f", ('"$swapused"' / 1000) }')
+  swaptotal=$(awk 'BEGIN { printf "%.0f", ('"$swaptotal"' / 1024) }')
+  swapused=$(awk 'BEGIN { printf "%.0f", ('"$swapused"' / 1024) }')
   if [ $swaptotal == "0" ]; then swaptotal=100; fi
 
   # Disk - SD devices
@@ -2789,10 +2797,13 @@ DisplayPage1()
   echo -e "${InvDkGray}${CWhite} Memory                                                                                                                  ${CClear}"
   echo ""
   echo -en "${InvGreen} ${CClear} ${CWhite}Mem Total  ${CDkGray}[                                         ${CWhite}"
-  printf "%-7s" "$totalphysmem MB"
+  printf "%-7s" "$totalmemorydisp MB"
   echo -e "${CDkGray}                                         ]${CClear}"
   preparebar 89 "|"
   progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
+  echo ""
+  preparebar 89 "|"
+  progressbar $oldmemavai2 $oldtotalmemory " Mem Avail " "MB" "Standard"
   echo ""
   preparebar 89 "|"
   progressbar $oldmemfree2 $oldtotalmemory " Mem Free  " "MB" "Reverse"
@@ -7207,11 +7218,13 @@ do
   memshrd1=0
   membuff1=0
   memcach1=0
+  memavai1=0
   memused2=0
   memfree2=0
   memshrd2=0
   membuff2=0
   memcach2=0
+  memavai2=0
   cpuusr1=0
   cpusys1=0
   cpunice1=0
