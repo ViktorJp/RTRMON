@@ -1,4 +1,4 @@
-v2.4.0b4  - (TBA)
+v2.4.0b   - (April 12, 2026)
           - MINOR: Implemented page #8 - Syslog! RTRMON will now display a scrollable syslog, showing
             the latest events by default in a condensed view. You have the option to scroll up, down,
             look at the raw, expanded view or refresh the log to see the latest items on the log.
@@ -22,6 +22,13 @@ v2.4.0b4  - (TBA)
             would be able to see in the Merlin UI under the System Info tab. While the values are in
             fact all MiB, they are notated as MB, just like in the Merlin UI, to cut down on confusion.
             I have also added the "Memory Available" values as an additional metric, like the UI shows.
+          - PATCH: Added "unset LD_LIBRARY_PATH" statement due to the latest Entware binaries using the
+            RUNPATH embedded library search path mechanism instead of the previous RPATH method.
+            RUNPATH is searched *AFTER* the LD_LIBRARY_PATH definitions, whereas RPATH has higher
+            priority than the LD_LIBRARY_PATH environment variable, so it's searched FIRST. Thanks to
+            @Martinski for his advice.
+          - PATCH: Made BACKUPMON compliant with the amtmupdate functionality to allow for autoupdates
+            through AMTM.
 
 v2.3.1    - (March 8, 2026)
           - PATCH: Fixed a few outstanding items on the wired/wireless client page (#7) that were still
