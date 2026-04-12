@@ -15,17 +15,18 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Apr-04
+# Last Modified: 2026-Apr-12
 ###########################################################################################################################
 
 #Preferred standard router binaries path
 export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+unset LD_LIBRARY_PATH
 
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.0b4"
-Beta=1
+Version="2.4.0"
+Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
 APPPATH="/jffs/scripts/rtrmon.sh"                     # Path to the location of rtrmon.sh
@@ -147,6 +148,9 @@ WRAP=0                                                                    # 0 = 
 MSG_MAX=103                                                               # visible chars for the message column when WRAP=0
 LOG_SOURCE=""
 MAX_LOG_LINES=2000                                                        # cap how many lines we read from file-backed logs
+
+# To support automatic script updates from AMTM #
+doScriptUpdateFromAMTM=true
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-04] ##
@@ -391,6 +395,34 @@ spinner()
   done
 
   printf "\r"
+}
+
+##-------------------------------------------##
+## Borrwed from ExtremeFiretop [2026-Apr-11] ##
+##-------------------------------------------##
+ScriptUpdateFromAMTM()
+{
+    if ! "$doScriptUpdateFromAMTM"
+    then
+        printf "Automatic script updates via AMTM are currently disabled.\n\n"
+        return 1
+    fi
+    
+    if [ $# -gt 0 ] && [ "$1" = "check" ]
+    then return 0
+    fi
+
+    # Force a BACKUPMON download and update
+    echo -e "${CClear}[i] Force Downloading RTRMON... Please stand by..."
+    curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
+    DLsuccess=$?
+    if [ "$DLsuccess" -eq 0 ]; then
+      echo -e "${CClear}[i] RTRMON Download/Update Success."
+    else
+      echo -e "${CClear}[X] RTRMON Download/Update Failed."
+    fi
+
+    return "$DLsuccess"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -6749,6 +6781,13 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   # Check what mode the router is in: 1=Router, 2=AP, 3=iMesh Node #
   OpsMode="$($timeoutcmd$timeoutsec nvram get sw_mode)"
   #OpsMode=3
+
+	if [ "$1" = "amtmupdate" ]
+	then
+	    shift
+	    ScriptUpdateFromAMTM "$@"
+	    exit "$?"
+	fi
 
   # Check and see if any commandline option is being used
   if [ $# -eq 0 ] || [ -z "$1" ]
