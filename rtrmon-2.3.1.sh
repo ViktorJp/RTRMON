@@ -15,17 +15,16 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Apr-12
+# Last Modified: 2026-Mar-8
 ###########################################################################################################################
 
 #Preferred standard router binaries path
 export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
-unset LD_LIBRARY_PATH
 
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.0"
+Version="2.3.1"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -110,13 +109,11 @@ memfree1=0
 memshrd1=0
 membuff1=0
 memcach1=0
-memavai1=0
 memused2=0
 memfree2=0
 memshrd2=0
 membuff2=0
 memcach2=0
-memavai2=0
 cpuusr1=0
 cpusys1=0
 cpunice1=0
@@ -138,19 +135,9 @@ w52updown="UP"
 w6updown="UP"
 w62updown="UP"
 SortbyOpt="Name"
-PreventScrolling=0                                                        # PreventScrolling: 0=Show all output, 1=Paginate output
-MaxRows=24                                                                # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
-HideNetworks=1                                                            # HideNetworks: 0=Show all output, 1=Hide networks with 0 connected clients
-PAGE_SIZE=24
-TMPFILE="/tmp/.syslog_pg_$$.tmp"
-page=0                                                                    # page 0 = latest;  page N = oldest visible window
-WRAP=0                                                                    # 0 = truncate message column at MSG_MAX chars; 1 = free wrap
-MSG_MAX=103                                                               # visible chars for the message column when WRAP=0
-LOG_SOURCE=""
-MAX_LOG_LINES=2000                                                        # cap how many lines we read from file-backed logs
-
-# To support automatic script updates from AMTM #
-doScriptUpdateFromAMTM=true
+PreventScrolling=0 # PreventScrolling: 0=Show all output, 1=Paginate output
+MaxRows=24 # MaxRows: Maximum rows to display before pausing (only used if PreventScrolling=1)
+HideNetworks=1 #HideNetworks: 0=Show all output, 1=Hide networks with 0 connected clients
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-04] ##
@@ -250,7 +237,7 @@ displayopsmenu()
     else
        echo -e "${InvGreen} ${CClear} ${CDkGray}Speedtest Wireguard 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}          ${InvGreen} ${CClear} L${CGreen}(O)${CClear}g Viewer / Trim Log Size (rows): ${CGreen}$LOGSIZE${CClear}"
     fi
-    echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                           ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/8)${CClear}"
+    echo -e "${InvGreen} ${CClear} Run Router Network ${CGreen}(D)${CClear}iagnostics                           ${InvGreen} ${CClear} ${CGreen}(N)${CClear}ext Page / ${CGreen}(P)${CClear}revious Page: ${CGreen}($NextPage/7)${CClear}"
     echo -e "${InvGreen} ${CClear} Refresh ${CGreen}(C)${CClear}urrent Network Statistics                       ${InvGreen} ${CClear} Auto ${CGreen}(R)${CClear}otate Pages Option: ${CGreen}$autorotateindicator${CClear}"
     echo -e "${InvGreen} ${CClear} View ${CGreen}(W)${CClear}AN / ${CGreen}(L)${CClear}AN / ${CGreen}(V)${CClear}PN / W${CGreen}(G)${CClear} Stats                    ${InvGreen} ${CClear} Router Model/FW: ${CGreen}${RouterModel} | ${FWBUILD}${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
@@ -395,34 +382,6 @@ spinner()
   done
 
   printf "\r"
-}
-
-##-------------------------------------------##
-## Borrwed from ExtremeFiretop [2026-Apr-11] ##
-##-------------------------------------------##
-ScriptUpdateFromAMTM()
-{
-    if ! "$doScriptUpdateFromAMTM"
-    then
-        printf "Automatic script updates via AMTM are currently disabled.\n\n"
-        return 1
-    fi
-    
-    if [ $# -gt 0 ] && [ "$1" = "check" ]
-    then return 0
-    fi
-
-    # Force a BACKUPMON download and update
-    echo -e "${CClear}[i] Force Downloading RTRMON... Please stand by..."
-    curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
-    DLsuccess=$?
-    if [ "$DLsuccess" -eq 0 ]; then
-      echo -e "${CClear}[i] RTRMON Download/Update Success."
-    else
-      echo -e "${CClear}[X] RTRMON Download/Update Failed."
-    fi
-
-    return "$DLsuccess"
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -598,21 +557,13 @@ progressbaroverride()
                      ;;
                [Ee]) clear; logoNMexit; echo -e "${CClear}"; exit 0
                      ;;
-               [Ff]) QueueSpdTest=1
-                     echo -e "${CClear}[Queuing WAN1 Speedtest]                                                  ";
-                     sleep 1; UseWAN1=1; NextPage=4; timerReset=1
-                     ;;
                [Gg]) NCView="WG"; NextPage=6; timerReset=1
                      ;;
                [Hh]) hideoptions=1 ; [ "$hideoptions" != "$prevHideOpts" ] && timerReset=1
                      ;;
                [Ii]) QueueSpdTest=1
-                     echo -e "${CClear}[Queuing WAN0 Speedtest]                                                  ";
-                     sleep 1; UseWAN0=1; NextPage=4; timerReset=1
-                     ;;
-               [Jj]) page=$(( page + 1 )); timerReset=1 # Move to OLDER entries (higher page index)
-                     ;; 
-               [Kk]) [ "$page" -gt 0 ] && page=$(( page - 1 )); timerReset=1 # Move to NEWER entries (lower page index), floor at 0 (latest)
+                     echo -e "${CClear}[Queuing WAN Speedtest]                                                  ";
+                     sleep 1; NextPage=4; timerReset=1
                      ;;
                [Ll]) NCView="LAN"; NextPage=6; timerReset=1
                      ;;
@@ -628,20 +579,18 @@ progressbaroverride()
                      elif [ "$NextPage" = "4" ]; then NextPage=5
                      elif [ "$NextPage" = "5" ]; then NextPage=6
                      elif [ "$NextPage" = "6" ]; then NextPage=7
-                     elif [ "$NextPage" = "7" ]; then NextPage=8
-                     elif [ "$NextPage" = "8" ]; then NextPage=1
+                     elif [ "$NextPage" = "7" ]; then NextPage=1
                      fi
                      ;;
                [Oo]) _IgnoreKeypresses_ OFF ; vlogs ;;
                [Pp]) timerReset=1
-                     if   [ "$NextPage" = "1" ]; then NextPage=8
+                     if   [ "$NextPage" = "1" ]; then NextPage=7
                      elif [ "$NextPage" = "2" ]; then NextPage=1
                      elif [ "$NextPage" = "3" ]; then NextPage=2
                      elif [ "$NextPage" = "4" ]; then NextPage=3
                      elif [ "$NextPage" = "5" ]; then NextPage=4
                      elif [ "$NextPage" = "6" ]; then NextPage=5
                      elif [ "$NextPage" = "7" ]; then NextPage=6
-                     elif [ "$NextPage" = "8" ]; then NextPage=7
                      fi
                      ;;
                [Rr]) if   [ "$autorotate" = 0 ]
@@ -661,7 +610,7 @@ progressbaroverride()
                      ;;
                [Ww]) NCView="WAN"; NextPage=6; timerReset=1
                      ;;
-               [Xx]) if "$pausedTimerEnabled"
+                  X) if "$pausedTimerEnabled"
                      then
                          pausedTimerEnabled=false
                          pausedTimerDispStr="$(printf "%*s" "$pausedTimerMsgLen" ' ')"
@@ -671,10 +620,6 @@ progressbaroverride()
                          _UpdateProgressBar_ "$4" "$5"
                          _PausedTimerHandler_
                      fi
-                     ;;
-               [Yy]) if [ "$WRAP" -eq 0 ]; then WRAP=1; else WRAP=0; fi; timerReset=1 # Toggle line-wrap on/off
-                     ;;
-               [Zz]) load_log; page=0; timerReset=1 # Re-snapshot the live syslog and jump to the latest page
                      ;;
                   1) QueueVPNSlot1=1
                      echo -e "${CClear}[Queuing VPN1 Speedtest]                                                  ";
@@ -1038,7 +983,7 @@ vconfig()
                 echo -e "$(date +'%b %d %Y %X') $(_GetLAN_HostName_) RTRMON[$$] - INFO: A new 6GHz Bandwidth speed ($MaxSpeed6Ghz Mbps) has been selected." >> $LOGFILE
               else
                 echo -e "${CRed}This item is currently only available for router models:"
-                echo -e "GT-BE19000AI, GT-AXE11000, GT-AXE16000, RT-BE96U, RT-BE92U and GT-BE98_Pro"
+                echo -e "GT-AXE11000, GT-AXE16000, RT-BE96U, RT-BE92U and GT-BE98_Pro"
                 echo ""
                 sleep 3
               fi
@@ -1809,90 +1754,6 @@ get_wan_setting() {
   printf "%s" "${varval}"
 } # get_wan_setting
 
-# Separated these out to get the ifname for a dual-wan/failover situation where both WAN connections are on
-get_wan_setting0()
-{
-  local varname varval
-  varname="${1}"
-  prefixes="wan0_"
-
-  if [ "$($timeoutcmd$timeoutsec nvram get wans_mode)" = "lb" ] ; then
-      for prefix in $prefixes; do
-          state="$($timeoutcmd$timeoutsec nvram get "${prefix}"state_t)"
-          sbstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"sbstate_t)"
-          auxstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"auxstate_t)"
-
-          # is_wan_connect()
-          [ "${state}" = "2" ] || continue
-          [ "${sbstate}" = "0" ] || continue
-          [ "${auxstate}" = "0" ] || [ "${auxstate}" = "2" ] || continue
-
-          # get_wan_ifname()
-          proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
-          if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
-              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
-          else
-              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
-          fi
-      done
-  else
-      for prefix in $prefixes; do
-          primary="$($timeoutcmd$timeoutsec nvram get "${prefix}"primary)"
-          [ "${primary}" = "1" ] && break
-      done
-
-      proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
-      if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
-          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
-      else
-          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
-      fi
-  fi
-  printf "%s" "${varval}"
-}
-
-# Separated these out to get the ifname for a dual-wan/failover situation where both WAN connections are on
-get_wan_setting1()
-{
-  local varname varval
-  varname="${1}"
-  prefixes="wan1_"
-
-  if [ "$($timeoutcmd$timeoutsec nvram get wans_mode)" = "lb" ] ; then
-      for prefix in $prefixes; do
-          state="$($timeoutcmd$timeoutsec nvram get "${prefix}"state_t)"
-          sbstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"sbstate_t)"
-          auxstate="$($timeoutcmd$timeoutsec nvram get "${prefix}"auxstate_t)"
-
-          # is_wan_connect()
-          [ "${state}" = "2" ] || continue
-          [ "${sbstate}" = "0" ] || continue
-          [ "${auxstate}" = "0" ] || [ "${auxstate}" = "2" ] || continue
-
-          # get_wan_ifname()
-          proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
-          if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
-              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
-          else
-              varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
-          fi
-      done
-  else
-      for prefix in $prefixes; do
-          primary="$($timeoutcmd$timeoutsec nvram get "${prefix}"primary)"
-          [ "${primary}" = "1" ] && break
-      done
-
-      proto="$($timeoutcmd$timeoutsec nvram get "${prefix}"proto)"
-      if [ "${proto}" = "pppoe" ] || [ "${proto}" = "pptp" ] || [ "${proto}" = "l2tp" ] ; then
-          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}"pppoe_"${varname}")"
-      else
-          varval="$($timeoutcmd$timeoutsec nvram get "${prefix}""${varname}")"
-      fi
-  fi
-  printf "%s" "${varval}"
-}
-
 # -------------------------------------------------------------------------------------------------------------------------
 
 # gettopstats gathers the majority of cpu and memory related stats directly from the TOP utility
@@ -1910,7 +1771,7 @@ gettopstats ()
 
    #totalmemory based on the power of 2 to determine nearest estimated installed RAM
    memtotal="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
-   totalreportedphysmem=$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' / 1024) }')
+   totalreportedphysmem=$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' / 1000) }')
    next_power_of_2=$(awk -v num="$totalreportedphysmem" '
    BEGIN {
     if (num == 0) {
@@ -1928,16 +1789,14 @@ gettopstats ()
     print num;
     }
     ')
-   totalmemorydisp="$next_power_of_2"
-   totalmemory="$totalreportedphysmem"
+   totalmemory="$next_power_of_2"
 
    memfree="$(awk '/^MemFree:/ {print $2}' /proc/meminfo)"
    membuff="$(awk '/^Buffers:/ {print $2}' /proc/meminfo)"
    memcach="$(awk '/^Cached:/ {print $2}' /proc/meminfo)"
-   memavai="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
+   memfree="$(awk 'BEGIN { printf "%.0f", ('"$memfree"' + '"$membuff"' + '"$memcach"') }')"
    memshrd="$(awk '/^Shmem:/ {print $2}' /proc/meminfo)"
-   memreclaim="$(awk '/^SReclaimable:/ {print $2}' /proc/meminfo)"
-   memused="$(awk 'BEGIN { printf "%.0f", ('"$memtotal"' - '"$memfree"' - '"$membuff"' - ('"$memcach"' + '"$memreclaim"' - '"$memshrd"') ) }')"
+   memused="$(awk 'BEGIN { printf "%.0f", ('"$totalmemory"' * 1000 - '"$memfree"') }')"
 
    cpuusr="$(echo $TotalMem | awk '{print $6}' | sed 's/%$//' | cut -d . -f 1)"
    cpusys="$(echo $TotalMem | awk '{print $7}' | sed 's/%$//' | cut -d . -f 1)"
@@ -1958,7 +1817,6 @@ gettopstats ()
    memshrd1="$((memshrd1 + memshrd))"
    membuff1="$((membuff1 + membuff))"
    memcach1="$((memcach1 + memcach))"
-   memavai1="$((memavai1 + memavai))"
    cpuusr1="$((cpuusr1 + cpuusr))"
    cpusys1="$((cpusys1 + cpusys))"
    cpunice1="$((cpunice1 + cpunice))"
@@ -1995,7 +1853,6 @@ oldstats()
   oldmemshrd2=$memshrd2
   oldmembuff2=$membuff2
   oldmemcach2=$memcach2
-  oldmemavai2=$memavai2
   oldtotalmemory=$totalmemory
   oldnvramfree=$nvramfree
   oldnvramused=$nvramused
@@ -2183,17 +2040,15 @@ calculatestats()
   if [ -n "$memshrd1" ]; then memshrd1=$((memshrd1 / currtimer)); else memshrd1=0; fi
   if [ -n "$membuff1" ]; then membuff1=$((membuff1 / currtimer)); else membuff1=0; fi
   if [ -n "$memcach1" ]; then memcach1=$((memcach1 / currtimer)); else memcach1=0; fi
-  if [ -n "$memavai1" ]; then memavai1=$((memavai1 / currtimer)); else memavai1=0; fi  
 
   totalphysmem="$totalmemory"
 
-  memused2=$(awk 'BEGIN { printf "%.0f", ('"$memused1"' / 1024) }')
-  memfree2=$(awk 'BEGIN { printf "%.0f", ('"$memfree1"' / 1024) }')
-  memshrd2=$(awk 'BEGIN { printf "%.0f", ('"$memshrd1"' / 1024) }')
-  membuff2=$(awk 'BEGIN { printf "%.0f", ('"$membuff1"' / 1024) }')
-  memcach2=$(awk 'BEGIN { printf "%.0f", ('"$memcach1"' / 1024) }')
-  memavai2=$(awk 'BEGIN { printf "%.0f", ('"$memavai1"' / 1024) }')
-  
+  memused2=$(awk 'BEGIN { printf "%.0f", ('"$memused1"' / 1000) }')
+  memfree2=$(awk 'BEGIN { printf "%.0f", ('"$memfree1"' / 1000) }')
+  memshrd2=$(awk 'BEGIN { printf "%.0f", ('"$memshrd1"' / 1000) }')
+  membuff2=$(awk 'BEGIN { printf "%.0f", ('"$membuff1"' / 1000) }')
+  memcach2=$(awk 'BEGIN { printf "%.0f", ('"$memcach1"' / 1000) }')
+
   # Memory - NVRAM --  Many thanks to @RMerlin, @SomewhereOverTheRainbow and @Ranger802004 for your help finding NVRAM stats
   eval "$($timeoutcmd$timeoutsec nvram show >/tmp/output.txt 2> /tmp/size.txt)"
   chmod 755 /tmp/size.txt
@@ -2211,15 +2066,15 @@ calculatestats()
   disk_use=$($timeoutcmd$timeoutsec df -P | grep -E '/jffs' | awk '{print $2, $3}')
   jffstotal="$(echo $disk_use | awk '{print $1}')"
   jffsused="$(echo $disk_use | awk '{print $2}')"
-  jffstotal=$(awk 'BEGIN { printf "%.0f", ('"$jffstotal"' / 1024) }')
-  jffsused=$(awk 'BEGIN { printf "%.0f", ('"$jffsused"' / 1024) }')
+  jffstotal=$(awk 'BEGIN { printf "%.0f", ('"$jffstotal"' / 1000) }')
+  jffsused=$(awk 'BEGIN { printf "%.0f", ('"$jffsused"' / 1000) }')
 
   # Disk - Swap file
   swap_use=$($timeoutcmd$timeoutsec /usr/bin/free | awk 'NR==4 {print $2, $3}' 2>/dev/null)
   swaptotal="$(echo $swap_use | awk '{print $1}')"
   swapused="$(echo $swap_use | awk '{print $2}')"
-  swaptotal=$(awk 'BEGIN { printf "%.0f", ('"$swaptotal"' / 1024) }')
-  swapused=$(awk 'BEGIN { printf "%.0f", ('"$swapused"' / 1024) }')
+  swaptotal=$(awk 'BEGIN { printf "%.0f", ('"$swaptotal"' / 1000) }')
+  swapused=$(awk 'BEGIN { printf "%.0f", ('"$swapused"' / 1000) }')
   if [ $swaptotal == "0" ]; then swaptotal=100; fi
 
   # Disk - SD devices
@@ -2829,13 +2684,10 @@ DisplayPage1()
   echo -e "${InvDkGray}${CWhite} Memory                                                                                                                  ${CClear}"
   echo ""
   echo -en "${InvGreen} ${CClear} ${CWhite}Mem Total  ${CDkGray}[                                         ${CWhite}"
-  printf "%-7s" "$totalmemorydisp MB"
+  printf "%-7s" "$totalphysmem MB"
   echo -e "${CDkGray}                                         ]${CClear}"
   preparebar 89 "|"
   progressbar $oldmemused2 $oldtotalmemory " Mem Used  " "MB" "Standard"
-  echo ""
-  preparebar 89 "|"
-  progressbar $oldmemavai2 $oldtotalmemory " Mem Avail " "MB" "Standard"
   echo ""
   preparebar 89 "|"
   progressbar $oldmemfree2 $oldtotalmemory " Mem Free  " "MB" "Reverse"
@@ -3563,23 +3415,8 @@ DisplaySpdtst()
 
   if [ "$QueueSpdTest" = "1" ]
   then
-    #Determine which interface
-    if [ "$UseWAN0" = "1" ]
-    then
-      if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting0 ifname); else WANIFNAME=$WANOverride; fi
-      if [ -z $WANIFNAME ]; then WANmsg="WAN0 Interface not found | "; WANIFNAME="eth0"; fi
-      UseWAN0=0
-    fi
-    
-    if [ "$UseWAN1" = "1" ]
-    then
-      WANIFNAME=$(get_wan_setting1 ifname)
-      if [ -z $WANIFNAME ]; then WANmsg="WAN1 Not Active | "; WANIFNAME="eth0"; fi
-      UseWAN1=0
-    fi
-  	
     #run speedtest and save Results
-  printf "\r${InvGreen} ${CClear} ${CGreen}[${WANmsg}Initializing WAN Speedtest on $WANIFNAME]"
+    printf "\r${InvGreen} ${CClear} ${CGreen}[Initializing WAN Speedtest]"
     #printf "${CGreen}\r[Initializing WAN Speedtest]"
     if [ $spdtestsvrID == "0" ]; then
       speed="$(/jffs/addons/rtrmon.d/speedtest --format=csv --interface=$WANIFNAME --accept-license --accept-gdpr 2>&1)"
@@ -3825,13 +3662,13 @@ DisplaySpdtst()
   fi
 
   if { [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; } && { [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; }; then
-    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)  ${CWhite} |   WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   elif [ "$vpn1on" = "True" ] || [ "$vpn2on" = "True" ] || [ "$vpn3on" = "True" ] || [ "$vpn4on" = "True" ] || [ "$vpn5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)  ${CWhite} |   ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    VPN 1:${CGreen}(1) ${CWhite}2:${CGreen}(2) ${CWhite}3:${CGreen}(3) ${CWhite}4:${CGreen}(4) ${CWhite}5:${CGreen}(5)   ${CWhite} |    ${CDkGray}WG 1:(6) 2:(7) 3:(8) 4:(9) 5:(0)${CClear}"
   elif [ "$wg1on" = "True" ] || [ "$wg2on" = "True" ] || [ "$wg3on" = "True" ] || [ "$wg4on" = "True" ] || [ "$wg5on" = "True" ]; then
-    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1   ${CWhite}|   ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)  ${CWhite} |   WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest on: ${CGreen}$WANIFNAME    ${CWhite}|    ${CDkGray}VPN 1:(1) 2:(2) 3:(3) 4:(4) 5:(5)   ${CWhite} |    WG 1:${CGreen}(6) ${CWhite}2:${CGreen}(7) ${CWhite}3:${CGreen}(8) ${CWhite}4:${CGreen}(9) ${CWhite}5:${CGreen}(0)${CClear}"
   else
-    printf "\r${InvGreen} ${CClear} ${CWhite}Initiate Speedtest on ${CGreen}(I)${CWhite}WAN0 | ${CGreen}(F)${CWhite}WAN1${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CGreen}(I)${CWhite}nitiate WAN Speedtest${CClear}                                            "
   fi
 
   echo ""
@@ -3857,11 +3694,6 @@ DisplaySpdtst()
   echo ""
   preparebar 89 "|"
   progressbar $SpdUpload $MaxSpeedInetUL " UL vs WAN " "Mbps" "Reverse" $SpdUpload $MaxSpeedInetUL
-  
-  #Reset WANIFNAME variable
-  if [ $WANOverride == "Auto" ]; then WANIFNAME=$(get_wan_setting ifname); else WANIFNAME=$WANOverride; fi
-  if [ -z $WANIFNAME ]; then WANIFNAME="eth0"; fi
-  WANmsg=""
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -3957,23 +3789,16 @@ DisplayPage5()
       echo ""
     fi
 
-	    if [ ! -f /opt/bin/dig ]; then
-  		  printf "${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Checking] ${CDkGray}| dig google.com${CClear}"
-          sleep 1
-        printf "\r${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Skipped]  ${CDkGray}| Please install dig using: 'opkg install bind-dig'${CClear}"
-        DigFuncTest="Skipped"
-	    else
-		    printf "${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Checking] ${CDkGray}| dig google.com${CClear}"
-		      DIG_STATE="$(dig google.com >/dev/null 2>&1; echo $?)"
-		      sleep 1
-		      if [ "$DIG_STATE" = "0" ]; then
-		        printf "\r${InvGreen} ${CClear} ${CWhite}Dig Functionality Test...    ${CGreen}[Passed]   ${CDkGray}| dig google.com${CClear}"
-		        DigFuncTest="Passed"
-		      else
-		        printf "\r${InvRed} ${CClear} ${CWhite}Dig Functionality Test...    ${CRed}[Failed]   ${CDkGray}| dig google.com${CClear}"
-		        DigFuncTest="Failed"
-		      fi
-			fi
+    printf "${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Checking] ${CDkGray}| dig google.com${CClear}"
+      DIG_STATE="$(dig google.com >/dev/null 2>&1; echo $?)"
+      sleep 1
+      if [ "$DIG_STATE" = "0" ]; then
+        printf "\r${InvGreen} ${CClear} ${CWhite}Dig Functionality Test...    ${CGreen}[Passed]   ${CDkGray}| dig google.com${CClear}"
+        DigFuncTest="Passed"
+      else
+        printf "\r${InvRed} ${CClear} ${CWhite}Dig Functionality Test...    ${CRed}[Failed]   ${CDkGray}| dig google.com${CClear}"
+        DigFuncTest="Failed"
+      fi
     echo ""
 
     printf "${InvYellow} ${CClear} ${CWhite}Curl Functionality Test...   ${CYellow}[Checking] ${CDkGray}| curl -Is http://www.google.com | head -n 1${CClear}"
@@ -4020,7 +3845,7 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
         WANnmap=$(nmap $oldwan0ip | grep "open" | sed 's/^/   /')
         if [ -z "$WANnmap" ]; then echo "None"; else nmap $oldwan0ip | grep "open" | sed 's/^/   /'; fi
         echo ""
@@ -4028,15 +3853,13 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANnmap=$(nmap $oldlanip | grep "open" | sed 's/^/   /')
       if [ -z "$LANnmap" ]; then echo "None"; else nmap $oldlanip | grep "open" | sed 's/^/   /'; fi
-      echo ""
-      echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
     elif [ "$PSView" == "UDP" ]; then
       echo -e "${InvGreen} ${CClear}"
       echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
       echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
       echo ""
       if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
+        echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
         WANUnmap=$(nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /')
         if [ -z "$WANUnmap" ]; then echo "None"; else nmap -sU $oldwan0ip | grep "open" | sed 's/^/   /'; fi
       echo ""
@@ -4044,8 +3867,6 @@ DisplayPage5()
       echo -e "${InvGreen} ${CClear} ${CWhite}BR0 IP: ${CGreen}$oldlanip${CClear}"
       LANUnmap=$(nmap -sU $oldlanip | grep "open" | sed 's/^/   /')
       if [ -z "$LANUnmap" ]; then echo "None"; else nmap -sU $oldlanip | grep "open" | sed 's/^/   /'; fi
-      echo ""
-      echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
     fi
 
   { echo 'Lastruntime="'"$(date)"'"'
@@ -4098,8 +3919,6 @@ else
   echo ""
   if [ "$DigFuncTest" == "Passed" ]; then
     printf "\r${InvGreen} ${CClear} ${CWhite}Dig Functionality Test...    ${CGreen}[Passed]   ${CDkGray}| dig google.com${CClear}"
-  elif [ "$DigFuncTest" == "Skipped" ]; then
-    printf "\r${InvYellow} ${CClear} ${CWhite}Dig Functionality Test...    ${CYellow}[Skipped]  ${CDkGray}| Please install dig using: 'opkg install bind-dig'${CClear}"
   else
     printf "\r${InvRed} ${CClear} ${CWhite}Dig Functionality Test...    ${CRed}[Failed]   ${CDkGray}| dig google.com${CClear}"
   fi
@@ -4134,7 +3953,7 @@ else
       oldwan0ip="12.34.56.78" #demo
     fi
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPWANRESPATH ]; then
         echo "None"
       else
@@ -4150,15 +3969,13 @@ else
       LANnmap=$(cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /')
       if [ -z "$LANnmap" ]; then echo "None"; else cat $NMAPLANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
-    echo ""
-    echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
   elif [ "$PSView" == "UDP" ]; then
     echo -e "${InvGreen} ${CClear}"
     echo -e "${InvGreen} ${CClear}${CWhite} Show Open  ${CGreen}(T)${CWhite}CP  Ports  |  Show Open ${InvDkGray} ${CGreen}(U)${CWhite}DP ${CClear}${CWhite} Ports${CClear}"
     echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
     echo ""
     if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
-      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip ${CWhite}**${CClear}"
+      echo -e "${InvGreen} ${CClear} ${CWhite}WAN0 IP: ${CGreen}$oldwan0ip${CClear}"
       if [ ! -f $NMAPUWANRESPATH ]; then
         echo "None"
       else
@@ -4174,8 +3991,6 @@ else
       LANUnmap=$(cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /')
       if [ -z "$LANUnmap" ]; then echo "None"; else cat $NMAPULANRESPATH | grep "open" | sed 's/^/   /'; fi
     fi
-    echo ""
-    echo -e "${CWhite}**NOTE: NMAP WAN Results may be misleading. Please test thoroughly with External Port Scan (ie. grc.com)"
   fi
 fi
 }
@@ -4938,7 +4753,7 @@ detect_router_model() {
             ;;
 
         # Three-band routers: 2.4GHz, 5GHz, 6GHz (wl0=2.4, wl1=5, wl2=6)
-        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U|GT-BE19000AI)
+        GT-AXE11000|ZenWiFi_ET8|RT-BE96U|RT-BE92U)
             IFNAME_24=$(${NVRAM} get wl0_ifname 2>/dev/null)
             IFNAME_5=$(${NVRAM} get wl1_ifname 2>/dev/null)
             IFNAME_6=$(${NVRAM} get wl2_ifname 2>/dev/null)
@@ -5960,173 +5775,6 @@ display_network_clients | handle_pagination
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# This function displays the syslog for page 8
-DisplayPage8()
-{
-  clear
-  if [ "$UpdateNotify" != "0" ]; then
-    echo -e "$UpdateNotify${CClear}"
-  fi
-  showheader
-
-  echo ""
-  echo -e "${InvGreen} ${CClear}${InvDkGray}${CWhite} Syslog Viewer                                                                                                          ${CClear}"
-  echo -e "${InvGreen} ${CClear}"
-
-load_log() {
-    > "$TMPFILE"   # truncate / create
-
-    # Helper: try a plain file source
-    _try_file() {
-        _f="$1"
-        _label="$2"
-        if [ -f "$_f" ] && [ -s "$_f" ]; then
-            # Use tail to cap, avoiding slurping a multi-MB file on every refresh
-            tail -n "$MAX_LOG_LINES" "$_f" > "$TMPFILE" 2>/dev/null
-            if [ -s "$TMPFILE" ]; then
-                LOG_SOURCE="$_label"
-                return 0
-            fi
-        fi
-        return 1
-    }
-
-    # 1. /tmp/syslog.log  (symlink -> /jffs/syslog.log on GT-BE98 Pro)
-    _try_file /tmp/syslog.log "/tmp/syslog.log -> /jffs/syslog.log" && return
-
-    # 2. /jffs/syslog.log  (direct)
-    _try_file /jffs/syslog.log "/jffs/syslog.log" && return
-
-    # 3. /var/log/messages
-    _try_file /var/log/messages "/var/log/messages" && return
-
-    # 4. logread  (last resort — broken on GT-BE98 Pro but kept for portability)
-    if command -v logread >/dev/null 2>&1; then
-        logread > "$TMPFILE" 2>"${TMPFILE}.err"
-        if [ -s "$TMPFILE" ]; then
-            LOG_SOURCE="logread"
-            rm -f "${TMPFILE}.err"
-            return
-        fi
-        _logread_err=$(cat "${TMPFILE}.err" 2>/dev/null)
-        rm -f "${TMPFILE}.err"
-    fi
-
-    # Nothing found — leave TMPFILE empty; show_page will display diagnostics
-    LOG_SOURCE="none found"
-    [ -n "$_logread_err" ] && printf 'logread error: %s\n' "$_logread_err" >> "$TMPFILE"
-}
-
-#  print_lines: format and display log lines from line_start to line_end.
-print_lines() {
-    _lstart=$1
-    _lend=$2
-
-    sed -n "${_lstart},${_lend}p" "$TMPFILE" | while IFS= read -r _line; do
-
-        # Split timestamp (fields 1-3) from the rest of the message
-        _ts=$(printf '%s' "$_line"  | awk '{print $1, $2, $3}')
-        _msg=$(printf '%s' "$_line" | cut -d' ' -f4-)
-
-        if [ "$WRAP" -eq 0 ]; then
-            # Truncate mode, wc -c counts bytes; fine for ASCII syslog content
-            _mlen=$(printf '%s' "$_msg" | wc -c | tr -d ' \t')
-            if [ "$_mlen" -gt "$MSG_MAX" ]; then
-                # Reserve last char for the ">" indicator
-                _msg=$(printf '%s' "$_msg" | cut -c1-$(( MSG_MAX - 1 )))
-                printf '\033[1;37m%-15s\033[0m | %s>\n' "$_ts" "$_msg"
-            else
-                printf '\033[1;37m%-15s\033[0m | %s\n' "$_ts" "$_msg"
-            fi
-        else
-            # Wrap mode: print full message, terminal handles line breaks
-            printf '\033[1;37m%-15s\033[0m | %s\n' "$_ts" "$_msg"
-        fi
-
-    done
-}
-
-#  show_page: render header, log lines for the current page, and footer
-show_page() {
-    # Re-count each render so a stale TMPFILE still works
-    total=$(wc -l < "$TMPFILE" | tr -d ' \t')
-
-    # Guard: empty log
-    if [ "$total" -eq 0 ]; then
-        return
-    fi
-
-    max_page=$(( (total - 1) / PAGE_SIZE ))
-
-    # Clamp page to valid range
-    [ "$page" -lt 0 ]            && page=0
-    [ "$page" -gt "$max_page" ]  && page="$max_page"
-
-    # Calculate line window in the file
-    #    page 0 => lines (total-23)..total  (the very latest)
-    #    page 1 => lines (total-47)..(total-24)  etc.
-    line_end=$(( total - page * PAGE_SIZE ))
-    line_start=$(( line_end - PAGE_SIZE + 1 ))
-    [ "$line_start" -lt 1 ] && line_start=1
-
-    shown=$(( line_end - line_start + 1 ))
-
-    # Context-aware nav hints
-    if [ "$page" -lt "$max_page" ]; then
-        hint_j='Older'
-    else
-        hint_j='(oldest)'
-    fi
-
-    if [ "$page" -gt 0 ]; then
-        hint_k='Newer'
-    else
-        hint_k='(latest)'
-    fi
-
-    if [ "$WRAP" -eq 0 ]; then
-        hint_y='Wrap: OFF'
-    else
-        hint_y='Wrap: ON '
-    fi
-    
-    # Header
-    echo -e "${InvGreen} ${CClear}${CWhite} View: ${CClear}[${CGreen}j${CClear}=$hint_j]  |  ${CClear}[${CGreen}k${CClear}=$hint_k]  |  ${CClear}[${CGreen}y${CClear}=$hint_y]  |  ${CClear}[${CGreen}z${CClear}=Refresh]${CClear}"
-    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
-
-    # Log lines
-    print_lines "$line_start" "$line_end"
-
-    # Pad with blank lines so the footer always appears at the same row, skip padding in WRAP=1 mode
-    if [ "$WRAP" -eq 0 ]; then
-        pad=$(( PAGE_SIZE - shown ))
-        i=0
-        while [ "$i" -lt "$pad" ]; do
-            printf '\n'
-            i=$(( i + 1 ))
-        done
-    fi
-    
-    # Footer
-    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
-    echo -en "${InvGreen} ${CClear} "
-
-    printf ' Page %d of %d  |  Lines %d-%d of %d  |  src: %s\n' \
-        $(( page + 1 )) $(( max_page + 1 )) \
-        "$line_start" "$line_end" "$total" "$LOG_SOURCE"
-
-    echo -e "${InvGreen} ${CClear}${CDkGray}------------------------------------------------------------------------------------------------------------------------${CClear}"
-
-}
-
-#  Main Syslog Viewer Execution
-
-load_log
-show_page
-
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
 # GetVPNWGIPCITY is a function that gathers IP/City stats from all active VPN and WG connections
 
 GetVPNWGIPCITY()
@@ -6771,7 +6419,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   if [ "$RouterModel" = "GT-BE98_Pro" ]; then
      FourBandCustom56624="True"
   fi
-  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ] || [ "$RouterModel" = "RT-BE92U" ] || [ "$RouterModel" = "GT-BE19000AI" ]; then
+  if [ "$RouterModel" = "GT-AXE11000" ] || [ "$RouterModel" = "ZenWiFi_ET8" ] || [ "$RouterModel" = "RT-BE96U" ] || [ "$RouterModel" = "RT-BE92U" ]; then
      ThreeBand2456="True"
   fi
   if [ "$RouterModel" = "GT-AX11000_Pro" ] || [ "$RouterModel" = "GT-AX11000" ] || [ "$RouterModel" = "ZenWiFi_Pro_XT12" ] || [ "$RouterModel" = "ZenWiFi_XT8" ]; then
@@ -6781,13 +6429,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   # Check what mode the router is in: 1=Router, 2=AP, 3=iMesh Node #
   OpsMode="$($timeoutcmd$timeoutsec nvram get sw_mode)"
   #OpsMode=3
-
-	if [ "$1" = "amtmupdate" ]
-	then
-	    shift
-	    ScriptUpdateFromAMTM "$@"
-	    exit "$?"
-	fi
 
   # Check and see if any commandline option is being used
   if [ $# -eq 0 ] || [ -z "$1" ]
@@ -6996,7 +6637,7 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
               cp -fp /jffs/addons/rtrmon.d/speedtest-cli.json /root/.config/ookla/speedtest-cli.json 2>/dev/null
           fi
 
-          NextPage="$([ $# -gt 1 ] && echo "$2" | tr -d -c 1-8 || echo)"
+          NextPage="$([ $# -gt 1 ] && echo "$2" | tr -d -c 1-7 || echo)"
           if [ -z "$NextPage" ]; then NextPage=1 ; fi
 
           # Per @Stephen Harrington's suggestion, check NVRAM to see if WiFi is turned on, else mark them as disabled
@@ -7246,9 +6887,6 @@ do
      #echo ""
   elif [ "$NextPage" = "7" ]; then
      DisplayPage7
-     
-  elif [ "$NextPage" = "8" ]; then
-     DisplayPage8
   fi
 
   # Reset stats after the UI has finished drawing
@@ -7257,13 +6895,11 @@ do
   memshrd1=0
   membuff1=0
   memcach1=0
-  memavai1=0
   memused2=0
   memfree2=0
   memshrd2=0
   membuff2=0
   memcach2=0
-  memavai2=0
   cpuusr1=0
   cpusys1=0
   cpunice1=0
@@ -7356,8 +6992,7 @@ do
      elif [ "$NextPage" = "4" ]; then NextPage=5 #DisplayPage5#
      elif [ "$NextPage" = "5" ]; then NextPage=6 #DisplayPage6#
      elif [ "$NextPage" = "6" ]; then NextPage=7 #DisplayPage7#
-     elif [ "$NextPage" = "7" ]; then NextPage=8 #DisplayPage1#
-     elif [ "$NextPage" = "8" ]; then NextPage=1 #DisplayPage1#	
+     elif [ "$NextPage" = "7" ]; then NextPage=1 #DisplayPage1#
      fi
   fi
 
