@@ -1,6 +1,5 @@
 Future Enhancements (Possible/Planned)
 -----------------------------
-* Fix KiB/MiB notations throughout script and fix math (@kriukas)
 * AMTM Email notifications on certain events (like 80% disk usage)
 * Perhaps check the amount of uptime of the router, and if it's less than 5 minutes, send a notification that the router just rebooted
 * WAN down functionality to put RTRMON in standby if the WAN isn't working, or at least show interface down.
