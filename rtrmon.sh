@@ -15,17 +15,23 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Apr-12
+# Last Modified: 2026-Apr-13
 ###########################################################################################################################
 
 #Preferred standard router binaries path
 export PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
 unset LD_LIBRARY_PATH
 
+##-------------------------------------##
+## Added by Martinski W. [2026-Apr-13] ##
+##-------------------------------------##
+[ "$HOME" != "/root" ] && export HOME="/root"
+export SCREENDIR="${HOME}/.screen"
+
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.0"
+Version="2.4.1"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -164,7 +170,9 @@ prevHideOpts=X      # Avoid redisplaying the options menu unnecessarily too ofte
 prevSortByOpt=X     # Avoid resetting the timer loop unnecessarily too often #
 bootInterval=10     # For "Boot Sequence" loop #
 LAN_HostName=""
-readonly gSavedSTTY="$(stty -g)"
+if [ -t 0 ] && ! tty | grep -qwi "NOT"
+then readonly gSavedSTTY="$(stty -g)"
+fi
 
 ##-------------------------------------##
 ## Added by Martinski W. [2024-Nov-05] ##
@@ -262,6 +270,9 @@ displayopsmenu()
 ##-------------------------------------##
 _ConsumeKeypressBuffer_()
 {
+   if [ -z "${gSavedSTTY:+xSETOKx}" ]
+   then return 1
+   fi
    local savedSettings
    local keyPress=''  prevTimeSec
    savedSettings="$(stty -g)"
@@ -280,8 +291,10 @@ _ConsumeKeypressBuffer_()
 ##-------------------------------------##
 _IgnoreKeypresses_()
 {
-   if [ $# -eq 0 ] || [ -z "$1" ]
-   then return 1 ; fi
+   if [ $# -eq 0 ] || [ -z "$1" ] || \
+      [ -z "${gSavedSTTY:+xSETOKx}" ]
+   then return 1
+   fi
    case "$1" in
         ON) stty -echo ;;
        OFF) stty "$gSavedSTTY" ; stty echo ;;
