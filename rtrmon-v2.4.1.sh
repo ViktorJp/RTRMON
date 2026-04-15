@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Apr-15
+# Last Modified: 2026-Apr-13
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -31,7 +31,7 @@ export SCREENDIR="${HOME}/.screen"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.2"
+Version="2.4.1"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -4013,15 +4013,14 @@ DisplayPage5()
       fi
     echo ""
 
-    printf "${InvYellow} ${CClear} ${CWhite}SSL Handshake Test...        ${CYellow}[Checking] ${CDkGray}| echo | openssl s_client -connect '8.8.8.8:443' 2>/dev/null | grep -q 'SSL ha>${CClear}"
-      #SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
-      SSL_STATE="$(echo | openssl s_client -connect "8.8.8.8:443" 2>/dev/null | grep -q "SSL handshake has read"; echo $?)"
+    printf "${InvYellow} ${CClear} ${CWhite}SSL Handshake Test...        ${CYellow}[Checking] ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
+      SSL_STATE="$(nc -w3 8.8.8.8 443 >/dev/null 2>&1 && echo | openssl s_client -connect 8.8.8.8:443 >/dev/null 2>&1 | awk 'handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 } $1 $2 == "SSLhandshake" { handshake = 1 }' >/dev/null 2>&1; echo $?)"
       sleep 1
       if [ "$SSL_STATE" = "0" ]; then
-        printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| echo | openssl s_client -connect '8.8.8.8:443' 2>/dev/null | grep -q 'SSL ha>${CClear}"
+        printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
         SSLHandshakeTest="Passed"
       else
-        printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| echo | openssl s_client -connect '8.8.8.8:443' 2>/dev/null | grep -q 'SSL ha>${CClear}"
+        printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
         SSLHandshakeTest="Failed"
       fi
     echo ""
@@ -4131,9 +4130,9 @@ else
   fi
   echo ""
   if [ "$SSLHandshakeTest" == "Passed" ]; then
-    printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| echo | openssl s_client -connect '8.8.8.8:443' 2>/dev/null | grep -q 'SSL ha>${CClear}"
+    printf "\r${InvGreen} ${CClear} ${CWhite}SSL Handshake Test...        ${CGreen}[Passed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
   else
-    printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| echo | openssl s_client -connect '8.8.8.8:443' 2>/dev/null | grep -q 'SSL ha>${CClear}"
+    printf "\r${InvRed} ${CClear} ${CWhite}SSL Handshake Test...        ${CRed}[Failed]   ${CDkGray}| nc -w3 8.8.8.8 443 && echo | openssl s_client -connect 8.8.8.8:443 | awk 'ha>${CClear}"
   fi
   echo ""
   echo ""
