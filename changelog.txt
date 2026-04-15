@@ -33,7 +33,7 @@ v2.4.0    - (April 12, 2026)
             RUNPATH is searched *AFTER* the LD_LIBRARY_PATH definitions, whereas RPATH has higher
             priority than the LD_LIBRARY_PATH environment variable, so it's searched FIRST. Thanks to
             @Martinski for his advice.
-          - PATCH: Made BACKUPMON compliant with the amtmupdate functionality to allow for autoupdates
+          - PATCH: Made RTRMON compliant with the amtmupdate functionality to allow for autoupdates
             through AMTM.
 
 v2.3.1    - (March 8, 2026)
