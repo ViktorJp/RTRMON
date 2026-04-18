@@ -6741,6 +6741,14 @@ _SetLAN_HostName_()
 _GetLAN_HostName_()
 { _SetLAN_HostName_ ; echo "$LAN_HostName" ; }
 
+# Check to see if amtmupdate is being called before the script officially starts
+	if [ "$1" = "amtmupdate" ]
+	then
+	    shift
+	    ScriptUpdateFromAMTM "$@"
+	    exit "$?"
+	fi
+
 trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -6795,13 +6803,6 @@ trap '_IgnoreKeypresses_ OFF ; exit 0' EXIT INT QUIT ABRT TERM
   # Check what mode the router is in: 1=Router, 2=AP, 3=iMesh Node #
   OpsMode="$($timeoutcmd$timeoutsec nvram get sw_mode)"
   #OpsMode=3
-
-	if [ "$1" = "amtmupdate" ]
-	then
-	    shift
-	    ScriptUpdateFromAMTM "$@"
-	    exit "$?"
-	fi
 
   # Check and see if any commandline option is being used
   if [ $# -eq 0 ] || [ -z "$1" ]
