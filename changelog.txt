@@ -4,6 +4,7 @@ v2.4.3    - (TBA)
             0.0.0.0. This was happening due to the timing of the reset, and would lock that IP into a
             failsafe IP so that at least something was assigned to it. It now will check for a real IP
             should it try to revert back to a blank IP.
+          - PATCH: Miscellaneous bug fixes
 
 v2.4.2    - (April 15, 2025)
           - PATCH: Based on some feedback from @JTnola, questioning my infallible code, he noted that
