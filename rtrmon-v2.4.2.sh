@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Jul-11
+# Last Modified: 2026-Apr-15
 ###########################################################################################################################
 
 #Preferred standard router binaries path
@@ -31,7 +31,7 @@ export SCREENDIR="${HOME}/.screen"
 # -------------------------------------------------------------------------------------------------------------------------
 # System Variables (Do not change beyond this point or this may change the programs ability to function correctly)
 # -------------------------------------------------------------------------------------------------------------------------
-Version="2.4.3"
+Version="2.4.2"
 Beta=0
 ScreenshotMode=0
 LOGFILE="/jffs/addons/rtrmon.d/rtrmon.log"            # Logfile path/name that captures important date/time events - change
@@ -425,17 +425,14 @@ ScriptUpdateFromAMTM()
     then return 0
     fi
 
-    # Force a RTRMON download and update
-    echo ""
-    echo -e "${InvGreen} ${CClear} Downloading latest ${CGreen}RTRMON${CClear}... Please stand by while we add even more stats & functionality..."
+    # Force a BACKUPMON download and update
+    echo -e "${CClear}[i] Force Downloading RTRMON... Please stand by..."
     curl --silent --fail --retry 3 "https://raw.githubusercontent.com/ViktorJp/RTRMON/master/rtrmon.sh" -o "/jffs/scripts/rtrmon.sh" && chmod 755 "/jffs/scripts/rtrmon.sh"
     DLsuccess=$?
     if [ "$DLsuccess" -eq 0 ]; then
-      echo -e "${InvGreen} ${CClear} RTRMON Download/Update Success."
-      echo ""
+      echo -e "${CClear}[i] RTRMON Download/Update Success."
     else
-      echo -e "${InvRed} ${CClear} RTRMON Download/Update Failed. Please check all the things."
-      echo ""
+      echo -e "${CClear}[X] RTRMON Download/Update Failed."
     fi
 
     return "$DLsuccess"
@@ -2068,16 +2065,15 @@ oldstats()
   oldvpn4txmbrate=$vpn4txmbrate
   oldvpn5rxmbrate=$vpn5rxmbrate
   oldvpn5txmbrate=$vpn5txmbrate
-
-  [ -n "$vpn1ip" ] && [ "$vpn1ip" != "0.0.0.0" ] && oldvpn1ip=$vpn1ip
+  oldvpn1ip=$vpn1ip
   oldvpn1city=$vpn1city
-  [ -n "$vpn2ip" ] && [ "$vpn2ip" != "0.0.0.0" ] && oldvpn2ip=$vpn2ip
+  oldvpn2ip=$vpn2ip
   oldvpn2city=$vpn2city
-  [ -n "$vpn3ip" ] && [ "$vpn3ip" != "0.0.0.0" ] && oldvpn3ip=$vpn3ip
+  oldvpn3ip=$vpn3ip
   oldvpn3city=$vpn3city
-  [ -n "$vpn4ip" ] && [ "$vpn4ip" != "0.0.0.0" ] && oldvpn4ip=$vpn4ip
+  oldvpn4ip=$vpn4ip
   oldvpn4city=$vpn4city
-  [ -n "$vpn5ip" ] && [ "$vpn5ip" != "0.0.0.0" ] && oldvpn5ip=$vpn5ip
+  oldvpn5ip=$vpn5ip
   oldvpn5city=$vpn5city
 
   oldwg1rxmbrate=$wg1rxmbrate
@@ -2090,16 +2086,15 @@ oldstats()
   oldwg4txmbrate=$wg4txmbrate
   oldwg5rxmbrate=$wg5rxmbrate
   oldwg5txmbrate=$wg5txmbrate
-
-  [ -n "$wg1ip" ] && [ "$wg1ip" != "0.0.0.0" ] && oldwg1ip=$wg1ip
+  oldwg1ip=$wg1ip
   oldwg1city=$wg1city
-  [ -n "$wg2ip" ] && [ "$wg2ip" != "0.0.0.0" ] && oldwg2ip=$wg2ip
+  oldwg2ip=$wg2ip
   oldwg2city=$wg2city
-  [ -n "$wg3ip" ] && [ "$wg3ip" != "0.0.0.0" ] && oldwg3ip=$wg3ip
+  oldwg3ip=$wg3ip
   oldwg3city=$wg3city
-  [ -n "$wg4ip" ] && [ "$wg4ip" != "0.0.0.0" ] && oldwg4ip=$wg4ip
+  oldwg4ip=$wg4ip
   oldwg4city=$wg4city
-  [ -n "$wg5ip" ] && [ "$wg5ip" != "0.0.0.0" ] && oldwg5ip=$wg5ip
+  oldwg5ip=$wg5ip
   oldwg5city=$wg5city
 
   if [ "$WAN0AltModes" == "0" ] || [ "$OpsMode" == "1" ]; then
@@ -6146,33 +6141,6 @@ show_page
 }
 
 # -------------------------------------------------------------------------------------------------------------------------
-# _GetPublicVPNIP_ resolves the public/exit IP seen through a given VPN/WG tunnel interface
-# $1 - tunnel interface name to bind the lookup to (e.g. tun11, wgc1)
-# $2 - fallback IP already resolved via ping against the configured VPN server address (may be empty)
-_GetPublicVPNIP_()
-{
-   local ifc="$1"  fallbackip="$2"  ip=""  apiurl
-
-   for apiurl in "https://ipv4.icanhazip.com" "https://ifconfig.me/ip" "https://ipinfo.io/ip"
-   do
-      ip="$(curl --silent --fail --retry 2 --retry-delay 2 --retry-all-errors --max-time 5 --interface "$ifc" --request GET --url "$apiurl" 2>/dev/null)"
-      # Guard against non-IP error bodies (rate-limit pages, captive portals, etc.) some of these APIs can return
-      if echo "$ip" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
-      then echo "$ip" ; return 0
-      fi
-   done
-
-   # All API lookups failed/unreachable through this tunnel -- fall back to the NVRAM/ping-resolved address
-   if echo "$fallbackip" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
-   then echo "$fallbackip" ; return 0
-   fi
-
-   # Nothing worked this tick -- return the sentinel so the caller's "stuck" check retries again next tick
-   echo "0.0.0.0"
-   return 1
-}
-
-# -------------------------------------------------------------------------------------------------------------------------
 # GetVPNWGIPCITY is a function that gathers IP/City stats from all active VPN and WG connections
 
 GetVPNWGIPCITY()
@@ -6187,12 +6155,12 @@ GetVPNWGIPCITY()
     NVRAMVPN1ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn1slot"_addr)
     NVRAMVPN1IP=$(ping -c 1 -w 1 $NVRAMVPN1ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ] || [ -z "$oldvpn1ip" ] || [ "$oldvpn1ip" = "0.0.0.0" ]; then
+    if [ "$NVRAMVPN1ADDR" != "$oldvpn1ADDR" ]; then
       if [ "$VPNSite2Site" == "1" ]; then
         oldvpn1ip=$NVRAMVPN1IP
-        if [ -z "$oldvpn1ip" ]; then oldvpn1ip="0.0.0.0"; fi
       else
-        oldvpn1ip="$(_GetPublicVPNIP_ "$TUN1" "$NVRAMVPN1IP")"
+        oldvpn1ip=$(curl --silent --fail --interface $TUN1 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn1ip ]; then oldvpn1ip=$NVRAMVPN1IP; fi
       fi
       oldvpn1ADDR=$NVRAMVPN1ADDR
     fi
@@ -6224,12 +6192,12 @@ GetVPNWGIPCITY()
     NVRAMVPN2ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn2slot"_addr)
     NVRAMVPN2IP=$(ping -c 1 -w 1 $NVRAMVPN2ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPN2ADDR" != "$oldvpn2ADDR" ] || [ -z "$oldvpn2ip" ] || [ "$oldvpn2ip" = "0.0.0.0" ]; then
+    if [ "$NVRAMVPN2ADDR" != "$oldvpn2ADDR" ]; then
       if [ "$VPNSite2Site" == "1" ]; then
         oldvpn2ip=$NVRAMVPN2IP
-        if [ -z "$oldvpn2ip" ]; then oldvpn2ip="0.0.0.0"; fi
       else
-        oldvpn2ip="$(_GetPublicVPNIP_ "$TUN2" "$NVRAMVPN2IP")"
+        oldvpn2ip=$(curl --silent --fail --interface $TUN2 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn2ip ]; then oldvpn2ip=$NVRAMVPN2IP; fi
       fi
       oldvpn2ADDR=$NVRAMVPN2ADDR
     fi
@@ -6248,7 +6216,7 @@ GetVPNWGIPCITY()
     vpn2on="True"
 
   else
-    vpn2on="False"
+    vpn5on="False"
   fi
 
   #Check to see if there's a third VPN connection
@@ -6261,12 +6229,12 @@ GetVPNWGIPCITY()
     NVRAMVPN3ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn3slot"_addr)
     NVRAMVPN3IP=$(ping -c 1 -w 1 $NVRAMVPN3ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPN3ADDR" != "$oldvpn3ADDR" ] || [ -z "$oldvpn3ip" ] || [ "$oldvpn3ip" = "0.0.0.0" ]; then
+    if [ "$NVRAMVPN3ADDR" != "$oldvpn3ADDR" ]; then
       if [ "$VPNSite2Site" == "1" ]; then
         oldvpn3ip=$NVRAMVPN3IP
-        if [ -z "$oldvpn3ip" ]; then oldvpn3ip="0.0.0.0"; fi
       else
-        oldvpn3ip="$(_GetPublicVPNIP_ "$TUN3" "$NVRAMVPN3IP")"
+        oldvpn3ip=$(curl --silent --fail --interface $TUN3 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn3ip ]; then oldvpn3ip=$NVRAMVPN3IP; fi
       fi
       oldvpn3ADDR=$NVRAMVPN3ADDR
     fi
@@ -6298,12 +6266,12 @@ GetVPNWGIPCITY()
     NVRAMVPN4ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn4slot"_addr)
     NVRAMVPN4IP=$(ping -c 1 -w 1 $NVRAMVPN4ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPN4ADDR" != "$oldvpn4ADDR" ] || [ -z "$oldvpn4ip" ] || [ "$oldvpn4ip" = "0.0.0.0" ]; then
+    if [ "$NVRAMVPN4ADDR" != "$oldvpn4ADDR" ]; then
       if [ "$VPNSite2Site" == "1" ]; then
         oldvpn4ip=$NVRAMVPN4IP
-        if [ -z "$oldvpn4ip" ]; then oldvpn4ip="0.0.0.0"; fi
       else
-        oldvpn4ip="$(_GetPublicVPNIP_ "$TUN4" "$NVRAMVPN4IP")"
+        oldvpn4ip=$(curl --silent --fail --interface $TUN4 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn4ip ]; then oldvpn4ip=$NVRAMVPN4IP; fi
       fi
       oldvpn4ADDR=$NVRAMVPN4ADDR
     fi
@@ -6335,12 +6303,12 @@ GetVPNWGIPCITY()
     NVRAMVPN5ADDR=$($timeoutcmd$timeoutsec nvram get vpn_client"$vpn5slot"_addr)
     NVRAMVPN5IP=$(ping -c 1 -w 1 $NVRAMVPN5ADDR | awk -F '[()]' '/PING/ { print $2}')
 
-    if [ "$NVRAMVPN5ADDR" != "$oldvpn5ADDR" ] || [ -z "$oldvpn5ip" ] || [ "$oldvpn5ip" = "0.0.0.0" ]; then
+    if [ "$NVRAMVPN5ADDR" != "$oldvpn5ADDR" ]; then
       if [ "$VPNSite2Site" == "1" ]; then
         oldvpn5ip=$NVRAMVPN5IP
-        if [ -z "$oldvpn5ip" ]; then oldvpn5ip="0.0.0.0"; fi
       else
-        oldvpn5ip="$(_GetPublicVPNIP_ "$TUN5" "$NVRAMVPN5IP")"
+        oldvpn5ip=$(curl --silent --fail --interface $TUN5 --request GET --url https://ipv4.icanhazip.com)
+        if [ -z $oldvpn5ip ]; then oldvpn5ip=$NVRAMVPN5IP; fi
       fi
       oldvpn5ADDR=$NVRAMVPN5ADDR
     fi
@@ -6372,14 +6340,18 @@ GetVPNWGIPCITY()
     WG1ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN1"_ep_addr)
     NVRAMWG1IP=$(ping -c 1 -w 1 $WGTUN1_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG1 Stats...]"; fi
-    if [ "$WG1ADDR" != "$oldwg1ADDR" ] || [ -z "$oldwg1ip" ] || [ "$oldwg1ip" = "0.0.0.0" ]; then
+    if [ "$WG1ADDR" != "$oldwg1ADDR" ] || [ "$wg1ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN1_IP lookup $WGTUN1 prio 10 >/dev/null 2>&1
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg1ip="$NVRAMWG1IP"
-        if [ -z "$oldwg1ip" ]; then oldwg1ip="0.0.0.0"; fi
       else
-        oldwg1ip="$(_GetPublicVPNIP_ "$WGTUN1" "$NVRAMWG1IP")"
+        oldwg1ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN1" --request GET --url https://ipv4.icanhazip.com"
+        oldwg1ip="$(eval $oldwg1ip)"
+        if [ -z "$oldwg1ip" ] || echo "$oldwg1ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg1ip="$NVRAMWG1IP"
+        fi
       fi
       oldwg1ADDR=$WG1ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -6413,14 +6385,18 @@ GetVPNWGIPCITY()
     WG2ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN2"_ep_addr)
     NVRAMWG2IP=$(ping -c 1 -w 1 $WGTUN2_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG2 Stats...]"; fi
-    if [ "$WG2ADDR" != "$oldwg2ADDR" ] || [ -z "$oldwg2ip" ] || [ "$oldwg2ip" = "0.0.0.0" ]; then
+    if [ "$WG2ADDR" != "$oldwg2ADDR" ] || [ "$wg2ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN2_IP lookup $WGTUN2 prio 10 >/dev/null 2>&1
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg2ip="$NVRAMWG2IP"
-        if [ -z "$oldwg2ip" ]; then oldwg2ip="0.0.0.0"; fi
       else
-        oldwg2ip="$(_GetPublicVPNIP_ "$WGTUN2" "$NVRAMWG2IP")"
+        oldwg2ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN2" --request GET --url https://ipv4.icanhazip.com"
+        oldwg2ip="$(eval $oldwg2ip)"
+        if [ -z "$oldwg2ip" ] || echo "$oldwg2ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg2ip="$NVRAMWG2IP"
+        fi
       fi
       oldwg2ADDR=$WG2ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -6454,14 +6430,18 @@ GetVPNWGIPCITY()
     WG3ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN3"_ep_addr)
     NVRAMWG3IP=$(ping -c 1 -w 1 $WGTUN3_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG3 Stats...]"; fi
-    if [ "$WG3ADDR" != "$oldwg3ADDR" ] || [ -z "$oldwg3ip" ] || [ "$oldwg3ip" = "0.0.0.0" ]; then
+    if [ "$WG3ADDR" != "$oldwg3ADDR" ] || [ "$wg3ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN3_IP lookup $WGTUN3 prio 10 >/dev/null 2>&1
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg3ip="$NVRAMWG3IP"
-        if [ -z "$oldwg3ip" ]; then oldwg3ip="0.0.0.0"; fi
       else
-        oldwg3ip="$(_GetPublicVPNIP_ "$WGTUN3" "$NVRAMWG3IP")"
+        oldwg3ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN3" --request GET --url https://ipv4.icanhazip.com"
+        oldwg3ip="$(eval $oldwg3ip)"
+        if [ -z "$oldwg3ip" ] || echo "$oldwg3ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg3ip="$NVRAMWG3IP"
+        fi
       fi
       oldwg3ADDR=$WG3ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -6495,14 +6475,18 @@ GetVPNWGIPCITY()
     WG4ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN4"_ep_addr)
     NVRAMWG4IP=$(ping -c 1 -w 1 $WGTUN4_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG4 Stats...]"; fi
-    if [ "$WG4ADDR" != "$oldwg4ADDR" ] || [ -z "$oldwg4ip" ] || [ "$oldwg4ip" = "0.0.0.0" ]; then
+    if [ "$WG4ADDR" != "$oldwg4ADDR" ] || [ "$wg4ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN4_IP lookup $WGTUN4 prio 10 >/dev/null 2>&1
       if [ "$VPNSite2Site" == "1" ]; then
         oldwg4ip="$NVRAMWG4IP"
-        if [ -z "$oldwg4ip" ]; then oldwg4ip="0.0.0.0"; fi
       else
-        oldwg4ip="$(_GetPublicVPNIP_ "$WGTUN4" "$NVRAMWG4IP")"
+        oldwg4ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN4" --request GET --url https://ipv4.icanhazip.com"
+        oldwg4ip="$(eval $oldwg4ip)"
+        if [ -z "$oldwg4ip" ] || echo "$oldwg4ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg4ip="$NVRAMWG4IP"
+        fi
       fi
       oldwg4ADDR=$WG4ADDR
       # Added based on suggestion from @ZebMcKayhan
@@ -6536,14 +6520,18 @@ GetVPNWGIPCITY()
     WG5ADDR=$($timeoutcmd$timeoutsec nvram get "$WGTUN5"_ep_addr)
     NVRAMWG5IP=$(ping -c 1 -w 1 $WGTUN5_IP | awk -F '[()]' '/PING/ { print $2}')
     if [ "$1" = "loop" ]; then printf "${CGreen}\r[Refreshing WG5 Stats...]"; fi
-    if [ "$WG5ADDR" != "$oldwg5ADDR" ] || [ -z "$oldwg5ip" ] || [ "$oldwg5ip" = "0.0.0.0" ]; then
+    if [ "$WG5ADDR" != "$oldwg5ADDR" ] || [ "$wg5ip" = "0.0.0.0" ]; then
       # Added based on suggestion from @ZebMcKayhan
       ip rule add from $WGTUN5_IP lookup $WGTUN5 prio 10 >/dev/null 2>&1
       if [ "$VPNSite2Site" == "1" ]; then
-        oldwg5ip="$NVRAMWG5IP"
-        if [ -z "$oldwg5ip" ]; then oldwg5ip="0.0.0.0"; fi
+        oldwg2ip="$NVRAMWG2IP"
       else
-        oldwg5ip="$(_GetPublicVPNIP_ "$WGTUN5" "$NVRAMWG5IP")"
+        oldwg5ip="curl --silent --fail --retry 3 --retry-delay 2 --retry-all-errors --fail --interface "$WGTUN5" --request GET --url https://ipv4.icanhazip.com"
+        oldwg5ip="$(eval $oldwg5ip)"
+        if [ -z "$oldwg5ip" ] || echo "$oldwg5ip" | grep -qoE 'Internet|traffic|Error|error'
+        then
+          oldwg5ip="$NVRAMWG5IP"
+        fi
       fi
       oldwg5ADDR=$WG5ADDR
       # Added based on suggestion from @ZebMcKayhan
