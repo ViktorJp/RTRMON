@@ -15,7 +15,7 @@
 #
 # Please use the 'sh rtrmon.sh -setup' command to configure the necessary parameters that match your environment the best!
 #
-# Last Modified: 2026-Jul-06
+# Last Modified: 2026-Jul-11
 ###########################################################################################################################
 
 #Preferred standard router binaries path
